@@ -1,5 +1,9 @@
 package team.a9043.sign_in_system.entity;
 
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
@@ -18,6 +22,10 @@ import java.util.stream.Collectors;
  * @author a9043
  */
 @Entity
+@Getter
+@Setter
+@DynamicUpdate
+@DynamicInsert
 public class SisUser {
     /**
      * 登录名，学号，用户名
@@ -49,46 +57,6 @@ public class SisUser {
      */
     @Column
     private String suAuthoritiesStr;
-
-    public String getSuId() {
-        return suId;
-    }
-
-    public void setSuId(String suId) {
-        this.suId = suId;
-    }
-
-    public String getSuName() {
-        return suName;
-    }
-
-    public void setSuName(String suName) {
-        this.suName = suName;
-    }
-
-    public String getSuPassword() {
-        return suPassword;
-    }
-
-    public void setSuPassword(String suPassword) {
-        this.suPassword = suPassword;
-    }
-
-    public String getSuOpenid() {
-        return suOpenid;
-    }
-
-    public void setSuOpenid(String suOpenid) {
-        this.suOpenid = suOpenid;
-    }
-
-    public String getSuAuthoritiesStr() {
-        return suAuthoritiesStr;
-    }
-
-    public void setSuAuthoritiesStr(String suAuthoritiesStr) {
-        this.suAuthoritiesStr = suAuthoritiesStr;
-    }
 
     public List<GrantedAuthority> getSuAuthorities() {
         if (null == suAuthoritiesStr) {

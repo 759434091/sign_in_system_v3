@@ -1,4 +1,4 @@
-package team.a9043.sign_in_system.security;
+package team.a9043.sign_in_system.security.entity;
 
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
@@ -9,7 +9,7 @@ import java.util.Collection;
 public class SisAuthenticationToken extends AbstractAuthenticationToken {
     private SisUser sisUser;
 
-    SisAuthenticationToken(SisUser sisUser) {
+    public SisAuthenticationToken(SisUser sisUser) {
         this(sisUser.getSuAuthorities());
         this.sisUser = sisUser;
     }

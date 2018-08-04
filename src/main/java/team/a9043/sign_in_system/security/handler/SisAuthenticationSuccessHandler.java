@@ -1,10 +1,10 @@
-package team.a9043.sign_in_system.security;
+package team.a9043.sign_in_system.security.handler;
 
 import org.json.JSONObject;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.stereotype.Component;
 import team.a9043.sign_in_system.entity.SisUser;
+import team.a9043.sign_in_system.security.entity.SecurityUserDetails;
 import team.a9043.sign_in_system.util.JwtUtil;
 
 import javax.servlet.http.HttpServletRequest;
@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-@Component
 public class SisAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,

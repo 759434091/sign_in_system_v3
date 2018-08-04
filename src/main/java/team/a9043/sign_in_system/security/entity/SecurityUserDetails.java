@@ -1,4 +1,4 @@
-package team.a9043.sign_in_system.security;
+package team.a9043.sign_in_system.security.entity;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
