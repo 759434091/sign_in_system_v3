@@ -1,6 +1,5 @@
 package team.a9043.sign_in_system.security.handler;
 
-import org.json.JSONObject;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 
@@ -13,12 +12,11 @@ public class SisAuthenticationEntryPoint implements AuthenticationEntryPoint {
     public void commence(HttpServletRequest request,
                          HttpServletResponse response,
                          AuthenticationException authException) throws IOException {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", false);
-        jsonObject.put("error", true);
-        jsonObject.put("message", authException.getMessage());
+        String jsonBody =
+            "{\"success\":false,\"error\":true,\"message\":\"Full " +
+                "authentication is required to access this resource\"}";
         response.setHeader("Content-type", "application/json;charset=utf-8");
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        response.getWriter().write(jsonObject.toString());
+        response.getWriter().write(jsonBody);
     }
 }

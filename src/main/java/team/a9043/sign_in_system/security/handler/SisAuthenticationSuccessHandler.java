@@ -1,6 +1,5 @@
 package team.a9043.sign_in_system.security.handler;
 
-import org.json.JSONObject;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import team.a9043.sign_in_system.entity.SisUser;
@@ -14,6 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SisAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
+
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
                                         HttpServletResponse response,
@@ -27,11 +27,11 @@ public class SisAuthenticationSuccessHandler implements AuthenticationSuccessHan
         claimsMap.put("suAuthoritiesStr", sisUser.getSuAuthoritiesStr());
 
         String token = JwtUtil.createJWT(claimsMap);
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("access-token", token);
-        jsonObject.put("success", true);
-        jsonObject.put("error", false);
         response.setHeader("Content-type", "application/json;charset=utf-8");
-        response.getWriter().write(jsonObject.toString());
+        String jsonRes =
+            "{\"success\":true,\"access-token\":\"%s\",\"error\":false}";
+        response.getWriter().write(
+            String.format(jsonRes, token)
+        );
     }
 }
