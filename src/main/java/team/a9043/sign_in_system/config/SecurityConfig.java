@@ -49,6 +49,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .anyRequest().authenticated()
                 .and()
                 .formLogin()
+                .usernameParameter("suId")
+                .passwordParameter("suPassword")
                 .loginProcessingUrl("/tokens")
                 .successHandler(new SisAuthenticationSuccessHandler())
                 .failureHandler(new SisAuthenticationFailureHandler())

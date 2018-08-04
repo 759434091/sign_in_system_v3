@@ -1,16 +1,19 @@
-package team.a9043.sign_in_system.entity;
+package team.a9043.sign_in_system.security;
 
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import team.a9043.sign_in_system.entity.SisUser;
 
 import java.util.Collection;
 
-public class SecurityUserDetails implements org.springframework.security.core.userdetails.UserDetails {
+public class SecurityUserDetails implements UserDetails {
     private SisUser sisUser;
 
     public SecurityUserDetails(SisUser sisUser) {
         this.sisUser = sisUser;
     }
 
+    // TODO authorities
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return null;
@@ -18,7 +21,7 @@ public class SecurityUserDetails implements org.springframework.security.core.us
 
     @Override
     public String getPassword() {
-        return sisUser.getSuEnPassword();
+        return sisUser.getSuPassword();
     }
 
     @Override
@@ -44,5 +47,13 @@ public class SecurityUserDetails implements org.springframework.security.core.us
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    public SisUser getSisUser() {
+        return sisUser;
+    }
+
+    public void setSisUser(SisUser sisUser) {
+        this.sisUser = sisUser;
     }
 }

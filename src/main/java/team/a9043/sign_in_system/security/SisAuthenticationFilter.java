@@ -4,27 +4,23 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import team.a9043.sign_in_system.service.SecurityUserDetailService;
+import team.a9043.sign_in_system.entity.SisUser;
 import team.a9043.sign_in_system.util.JwtUtil;
 
-import javax.annotation.Resource;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
 
 @Component
 public class SisAuthenticationFilter extends OncePerRequestFilter {
-    @Resource
-    private SecurityUserDetailService securityUserDetailService;
-
+    @SuppressWarnings("unchecked")
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
@@ -43,12 +39,15 @@ public class SisAuthenticationFilter extends OncePerRequestFilter {
         }
 
         Claims claims;
-        UserDetails userDetails;
+        SisUser sisUser;
         //解析token
         try {
             claims = JwtUtil.parseJwt(token);
-            String userName = (String) claims.get("userName");
-            userDetails = securityUserDetailService.loadUserByUsername(userName);
+            sisUser = new SisUser();
+            sisUser.setSuId(claims.get("suId", String.class));
+            sisUser.setSuName(claims.get("suName", String.class));
+            sisUser.setSuAuthoritiesStr(claims.get("suAuthoritiesStr", String.class));
+
         } catch (MalformedJwtException | SignatureException | ExpiredJwtException e) {
             SecurityContextHolder.clearContext();
             filterChain.doFilter(request, response);
@@ -56,17 +55,13 @@ public class SisAuthenticationFilter extends OncePerRequestFilter {
         }
 
         //设定Authentication
-        UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(
-                        userDetails.getUsername(),
-                        userDetails.getPassword(),
-                        userDetails.getAuthorities());
-        authentication.setDetails(
+        SisAuthenticationToken sisAuthenticationToken = new SisAuthenticationToken(sisUser);
+        sisAuthenticationToken.setDetails(
                 new WebAuthenticationDetailsSource().
                         buildDetails(
                                 request));
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
+        sisAuthenticationToken.setAuthenticated(true);
+        SecurityContextHolder.getContext().setAuthentication(sisAuthenticationToken);
 
         filterChain.doFilter(request, response);
     }
