@@ -13,8 +13,8 @@ public class SisAuthenticationEntryPoint implements AuthenticationEntryPoint {
                          HttpServletResponse response,
                          AuthenticationException authException) throws IOException {
         String jsonBody =
-            "{\"success\":false,\"error\":true,\"message\":\"Full " +
-                "authentication is required to access this resource\"}";
+            String.format("{\"success\":false,\"error\":true," +
+                "\"message\":\"%s\"}", authException.getMessage());
         response.setHeader("Content-type", "application/json;charset=utf-8");
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.getWriter().write(jsonBody);

@@ -29,7 +29,7 @@ public class SisAuthenticationSuccessHandler implements AuthenticationSuccessHan
         String token = JwtUtil.createJWT(claimsMap);
         response.setHeader("Content-type", "application/json;charset=utf-8");
         String jsonRes =
-            "{\"success\":true,\"access-token\":\"%s\",\"error\":false}";
+            "{\"success\":true,\"error\":false,\"access_token\":\"%s\"";
         response.getWriter().write(
             String.format(jsonRes, token)
         );
