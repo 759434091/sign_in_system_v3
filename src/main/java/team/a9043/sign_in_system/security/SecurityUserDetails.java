@@ -13,10 +13,9 @@ public class SecurityUserDetails implements UserDetails {
         this.sisUser = sisUser;
     }
 
-    // TODO authorities
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return null;
+        return sisUser.getSuAuthorities();
     }
 
     @Override

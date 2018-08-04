@@ -19,7 +19,8 @@ public class SisAuthenticationSuccessHandler implements AuthenticationSuccessHan
     public void onAuthenticationSuccess(HttpServletRequest request,
                                         HttpServletResponse response,
                                         Authentication authentication) throws IOException {
-        SecurityUserDetails securityUserDetails = (SecurityUserDetails) authentication.getPrincipal();
+        SecurityUserDetails securityUserDetails =
+            (SecurityUserDetails) authentication.getPrincipal();
         SisUser sisUser = securityUserDetails.getSisUser();
         Map<String, Object> claimsMap = new HashMap<>();
         claimsMap.put("suId", sisUser.getSuId());

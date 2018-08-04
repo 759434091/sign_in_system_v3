@@ -16,7 +16,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.List;
 
 @Component
 public class SisAuthenticationFilter extends OncePerRequestFilter {
@@ -33,7 +32,7 @@ public class SisAuthenticationFilter extends OncePerRequestFilter {
 
         String token = header.substring(7);
         if (token.length() <= 0 ||
-                SecurityContextHolder.getContext().getAuthentication() != null) {
+            SecurityContextHolder.getContext().getAuthentication() != null) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -46,7 +45,8 @@ public class SisAuthenticationFilter extends OncePerRequestFilter {
             sisUser = new SisUser();
             sisUser.setSuId(claims.get("suId", String.class));
             sisUser.setSuName(claims.get("suName", String.class));
-            sisUser.setSuAuthoritiesStr(claims.get("suAuthoritiesStr", String.class));
+            sisUser.setSuAuthoritiesStr(claims.get("suAuthoritiesStr",
+                String.class));
 
         } catch (MalformedJwtException | SignatureException | ExpiredJwtException e) {
             SecurityContextHolder.clearContext();
@@ -55,11 +55,12 @@ public class SisAuthenticationFilter extends OncePerRequestFilter {
         }
 
         //设定Authentication
-        SisAuthenticationToken sisAuthenticationToken = new SisAuthenticationToken(sisUser);
+        SisAuthenticationToken sisAuthenticationToken =
+            new SisAuthenticationToken(sisUser);
         sisAuthenticationToken.setDetails(
-                new WebAuthenticationDetailsSource().
-                        buildDetails(
-                                request));
+            new WebAuthenticationDetailsSource().
+                buildDetails(
+                    request));
         sisAuthenticationToken.setAuthenticated(true);
         SecurityContextHolder.getContext().setAuthentication(sisAuthenticationToken);
 

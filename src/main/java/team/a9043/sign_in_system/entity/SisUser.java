@@ -1,8 +1,12 @@
 package team.a9043.sign_in_system.entity;
 
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -86,15 +90,20 @@ public class SisUser {
         this.suAuthoritiesStr = suAuthoritiesStr;
     }
 
-    public List<String> getSuAuthorities() {
+    public List<GrantedAuthority> getSuAuthorities() {
+        if (null == suAuthoritiesStr) {
+            return null;
+        }
         return Arrays
-                .stream(suAuthoritiesStr.split(","))
-                .map(String::trim)
-                .map(String::toUpperCase)
-                .collect(Collectors.toList());
+            .stream(suAuthoritiesStr.split(","))
+            .map(String::trim)
+            .map(String::toUpperCase)
+            .map(SimpleGrantedAuthority::new)
+            .collect(Collectors.toList());
     }
 
     public void setSuAuthorities(List<String> suAuthorityList) {
-        this.suAuthoritiesStr = String.join(",", (String[]) suAuthorityList.toArray());
+        this.suAuthoritiesStr = String.join(",",
+            (String[]) suAuthorityList.toArray());
     }
 }

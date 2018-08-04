@@ -13,7 +13,9 @@ import java.io.IOException;
 @Component
 public class SisAuthenticationFailureHandler implements AuthenticationFailureHandler {
     @Override
-    public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
+    public void onAuthenticationFailure(HttpServletRequest request,
+                                        HttpServletResponse response,
+                                        AuthenticationException exception) throws IOException {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("success", false);
         jsonObject.put("error", true);

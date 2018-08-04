@@ -4,22 +4,21 @@ import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import team.a9043.sign_in_system.entity.SisUser;
 
-import java.util.ArrayList;
 import java.util.Collection;
 
 public class SisAuthenticationToken extends AbstractAuthenticationToken {
     private SisUser sisUser;
 
     SisAuthenticationToken(SisUser sisUser) {
-        // TODO authorities
-        this(new ArrayList<>());
+        this(sisUser.getSuAuthorities());
         this.sisUser = sisUser;
     }
 
     /**
      * Creates a token with the supplied array of authorities.
      *
-     * @param authorities the collection of <tt>GrantedAuthority</tt>s for the principal
+     * @param authorities the collection of <tt>GrantedAuthority</tt>s for
+     *                    the principal
      *                    represented by this authentication object.
      */
     private SisAuthenticationToken(Collection<? extends GrantedAuthority> authorities) {
@@ -33,7 +32,7 @@ public class SisAuthenticationToken extends AbstractAuthenticationToken {
 
     @Override
     public Object getPrincipal() {
-        return null;
+        return sisUser.getSuId();
     }
 
     public SisUser getSisUser() {
