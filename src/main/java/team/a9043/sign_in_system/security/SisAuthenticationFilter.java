@@ -20,7 +20,6 @@ import java.io.IOException;
 
 @Component
 public class SisAuthenticationFilter extends OncePerRequestFilter {
-    @SuppressWarnings("unchecked")
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
@@ -58,10 +57,11 @@ public class SisAuthenticationFilter extends OncePerRequestFilter {
         //设定Authentication
         SisAuthenticationToken sisAuthenticationToken =
             new SisAuthenticationToken(sisUser);
-        sisAuthenticationToken.setDetails(
-            new WebAuthenticationDetailsSource().
-                buildDetails(
-                    request));
+        sisAuthenticationToken
+            .setDetails(
+                new WebAuthenticationDetailsSource().
+                    buildDetails(
+                        request));
         sisAuthenticationToken.setAuthenticated(true);
         SecurityContextHolder.getContext().setAuthentication(sisAuthenticationToken);
 
