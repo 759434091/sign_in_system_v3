@@ -2,10 +2,10 @@ package team.a9043.sign_in_system.entity;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import javax.persistence.*;
 
 /**
  * @author a9043
@@ -13,8 +13,11 @@ import javax.persistence.Id;
 @Entity
 @Getter
 @Setter
+@DynamicUpdate
+@DynamicInsert
 public class SisRole {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer srId;
     @Column(length = 20)
     private String roleName;
