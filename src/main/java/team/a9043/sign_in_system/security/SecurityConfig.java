@@ -1,4 +1,4 @@
-package team.a9043.sign_in_system.config;
+package team.a9043.sign_in_system.security;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -10,7 +10,6 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import team.a9043.sign_in_system.security.SisAuthenticationFilter;
 import team.a9043.sign_in_system.security.handler.SisAuthenticationEntryPoint;
 import team.a9043.sign_in_system.security.handler.SisAuthenticationFailureHandler;
 import team.a9043.sign_in_system.security.handler.SisAuthenticationSuccessHandler;

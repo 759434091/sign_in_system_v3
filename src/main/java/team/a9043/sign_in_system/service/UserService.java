@@ -7,10 +7,10 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.data.domain.Example;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.client.RestTemplate;
 import team.a9043.sign_in_system.convertor.JsonObjectHttpMessageConverter;
 import team.a9043.sign_in_system.entity.SisUser;
-import team.a9043.sign_in_system.exception.UnauthorizedException;
 import team.a9043.sign_in_system.exception.WxServerException;
 import team.a9043.sign_in_system.repository.SisUserRepository;
 import team.a9043.sign_in_system.util.JwtUtil;
@@ -58,8 +58,8 @@ public class UserService {
         return null != sisUserRepository.save(sisUser);
     }
 
-    public JSONObject getTokensByCode(String code) throws WxServerException,
-        UnauthorizedException {
+    public JSONObject getTokensByCode(String code) throws WxServerException {
+        JSONObject jsonObject = new JSONObject();
         JSONObject wxUserInfo = restTemplate.getForObject(String.format(
             apiurl, appid, secret, code
         ), JSONObject.class);
@@ -68,32 +68,38 @@ public class UserService {
             throw new WxServerException("WX Server error");
         }
         if (!wxUserInfo.has("openid")) {
-            throw new UnauthorizedException(wxUserInfo.toString());
+            jsonObject.put("success", false);
+            jsonObject.put("error", true);
+            jsonObject.put("message", wxUserInfo.toString());
+            return jsonObject;
         }
 
         String openid = wxUserInfo.getString("openid");
         SisUser exampleSisUser = new SisUser();
         exampleSisUser.setSuOpenid(openid);
 
-        String token = sisUserRepository
+        return sisUserRepository
             .findOne(Example.of(exampleSisUser))
             .map(sisUser -> {
                 Map<String, Object> claimsMap = new HashMap<>();
                 claimsMap.put("suId", sisUser.getSuId());
-                claimsMap.put("suName", sisUser.getSuName());
+                claimsMap.put("suName", sisUser.getSuId());
                 claimsMap.put("suAuthoritiesStr",
                     sisUser.getSuAuthoritiesStr());
 
-                return JwtUtil.createJWT(claimsMap);
+                jsonObject.put("success", true);
+                jsonObject.put("error", false);
+                jsonObject.put("access_token", JwtUtil.createJWT(claimsMap));
+                return jsonObject;
             })
-            .orElseThrow(() -> new UnauthorizedException(
-                String.format("Unauthorized: no user found by openid %s",
-                    openid)));
-
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", true);
-        jsonObject.put("error", false);
-        jsonObject.put("access_token", token);
-        return jsonObject;
+            .orElseGet(() -> {
+                String message = String
+                    .format("No user found " + "by openid %s",
+                        openid);
+                jsonObject.put("success", false);
+                jsonObject.put("error", true);
+                jsonObject.put("message", message);
+                return jsonObject;
+            });
     }
 }

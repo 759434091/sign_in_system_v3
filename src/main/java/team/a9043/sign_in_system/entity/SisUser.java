@@ -7,16 +7,19 @@ import org.hibernate.annotations.DynamicUpdate;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import javax.persistence.*;
+import javax.validation.constraints.NotNull;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
  * 表
  * 用户表实体
+ * <p>
+ * abbr: su
  *
  * @author a9043
  */
@@ -31,6 +34,7 @@ public class SisUser {
      */
     @Id
     @Column(length = 20)
+    @NotNull
     private String suId;
 
     /**
@@ -43,6 +47,7 @@ public class SisUser {
      * 密文密码
      */
     @Column(length = 72)
+    @NotNull
     private String suPassword;
 
     /**
@@ -56,6 +61,15 @@ public class SisUser {
      */
     @Column
     private String suAuthoritiesStr;
+
+    @OneToMany(cascade = {CascadeType.ALL})
+    @JoinColumn(name = "suId", referencedColumnName = "suId")
+    private Collection<SisSchedule> sisSchedules = new ArrayList<>();
+
+
+    @OneToMany(cascade = {CascadeType.ALL})
+    @JoinColumn(name = "suId", referencedColumnName = "suId")
+    private Collection<SisJoinCourse> sisJoinCourses = new ArrayList<>();
 
     public List<GrantedAuthority> getSuAuthorities() {
         if (null == suAuthoritiesStr) {

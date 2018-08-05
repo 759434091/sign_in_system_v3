@@ -1,20 +1,16 @@
 package team.a9043.sign_in_system.service;
 
 import lombok.extern.java.Log;
-import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import team.a9043.sign_in_system.entity.SisUser;
-import team.a9043.sign_in_system.exception.UnauthorizedException;
 import team.a9043.sign_in_system.exception.WxServerException;
 
 import javax.annotation.Resource;
 import javax.transaction.Transactional;
-
-import static org.junit.Assert.*;
 
 /**
  * @author a9043
@@ -39,8 +35,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void getTokensByCode() throws UnauthorizedException,
-        WxServerException {
+    public void getTokensByCode() throws WxServerException {
         JSONObject jsonObject = userService.getTokensByCode("123456");
         log.info(jsonObject.toString(2));
     }

@@ -2,16 +2,26 @@ package team.a9043.sign_in_system.entity;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
 
 import javax.persistence.*;
 import java.time.DayOfWeek;
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
+ * 排课表实体
+ * <p>
+ * abbr: ss
+ *
  * @author a9043
  */
 @Entity
 @Getter
 @Setter
+@DynamicUpdate
+@DynamicInsert
 public class SisSchedule {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -40,9 +50,31 @@ public class SisSchedule {
     private Integer ssStartTime;
     @Column
     private Integer ssEndTime;
+    /**
+     * 停课列表
+     * <p>
+     * integer
+     * <p>
+     * 分割符号: ","
+     */
+    @Column(length = 60)
+    private String ssSuspension;
+    /**
+     * the monitor
+     */
+    @ManyToOne
+    @JoinColumn(name = "suId", referencedColumnName = "suId")
+    private SisUser monitor;
+    /**
+     * course
+     */
     @ManyToOne
     @JoinColumn(name = "scId", referencedColumnName = "scId")
     private SisCourse sisCourse;
+
+    @OneToMany(cascade = {CascadeType.ALL})
+    @JoinColumn(name = "ssId", referencedColumnName = "ssId")
+    private Collection<SisSupervision> sisSupervisions = new ArrayList<>();
 
     enum ScFortnight {
         FULL(0), ODD(1), EVEN(2);

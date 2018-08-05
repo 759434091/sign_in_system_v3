@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import springfox.documentation.annotations.ApiIgnore;
-import team.a9043.sign_in_system.exception.UnauthorizedException;
+import team.a9043.sign_in_system.exception.IncorrectParameterException;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -23,16 +23,6 @@ public class GlobalExceptionHandler {
     private static final String errResStr =
         "{\"success\":false,\"error\":true,\"errType\":\"%s\"," +
             "\"message\":%s}";
-
-    @ExceptionHandler({UnauthorizedException.class})
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public void handleUNAUTHORIZED(Exception e,
-                                   HttpServletResponse response) throws IOException {
-        response.setHeader("Content-type",
-            "application/json;charset=utf-8");
-        response.getWriter().write(
-            formatErr(HttpStatus.UNAUTHORIZED, e.getMessage()));
-    }
 
     @ExceptionHandler({HttpRequestMethodNotSupportedException.class})
     @ResponseStatus(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
@@ -56,7 +46,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({
         MissingServletRequestParameterException.class,
-        MissingPathVariableException.class})
+        MissingPathVariableException.class,
+        IncorrectParameterException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public void handleBadRequest(Exception e,
                                  HttpServletResponse response) throws IOException {

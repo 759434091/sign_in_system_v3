@@ -8,6 +8,10 @@ import org.hibernate.annotations.DynamicUpdate;
 import javax.persistence.*;
 
 /**
+ * 角色权限实体
+ * <p>
+ * abbr: sr
+ *
  * @author a9043
  */
 @Entity

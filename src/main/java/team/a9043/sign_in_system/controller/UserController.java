@@ -1,8 +1,10 @@
 package team.a9043.sign_in_system.controller;
 
 import org.json.JSONObject;
-import org.springframework.web.bind.annotation.*;
-import team.a9043.sign_in_system.exception.UnauthorizedException;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
 import team.a9043.sign_in_system.exception.WxServerException;
 import team.a9043.sign_in_system.service.UserService;
 
@@ -18,8 +20,7 @@ public class UserController {
 
     @RequestMapping(value = "/tokens/{code}",
         method = {RequestMethod.GET, RequestMethod.POST})
-    public JSONObject getTokens(@PathVariable String code) throws WxServerException,
-        UnauthorizedException {
+    public JSONObject getTokens(@PathVariable String code) throws WxServerException {
         return userService.getTokensByCode(code);
     }
 }
