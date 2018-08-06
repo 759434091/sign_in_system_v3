@@ -67,7 +67,7 @@ public class SisUser {
     private Collection<SisSchedule> sisSchedules = new ArrayList<>();
 
 
-    @OneToMany(cascade = {CascadeType.ALL})
+    @OneToMany(cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
     @JoinColumn(name = "suId", referencedColumnName = "suId")
     private Collection<SisJoinCourse> sisJoinCourses = new ArrayList<>();
 

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import springfox.documentation.annotations.ApiIgnore;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
+import team.a9043.sign_in_system.exception.WxServerException;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -55,6 +56,16 @@ public class GlobalExceptionHandler {
             "application/json;charset=utf-8");
         response.getWriter().write(
             formatErr(HttpStatus.BAD_REQUEST, e.getMessage()));
+    }
+
+    @ExceptionHandler(WxServerException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public void handleInternalServerError(Exception e,
+                            HttpServletResponse response) throws IOException {
+        response.setHeader("Content-type",
+            "application/json;charset=utf-8");
+        response.getWriter().write(
+            formatErr(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)

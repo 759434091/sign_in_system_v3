@@ -10,7 +10,7 @@ import javax.persistence.*;
 /**
  * 参与课堂关联表
  * <p>
- * abbr: sj
+ * abbr: sjc
  *
  * @author a9043
  */
@@ -22,7 +22,7 @@ import javax.persistence.*;
 public class SisJoinCourse {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer sjId;
+    private Integer sjcId;
     /**
      * 0: ATTENDANCE
      * 1: TEACHING
@@ -33,12 +33,12 @@ public class SisJoinCourse {
     @ManyToOne
     @JoinColumn(name = "scId", referencedColumnName = "scId")
     private SisCourse sisCourse;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "suId", referencedColumnName = "suId")
     private SisUser sisUser;
 
 
-    enum JoinCourseType {
+    public enum JoinCourseType {
         ATTENDANCE(0), TEACHING(1);
 
         private final int value;

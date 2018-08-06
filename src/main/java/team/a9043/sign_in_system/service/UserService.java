@@ -58,6 +58,14 @@ public class UserService {
         return null != sisUserRepository.save(sisUser);
     }
 
+    /**
+     * 小程序获取Token 接口
+     * 补充Spring Security
+     *
+     * @param code 微信 code
+     * @return JSON
+     * @throws WxServerException 微信服务器错误
+     */
     public JSONObject getTokensByCode(String code) throws WxServerException {
         JSONObject jsonObject = new JSONObject();
         JSONObject wxUserInfo = restTemplate.getForObject(String.format(

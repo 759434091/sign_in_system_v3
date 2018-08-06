@@ -6,6 +6,7 @@ import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.time.DayOfWeek;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,6 +26,7 @@ import java.util.Collection;
 public class SisSchedule {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @NotNull
     private Integer ssId;
     /**
      * startYear-endYear-term
@@ -43,13 +45,15 @@ public class SisSchedule {
      */
     @Column
     @Enumerated(EnumType.ORDINAL)
-    private Enum<ScFortnight> ssFortnight;
+    private ScFortnight ssFortnight;
     @Column
     private DayOfWeek ssDayOfWeek;
     @Column
     private Integer ssStartTime;
     @Column
     private Integer ssEndTime;
+    @Column
+    private Boolean ssNeedMonitor;
     /**
      * 停课列表
      * <p>

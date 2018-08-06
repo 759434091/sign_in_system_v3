@@ -48,5 +48,5 @@ public class SisCourse {
 
     @OneToMany(cascade = {CascadeType.ALL})
     @JoinColumn(name = "scId", referencedColumnName = "scId")
-    private Collection<SisJoinCourse> sisJoinCourses = new ArrayList<>();
+    private Collection<SisJoinCourse> sisJoinCourseList = new ArrayList<>();
 }
