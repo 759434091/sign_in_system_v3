@@ -6,6 +6,7 @@ import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 
 /**
  * 督导记录表实体
@@ -24,12 +25,19 @@ public class SisSupervision {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer ssvId;
     @Column
+    @NotNull
+    private Integer ssvWeek;
+    @Column
+    @NotNull
     private Integer ssvActualNum;
     @Column
+    @NotNull
     private Integer ssvMobileNum;
     @Column
+    @NotNull
     private Integer ssvSleepNum;
     @Column(length = 150)
+    @NotNull
     private String ssvRecInfo;
     @ManyToOne
     @JoinColumn(name = "ssId", referencedColumnName = "ssId")

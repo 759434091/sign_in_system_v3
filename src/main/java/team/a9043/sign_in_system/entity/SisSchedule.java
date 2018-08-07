@@ -45,7 +45,7 @@ public class SisSchedule {
      */
     @Column
     @Enumerated(EnumType.ORDINAL)
-    private ScFortnight ssFortnight;
+    private SsFortnight ssFortnight;
     @Column
     private DayOfWeek ssDayOfWeek;
     @Column
@@ -53,6 +53,7 @@ public class SisSchedule {
     @Column
     private Integer ssEndTime;
     @Column
+    @NotNull
     private Boolean ssNeedMonitor;
     /**
      * 停课列表
@@ -80,13 +81,34 @@ public class SisSchedule {
     @JoinColumn(name = "ssId", referencedColumnName = "ssId")
     private Collection<SisSupervision> sisSupervisions = new ArrayList<>();
 
-    enum ScFortnight {
+    public enum SsFortnight {
         FULL(0), ODD(1), EVEN(2);
 
         private final int value;
 
-        ScFortnight(int value) {
+        SsFortnight(int value) {
             this.value = value;
+        }
+    }
+
+    public enum SsTerm {
+        FIRST(1), SECOND(2);
+
+        private final int value;
+
+        SsTerm(int value) {
+            this.value = value;
+        }
+
+        public static SsTerm toEnum(int value) {
+            switch (value) {
+                case 1:
+                    return FIRST;
+                case 2:
+                    return SECOND;
+                default:
+                    return null;
+            }
         }
     }
 }

@@ -12,6 +12,7 @@ import team.a9043.sign_in_system.security.tokenuser.TokenUser;
 import team.a9043.sign_in_system.service.CourseService;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 
 /**
  * @author a9043
@@ -35,7 +36,7 @@ public class CourseController {
 
     @PostMapping("/schedules/{ssId}")
     @PreAuthorize("hasAuthority('ADMINISTRATOR')")
-    public JSONObject setSsNeedMonitor(@RequestBody SisSchedule sisSchedule,
+    public JSONObject modifySsNeedMonitor(@RequestBody @Valid SisSchedule sisSchedule,
                                        @PathVariable Integer ssId,
                                        BindingResult bindingResult) throws IncorrectParameterException {
         if (bindingResult.hasErrors()) {
@@ -44,6 +45,8 @@ public class CourseController {
         if (!ssId.equals(sisSchedule.getSsId())) {
             throw new IncorrectParameterException("Incorrect ssId");
         }
-        return courseService.setSsNeedMonitor(sisSchedule);
+        return courseService.modifySsNeedMonitor(sisSchedule);
     }
+
+
 }

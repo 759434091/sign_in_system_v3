@@ -150,14 +150,14 @@ public class CourseService {
     }
 
     @Transactional
-    public JSONObject setSsNeedMonitor(SisSchedule sisSchedule) {
-        SisSchedule updateSchedule = new SisSchedule();
-        updateSchedule.setSsId(sisSchedule.getSsId());
-        updateSchedule.setSsNeedMonitor(true);
-
+    public JSONObject modifySsNeedMonitor(SisSchedule sisSchedule) {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("success",
-            null != sisScheduleRepository.save(updateSchedule));
+            sisScheduleRepository
+                .modifySsNeedMonitor(
+                    sisSchedule.getSsId(),
+                    sisSchedule.getSsNeedMonitor()
+                ) > 0);
         return jsonObject;
     }
 }

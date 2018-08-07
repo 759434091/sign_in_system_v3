@@ -6,6 +6,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+import team.a9043.sign_in_system.entity.SisSchedule;
 import team.a9043.sign_in_system.entity.SisUser;
 
 import javax.annotation.Resource;
@@ -38,5 +39,14 @@ public class CourseServiceTest {
         LocalTime end2 = LocalTime.now();
         log.info("use " + (end1.toNanoOfDay() - start.toNanoOfDay()) / 1000000);
         log.info("use " + (end2.toNanoOfDay() - start.toNanoOfDay()) / 1000000);
+    }
+
+    @Test
+    public void modifySsNeedMonitor() {
+        SisSchedule sisSchedule = new SisSchedule();
+        sisSchedule.setSsId(2);
+        sisSchedule.setSsNeedMonitor(true);
+        JSONObject jsonObject = courseService.modifySsNeedMonitor(sisSchedule);
+        log.info(jsonObject.toString(2));
     }
 }
