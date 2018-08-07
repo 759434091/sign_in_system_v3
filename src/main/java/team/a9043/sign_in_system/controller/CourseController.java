@@ -8,8 +8,10 @@ import org.springframework.web.bind.annotation.*;
 import team.a9043.sign_in_system.entity.SisSchedule;
 import team.a9043.sign_in_system.entity.SisUser;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
+import team.a9043.sign_in_system.exception.InvalidPermissionException;
 import team.a9043.sign_in_system.security.tokenuser.TokenUser;
 import team.a9043.sign_in_system.service.CourseService;
+import team.a9043.sign_in_system.service.MonitorService;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
@@ -21,24 +23,50 @@ import javax.validation.Valid;
 public class CourseController {
     @Resource
     private CourseService courseService;
+    @Resource
+    private MonitorService monitorService;
 
     @GetMapping("/courses")
-    @PreAuthorize("hasAuthority('ADMINISTRATOR')")
-    public JSONObject getCourses(@RequestParam(required = false) Integer page) {
-        return courseService.getCourses(page);
-    }
+    @PreAuthorize("hasAnyAuthority('ADMINISTRATOR','STUDENT','MONITOR')")
+    public JSONObject getCourses(@TokenUser SisUser sisUser,
+                                 @RequestParam(required = false) Integer page,
+                                 @RequestParam String getType) throws
+        IncorrectParameterException, InvalidPermissionException {
 
-    @GetMapping("/courses/table")
-    @PreAuthorize("hasAuthority('STUDENT')")
-    public JSONObject getCourses(@TokenUser SisUser sisUser) {
-        return courseService.getCourses(sisUser);
+        switch (getType) {
+            case "administrator": {
+                if (!sisUser.getSuAuthoritiesStr().contains("ADMINISTRATOR")) {
+                    throw new InvalidPermissionException(
+                        "Invalid permission:" + getType);
+                }
+                return courseService.getCourses(page);
+            }
+            case "monitor": {
+                if (!sisUser.getSuAuthoritiesStr().contains("MONITOR")) {
+                    throw new InvalidPermissionException(
+                        "Invalid permission:" + getType);
+                }
+                return monitorService.getCourses(sisUser);
+            }
+            case "student": {
+                if (!sisUser.getSuAuthoritiesStr().contains("STUDENT")) {
+                    throw new InvalidPermissionException(
+                        "Invalid permission:" + getType);
+                }
+                return courseService.getCourses(sisUser);
+            }
+            default:
+                throw new IncorrectParameterException("Incorrect " +
+                    "getType:" + getType);
+
+        }
     }
 
     @PostMapping("/schedules/{ssId}")
     @PreAuthorize("hasAuthority('ADMINISTRATOR')")
     public JSONObject modifySsNeedMonitor(@RequestBody @Valid SisSchedule sisSchedule,
-                                       @PathVariable Integer ssId,
-                                       BindingResult bindingResult) throws IncorrectParameterException {
+                                          @PathVariable Integer ssId,
+                                          BindingResult bindingResult) throws IncorrectParameterException {
         if (bindingResult.hasErrors()) {
             throw new IncorrectParameterException(new JSONArray(bindingResult.getAllErrors()).toString());
         }
@@ -47,6 +75,4 @@ public class CourseController {
         }
         return courseService.modifySsNeedMonitor(sisSchedule);
     }
-
-
 }
