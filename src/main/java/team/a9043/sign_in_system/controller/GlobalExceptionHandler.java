@@ -10,14 +10,12 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import springfox.documentation.annotations.ApiIgnore;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.WxServerException;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-@ApiIgnore
 @ControllerAdvice
 @RestController
 public class GlobalExceptionHandler {

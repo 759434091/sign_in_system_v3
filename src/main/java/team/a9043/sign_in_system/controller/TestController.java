@@ -4,6 +4,7 @@ import org.json.JSONObject;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import springfox.documentation.annotations.ApiIgnore;
 import team.a9043.sign_in_system.entity.SisUser;
 import team.a9043.sign_in_system.security.tokenuser.TokenUser;
 
@@ -12,6 +13,7 @@ import team.a9043.sign_in_system.security.tokenuser.TokenUser;
  */
 @RestController
 public class TestController {
+    @ApiIgnore
     @GetMapping(value = "/resources")
     @PreAuthorize("hasAuthority('STUDENT')")
     public JSONObject getR(@TokenUser SisUser sisUser) {

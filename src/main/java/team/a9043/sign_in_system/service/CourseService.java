@@ -4,6 +4,7 @@ import lombok.Getter;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.lang.Nullable;
@@ -12,6 +13,7 @@ import team.a9043.sign_in_system.entity.SisCourse;
 import team.a9043.sign_in_system.entity.SisJoinCourse;
 import team.a9043.sign_in_system.entity.SisSchedule;
 import team.a9043.sign_in_system.entity.SisUser;
+import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.repository.SisCourseRepository;
 import team.a9043.sign_in_system.repository.SisJoinCourseRepository;
 import team.a9043.sign_in_system.repository.SisScheduleRepository;
@@ -36,29 +38,37 @@ public class CourseService {
     @Resource
     private SisCourseRepository sisCourseRepository;
     @Resource
-    private SisScheduleRepository sisScheduleRepository;
-    @Resource
     private SisJoinCourseRepository sisJoinCourseRepository;
     @PersistenceContext
     private EntityManager entityManager;
 
     @SuppressWarnings({"ResultOfMethodCallIgnored", "ConstantConditions"})
     @Transactional
-    public JSONObject getCourses(@Nullable Integer page) {
-        @Getter
-        class StreamIntegration {
-            private StreamIntegration(Collection<SisSchedule> sisSchedules,
-                                      Collection<SisJoinCourse> sisJoinCourseList) {
-                this.sisSchedules = sisSchedules;
-                this.sisJoinCourseList = sisJoinCourseList;
-            }
-
-            Collection<SisSchedule> sisSchedules;
-            Collection<SisJoinCourse> sisJoinCourseList;
-        }
+    public JSONObject getCourses(@Nullable Boolean needMonitor ,
+                                 @Nullable Boolean hasMonitor,
+                                 @Nullable Integer page) {
         page = null == page ? 0 : page;
-        Page<SisCourse> sisCoursePage = sisCourseRepository
-            .findAll(PageRequest.of(page, coursePageSize));
+
+        Page<SisCourse> sisCoursePage;
+        if (null != needMonitor) {
+            if (null == hasMonitor)
+                sisCoursePage = sisCourseRepository.findAllByScNeedMonitorIs(
+                    needMonitor,
+                    PageRequest.of(page, coursePageSize));
+            else if (hasMonitor)
+                sisCoursePage =
+                    sisCourseRepository.findAllByScNeedMonitorIsAndMonitorNotNull(
+                        needMonitor,
+                        PageRequest.of(page, coursePageSize));
+            else
+                sisCoursePage =
+                    sisCourseRepository.findAllByScNeedMonitorIsAndMonitorIsNull(
+                        needMonitor,
+                        PageRequest.of(page, coursePageSize));
+        } else {
+            sisCoursePage = sisCourseRepository.findAll(
+                PageRequest.of(page, coursePageSize));
+        }
 
         JSONObject jsonObject = new JSONObject();
         List<SisCourse> sisCourseList = sisCoursePage.getContent();
@@ -72,21 +82,21 @@ public class CourseService {
 
         sisCourseList
             .parallelStream()
-            .map(sisCourse -> new StreamIntegration(sisCourse.getSisSchedules(), sisCourse.getSisJoinCourseList()))
-            .forEach(streamIntegration -> {
-                streamIntegration.getSisSchedules()
+            .forEach(sisCourse -> {
+                Optional
+                    .ofNullable(sisCourse.getMonitor())
+                    .ifPresent(monitor -> {
+                        monitor.setSuPassword(null);
+                        monitor.setSisSchedules(null);
+                        monitor.setSisJoinCourses(null);
+                    });
+                sisCourse.getSisSchedules()
                     .forEach(sisSchedule -> {
                         sisSchedule.getSisSupervisions();
-                        Optional
-                            .ofNullable(sisSchedule.getMonitor())
-                            .ifPresent(monitor -> {
-                                monitor.setSuPassword(null);
-                                monitor.setSisSchedules(null);
-                                monitor.setSisJoinCourses(null);
-                            });
+
                         sisSchedule.setSisCourse(null);
                     });
-                streamIntegration.getSisJoinCourseList()
+                sisCourse.getSisJoinCourseList()
                     .forEach(sisJoinCourse -> {
                         Optional
                             .ofNullable(sisJoinCourse.getSisUser())
@@ -150,14 +160,30 @@ public class CourseService {
     }
 
     @Transactional
-    public JSONObject modifySsNeedMonitor(SisSchedule sisSchedule) {
+    public JSONObject modifyScNeedMonitor(SisCourse sisCourse) throws IncorrectParameterException {
+        SisCourse stdSisCourse = sisCourseRepository
+            .findById(sisCourse.getScId())
+            .map(tSisCourse -> {
+                boolean scNeedMonitor = sisCourse.getScNeedMonitor();
+
+                tSisCourse.setScNeedMonitor(scNeedMonitor);
+                if (!scNeedMonitor) {
+                    tSisCourse.setMonitor(null);
+                    return tSisCourse;
+                }
+
+                SisUser sisUser = sisCourse.getMonitor();
+                if (null != sisUser) {
+                    tSisCourse.setMonitor(sisUser);
+                }
+
+                return tSisCourse;
+            })
+            .orElseThrow(() -> new IncorrectParameterException("No course: " + sisCourse.getScId()));
+
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("success",
-            sisScheduleRepository
-                .modifySsNeedMonitor(
-                    sisSchedule.getSsId(),
-                    sisSchedule.getSsNeedMonitor()
-                ) > 0);
+            sisCourseRepository.save(stdSisCourse));
         return jsonObject;
     }
 }

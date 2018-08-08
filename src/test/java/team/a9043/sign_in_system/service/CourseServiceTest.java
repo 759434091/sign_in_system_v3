@@ -6,8 +6,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
-import team.a9043.sign_in_system.entity.SisSchedule;
+import team.a9043.sign_in_system.entity.SisCourse;
 import team.a9043.sign_in_system.entity.SisUser;
+import team.a9043.sign_in_system.exception.IncorrectParameterException;
 
 import javax.annotation.Resource;
 import java.time.LocalTime;
@@ -24,7 +25,7 @@ public class CourseServiceTest {
 
     @Test
     public void getCourses() {
-        JSONObject jsonObject = courseService.getCourses(0);
+        JSONObject jsonObject = courseService.getCourses(null, null, 0);
         log.info(jsonObject.toString(2));
     }
 
@@ -42,11 +43,11 @@ public class CourseServiceTest {
     }
 
     @Test
-    public void modifySsNeedMonitor() {
-        SisSchedule sisSchedule = new SisSchedule();
-        sisSchedule.setSsId(2);
-        sisSchedule.setSsNeedMonitor(true);
-        JSONObject jsonObject = courseService.modifySsNeedMonitor(sisSchedule);
+    public void modifySsNeedMonitor() throws IncorrectParameterException {
+        SisCourse sisCourse = new SisCourse();
+        sisCourse.setScId("A");
+        sisCourse.setScNeedMonitor(true);
+        JSONObject jsonObject = courseService.modifyScNeedMonitor(sisCourse);
         log.info(jsonObject.toString(2));
     }
 }

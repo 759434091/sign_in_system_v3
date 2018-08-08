@@ -52,9 +52,6 @@ public class SisSchedule {
     private Integer ssStartTime;
     @Column
     private Integer ssEndTime;
-    @Column
-    @NotNull
-    private Boolean ssNeedMonitor;
     /**
      * 停课列表
      * <p>
@@ -64,12 +61,7 @@ public class SisSchedule {
      */
     @Column(length = 60)
     private String ssSuspension;
-    /**
-     * the monitor
-     */
-    @ManyToOne
-    @JoinColumn(name = "suId", referencedColumnName = "suId")
-    private SisUser monitor;
+
     /**
      * course
      */
