@@ -27,6 +27,7 @@ import java.io.Serializable;
 public class SisSupervision {
     @EmbeddedId
     @ApiModelProperty(value = "主键列", notes = "联合主键")
+    @NotNull
     private IdClass ssvId;
     @Column
     @NotNull

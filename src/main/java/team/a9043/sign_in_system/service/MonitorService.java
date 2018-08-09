@@ -149,7 +149,16 @@ public class MonitorService {
 
         SisUser stdSisUser = sisSchedule.getSisCourse().getMonitor();
         if (null == stdSisUser || !sisUser.getSuId().equals(stdSisUser.getSuId())) {
-            throw new InvalidPermissionException("No permission: " + sisSchedule.getSsId());
+            SisMonitorTrans.IdClass idClass = new SisMonitorTrans.IdClass();
+            idClass.setSisSchedule(sisSchedule);
+            idClass.setSmtWeek(sisSupervision.getSsvId().getSsvWeek());
+            sisMonitorTransRepository
+                .findById(idClass)
+                .filter(sisMonitorTrans ->
+                    sisMonitorTrans.getSmtAgree().equals(SisMonitorTrans.SmtAgree.AGREE) &&
+                        sisMonitorTrans.getSisUser().getSuId().equals(sisUser.getSuId()))
+                .orElseThrow(() ->
+                    new InvalidPermissionException("No permission: " + sisSchedule.getSsId()));
         }
 
         if (!JudgeTimeUtil.isCourseTime(sisSchedule,
