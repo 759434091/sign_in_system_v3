@@ -87,7 +87,7 @@ public class CourseService {
                     .ofNullable(sisCourse.getMonitor())
                     .ifPresent(monitor -> {
                         monitor.setSuPassword(null);
-                        monitor.setSisSchedules(null);
+                        monitor.setSisCourses(null);
                         monitor.setSisJoinCourses(null);
                     });
                 sisCourse.getSisSchedules()
@@ -103,7 +103,7 @@ public class CourseService {
                             .ifPresent(sisUser -> {
                                 sisUser.setSuPassword(null);
                                 sisUser.setSisJoinCourses(null);
-                                sisUser.setSisSchedules(null);
+                                sisUser.setSisCourses(null);
                             });
                         sisJoinCourse.setSisCourse(null);
                     });

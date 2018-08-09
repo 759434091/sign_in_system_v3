@@ -13,6 +13,7 @@ import team.a9043.sign_in_system.entity.SisSupervision;
 import team.a9043.sign_in_system.entity.SisUser;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
+import team.a9043.sign_in_system.exception.String2EnumException;
 import team.a9043.sign_in_system.security.tokenuser.TokenUser;
 import team.a9043.sign_in_system.service.MonitorService;
 import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
@@ -91,5 +92,18 @@ public class MonitorController {
                                      @PathVariable Integer ssId,
                                      @RequestBody SisMonitorTrans sisMonitorTrans) throws IncorrectParameterException, InvalidPermissionException {
         return monitorService.modifyTransfer(sisUser, ssId, sisMonitorTrans);
+    }
+
+    @GetMapping("/schedules/monitor-trans")
+    @PreAuthorize("hasAuthority('MONITOR')")
+    @ApiOperation(value = "获取转接课程", notes = "根据smtStatus获取转接课程",
+        httpMethod = "POST", produces = "application/json")
+    public JSONObject getTransCourses(@TokenUser @ApiIgnore SisUser sisUser,
+                                      @RequestParam
+                                      @ApiParam(value = "获得方式",
+                                          example = "untreated,agree,disagree")
+                                          String smtStatus) throws String2EnumException {
+        return monitorService.getTransCourses(sisUser,
+            SisMonitorTrans.SmtStatus.lowercase2Enum(smtStatus));
     }
 }

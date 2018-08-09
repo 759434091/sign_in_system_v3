@@ -6,10 +6,10 @@ import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
+import team.a9043.sign_in_system.exception.String2EnumException;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Null;
 import java.io.Serializable;
 
 /**
@@ -35,7 +35,7 @@ public class SisMonitorTrans {
     @Column(nullable = false)
     @Enumerated(EnumType.ORDINAL)
     @NotNull
-    private SmtAgree smtAgree;
+    private SisMonitorTrans.SmtStatus smtStatus;
 
     @ManyToOne
     @JoinColumn(name = "suId", referencedColumnName = "suId")
@@ -43,13 +43,26 @@ public class SisMonitorTrans {
     private SisUser sisUser;
 
 
-    public enum SmtAgree {
+    public enum SmtStatus {
         UNTREATED(0), AGREE(1), DISAGREE(2);
 
         private final int value;
 
-        SmtAgree(int value) {
+        SmtStatus(int value) {
             this.value = value;
+        }
+
+        public static SmtStatus lowercase2Enum(String value) throws String2EnumException {
+            switch (value) {
+                case "untreated":
+                    return UNTREATED;
+                case "agree":
+                    return AGREE;
+                case "disagree":
+                    return DISAGREE;
+                default:
+                    throw new String2EnumException("No enum: " + value);
+            }
         }
     }
 

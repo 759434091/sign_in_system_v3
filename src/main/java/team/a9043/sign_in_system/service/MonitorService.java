@@ -21,7 +21,9 @@ import javax.transaction.Transactional;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * @author a9043
@@ -41,6 +43,7 @@ public class MonitorService {
 
     @SuppressWarnings("ConstantConditions")
     @Transactional
+    // TODO trans
     public JSONObject getCourses(@NotNull SisUser sisUser) {
         SisCourse sisCourse = new SisCourse();
         sisCourse.setMonitor(sisUser);
@@ -59,7 +62,7 @@ public class MonitorService {
                         sisJoinCourse.setSisCourse(null);
                         SisUser tSisUser = sisJoinCourse.getSisUser();
                         tSisUser.setSisJoinCourses(null);
-                        tSisUser.setSisSchedules(null);
+                        tSisUser.setSisCourses(null);
                         tSisUser.setSuPassword(null);
                     });
 
@@ -155,7 +158,7 @@ public class MonitorService {
             sisMonitorTransRepository
                 .findById(idClass)
                 .filter(sisMonitorTrans ->
-                    sisMonitorTrans.getSmtAgree().equals(SisMonitorTrans.SmtAgree.AGREE) &&
+                    sisMonitorTrans.getSmtStatus().equals(SisMonitorTrans.SmtStatus.AGREE) &&
                         sisMonitorTrans.getSisUser().getSuId().equals(sisUser.getSuId()))
                 .orElseThrow(() ->
                     new InvalidPermissionException("No permission: " + sisSchedule.getSsId()));
@@ -176,6 +179,49 @@ public class MonitorService {
 
         sisSupervisionRepository.saveAndFlush(sisSupervision);
         jsonObject.put("success", true);
+        return jsonObject;
+    }
+
+    @SuppressWarnings({"ResultOfMethodCallIgnored", "ConstantConditions"})
+    public JSONObject getTransCourses(@NotNull SisUser sisUser,
+                                      SisMonitorTrans.SmtStatus smtStatus) {
+        SisMonitorTrans tSisMonitorTrans = new SisMonitorTrans();
+        tSisMonitorTrans.setSisUser(sisUser);
+        tSisMonitorTrans.setSmtStatus(smtStatus);
+
+        List<SisMonitorTrans> sisMonitorTransList = sisMonitorTransRepository
+            .findAll(Example.of(tSisMonitorTrans))
+            .stream()
+            .peek(sisMonitorTrans -> {
+                SisSchedule sisSchedule =
+                    sisMonitorTrans.getSmtId().getSisSchedule();
+                sisSchedule.setSisSupervisions(null);
+
+                SisCourse sisCourse = sisSchedule.getSisCourse();
+
+                sisCourse
+                    .getSisJoinCourseList()
+                    .forEach(sisJoinCourse -> {
+                        sisJoinCourse.setSisCourse(null);
+                        SisUser joinUser = sisJoinCourse.getSisUser();
+                        joinUser.setSuPassword(null);
+                        joinUser.setSisMonitorTrans(null);
+                        joinUser.setSisJoinCourses(null);
+                        joinUser.setSisJoinCourses(null);
+                    });
+                sisCourse.setSisSchedules(null);
+
+                SisUser monitor = sisCourse.getMonitor();
+                monitor.setSisCourses(null);
+            })
+            .collect(Collectors.toList());
+
+        entityManager.clear();
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success", true);
+        jsonObject.put("error", false);
+        jsonObject.put("array", sisMonitorTransList);
+        jsonObject.put("arrSize", sisMonitorTransList.size());
         return jsonObject;
     }
 
@@ -202,7 +248,7 @@ public class MonitorService {
             .orElseThrow(() ->
                 new InvalidPermissionException("Invalid Permission: ssId " + sisSchedule.getSsId()));
 
-        sisMonitorTrans.setSmtAgree(SisMonitorTrans.SmtAgree.UNTREATED);
+        sisMonitorTrans.setSmtStatus(SisMonitorTrans.SmtStatus.UNTREATED);
         sisMonitorTransRepository.saveAndFlush(sisMonitorTrans);
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("success", true);
@@ -226,7 +272,7 @@ public class MonitorService {
             throw new InvalidPermissionException(
                 "Invalid Permission: sisMonitorTrans " + sisMonitorTrans.getSmtId().toString());
 
-        stdSisMonitorTrans.setSmtAgree(sisMonitorTrans.getSmtAgree());
+        stdSisMonitorTrans.setSmtStatus(sisMonitorTrans.getSmtStatus());
         sisMonitorTransRepository.saveAndFlush(sisMonitorTrans);
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("success", true);

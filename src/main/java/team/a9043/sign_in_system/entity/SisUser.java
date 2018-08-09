@@ -68,7 +68,7 @@ public class SisUser {
 
     @OneToMany(cascade = {CascadeType.ALL})
     @JoinColumn(name = "suId", referencedColumnName = "suId")
-    private Collection<SisSchedule> sisSchedules = new ArrayList<>();
+    private Collection<SisCourse> sisCourses = new ArrayList<>();
 
 
     @OneToMany(cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)

@@ -88,7 +88,8 @@ public class MonitorServiceTest {
 
     @Test
     @Transactional
-    public void applyForTransfer() throws IncorrectParameterException, InvalidPermissionException {
+    public void applyForTransfer() throws IncorrectParameterException,
+        InvalidPermissionException {
         SisUser sisUser = new SisUser();
         sisUser.setSuId("2016220401001");
 
@@ -106,6 +107,6 @@ public class MonitorServiceTest {
         sisMonitorTrans.setSmtId(idClass);
         sisMonitorTrans.setSisUser(tSisUser);
 
-        monitorService.applyForTransfer(sisUser, sisMonitorTrans);
+        monitorService.applyForTransfer(sisUser, 2, sisMonitorTrans);
     }
 }
