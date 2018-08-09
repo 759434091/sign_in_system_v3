@@ -14,6 +14,7 @@ import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
 import team.a9043.sign_in_system.security.tokenuser.TokenUser;
 import team.a9043.sign_in_system.service.MonitorService;
+import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
 import team.a9043.sign_in_system.util.judgetime.ScheduleParserException;
 
 import javax.annotation.Resource;
@@ -31,8 +32,7 @@ public class MonitorController {
     @PostMapping("/courses/{scId}/monitor")
     @ApiOperation(value = "领取督导池", notes = "只可领取, 不可取消")
     public JSONObject modifyMonitor(@TokenUser @ApiIgnore SisUser sisUser,
-                                    @PathVariable @ApiParam(value = "课程序号") String scId) throws
-        InvalidPermissionException, IncorrectParameterException {
+                                    @PathVariable @ApiParam(value = "课程序号") String scId) throws InvalidPermissionException, IncorrectParameterException {
 
         return monitorService.modifyMonitor(sisUser, scId);
     }
@@ -41,8 +41,7 @@ public class MonitorController {
     @PreAuthorize("hasAuthority('MONITOR')")
     @ApiOperation(value = "获取督导记录", notes = "根据课程序号获取督导记录", httpMethod = "GET")
     public JSONObject getSupervisions(@TokenUser @ApiIgnore SisUser sisUser,
-                                      @PathVariable @ApiParam(value = "课程序号") String scId) throws
-        InvalidPermissionException, IncorrectParameterException {
+                                      @PathVariable @ApiParam(value = "课程序号") String scId) throws InvalidPermissionException, IncorrectParameterException {
         return monitorService.getSupervisions(sisUser, scId);
     }
 
@@ -54,10 +53,7 @@ public class MonitorController {
                                         @PathVariable
                                         @ApiParam(value = "排课号") Integer ssId,
                                         @RequestBody @Valid SisSupervision sisSupervision,
-                                        @ApiIgnore BindingResult bindingResult) throws
-        IncorrectParameterException,
-        ScheduleParserException,
-        InvalidPermissionException {
+                                        @ApiIgnore BindingResult bindingResult) throws IncorrectParameterException, ScheduleParserException, InvalidPermissionException, InvalidTimeParameterException {
 
         if (bindingResult.hasErrors()) {
             throw new IncorrectParameterException(new JSONArray(bindingResult.getAllErrors()).toString());

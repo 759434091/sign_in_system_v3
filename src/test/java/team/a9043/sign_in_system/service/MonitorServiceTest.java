@@ -6,17 +6,19 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+import team.a9043.sign_in_system.entity.SisMonitorTrans;
 import team.a9043.sign_in_system.entity.SisSchedule;
 import team.a9043.sign_in_system.entity.SisSupervision;
 import team.a9043.sign_in_system.entity.SisUser;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
-import team.a9043.sign_in_system.repository.SisScheduleRepository;
+import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
 import team.a9043.sign_in_system.util.judgetime.JudgeTimeUtil;
 import team.a9043.sign_in_system.util.judgetime.ScheduleParserException;
 
 import javax.annotation.Resource;
-
+import javax.transaction.Transactional;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -30,8 +32,6 @@ import java.time.LocalTime;
 public class MonitorServiceTest {
     @Resource
     private MonitorService monitorService;
-    @Resource
-    private SisScheduleRepository sisScheduleRepository;
 
     @Test
     public void getCourses() {
@@ -42,16 +42,24 @@ public class MonitorServiceTest {
     }
 
     @Test
+    @Transactional
     public void insertSupervision() throws IncorrectParameterException,
-        ScheduleParserException, InvalidPermissionException {
+        ScheduleParserException, InvalidPermissionException,
+        InvalidTimeParameterException {
         SisUser sisUser = new SisUser();
         sisUser.setSuId("2016220401001");
+
         Integer ssId = 2;
-        SisSchedule sisSchedule =
-            sisScheduleRepository.findById(2).orElseThrow(() -> new IncorrectParameterException(""));
+
+        SisSchedule sisSchedule = new SisSchedule();
+        sisSchedule.setSsId(ssId);
+        sisSchedule.setSsDayOfWeek(DayOfWeek.TUESDAY);
+        sisSchedule.setSsStartTime(1);
+
         SisSupervision.IdClass idClass = new SisSupervision.IdClass();
         idClass.setSisSchedule(sisSchedule);
         idClass.setSsvWeek(1);
+
         SisSupervision sisSupervision = new SisSupervision();
         sisSupervision.setSsvId(idClass);
         sisSupervision.setSsvActualNum(1);
@@ -62,8 +70,7 @@ public class MonitorServiceTest {
         LocalDate localDate = JudgeTimeUtil.getScheduleDate(sisSchedule, 1);
         LocalTime localTime =
             JudgeTimeUtil.getClassTime(sisSchedule.getSsStartTime());
-        assert localDate != null;
-        assert localTime != null;
+
         LocalDateTime localDateTime = LocalDateTime.of(localDate, localTime);
         JSONObject jsonObject = monitorService.insertSupervision(sisUser, ssId,
             sisSupervision,
@@ -73,5 +80,32 @@ public class MonitorServiceTest {
 
     @Test
     public void getSupervisions() {
+    }
+
+    @Test
+    public void modifyMonitor() {
+    }
+
+    @Test
+    @Transactional
+    public void applyForTransfer() throws IncorrectParameterException, InvalidPermissionException {
+        SisUser sisUser = new SisUser();
+        sisUser.setSuId("2016220401001");
+
+        SisUser tSisUser = new SisUser();
+        tSisUser.setSuId("Z");
+
+        SisSchedule sisSchedule = new SisSchedule();
+        sisSchedule.setSsId(2);
+
+        SisMonitorTrans.IdClass idClass = new SisMonitorTrans.IdClass();
+        idClass.setSmtWeek(2);
+        idClass.setSisSchedule(sisSchedule);
+
+        SisMonitorTrans sisMonitorTrans = new SisMonitorTrans();
+        sisMonitorTrans.setSmtId(idClass);
+        sisMonitorTrans.setSisUser(tSisUser);
+
+        monitorService.applyForTransfer(sisUser, sisMonitorTrans);
     }
 }

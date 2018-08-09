@@ -62,6 +62,10 @@ public class SisUser {
     @Column
     private String suAuthoritiesStr;
 
+    @OneToMany
+    @JoinColumn(name = "suId", referencedColumnName = "suId")
+    private Collection<SisMonitorTrans> sisMonitorTrans = new ArrayList<>();
+
     @OneToMany(cascade = {CascadeType.ALL})
     @JoinColumn(name = "suId", referencedColumnName = "suId")
     private Collection<SisSchedule> sisSchedules = new ArrayList<>();

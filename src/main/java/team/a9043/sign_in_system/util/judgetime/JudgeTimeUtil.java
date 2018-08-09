@@ -4,11 +4,12 @@ import team.a9043.sign_in_system.entity.SisSchedule;
 
 import java.time.*;
 import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 
 /**
  * @author a9043
  */
-@SuppressWarnings("WeakerAccess")
+@SuppressWarnings({"WeakerAccess", "unused"})
 public class JudgeTimeUtil {
     private static Month splitMonth = Month.NOVEMBER;
     private static LocalDate startDate = LocalDate.of(2018, Month.MARCH, 5);
@@ -35,20 +36,27 @@ public class JudgeTimeUtil {
         splitMonth = month;
     }
 
-    public static LocalDate getScheduleDate(SisSchedule sisSchedule, int week) {
+    public static LocalDate getScheduleDate(SisSchedule sisSchedule,
+                                            int week) throws InvalidTimeParameterException {
         if (week <= 0 || week > 20) {
-            return null;
+            throw new InvalidTimeParameterException("Invalid week: " + week);
         }
-        int week2Day = (week - 1) * 7;
-        LocalDate localDate = startDate.plus(week2Day, ChronoUnit.DAYS);
-        localDate = localDate.plus(sisSchedule.getSsDayOfWeek().getValue() - 1,
-            ChronoUnit.DAYS);
-        return localDate;
+        return startDate
+            .plus((week - 1) * 7, ChronoUnit.DAYS)
+            .plus(
+                Optional
+                    .of(sisSchedule)
+                    .map(SisSchedule::getSsDayOfWeek)
+                    .map(DayOfWeek::getValue)
+                    .map(s -> s - 1)
+                    .orElseThrow(() -> new InvalidTimeParameterException(
+                        "Invalid schedule dayOfWeek")),
+                ChronoUnit.DAYS);
     }
 
     public static boolean isCourseTime(SisSchedule sisSchedule,
                                        int actionWeek,
-                                       LocalDateTime localDateTime) throws ScheduleParserException {
+                                       LocalDateTime localDateTime) throws ScheduleParserException, InvalidTimeParameterException {
         boolean res1 = judgeYearEtTerm(localDateTime,
             sisSchedule.getSsYearEtTerm());
 
@@ -125,7 +133,7 @@ public class JudgeTimeUtil {
 
     public static boolean judgeTime(LocalDateTime localDateTime,
                                     int ssStartTime,
-                                    int ssEndTime) {
+                                    int ssEndTime) throws InvalidTimeParameterException {
         // judge time
         LocalTime localTime = localDateTime.toLocalTime();
         LocalTime stdStartTime = getClassTime(ssStartTime);
@@ -137,7 +145,7 @@ public class JudgeTimeUtil {
                 ChronoUnit.MINUTES));
     }
 
-    public static LocalTime getClassTime(int value) {
+    public static LocalTime getClassTime(int value) throws InvalidTimeParameterException {
         switch (value) {
             case 1:
                 return firstClass;
@@ -164,7 +172,7 @@ public class JudgeTimeUtil {
             case 12:
                 return twelfthClass;
             default:
-                return null;
+                throw new InvalidTimeParameterException("Invalid time: " + value);
         }
     }
 }

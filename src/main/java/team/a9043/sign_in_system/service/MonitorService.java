@@ -3,15 +3,14 @@ package team.a9043.sign_in_system.service;
 import org.json.JSONObject;
 import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Service;
-import team.a9043.sign_in_system.entity.SisCourse;
-import team.a9043.sign_in_system.entity.SisSchedule;
-import team.a9043.sign_in_system.entity.SisSupervision;
-import team.a9043.sign_in_system.entity.SisUser;
+import team.a9043.sign_in_system.entity.*;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
 import team.a9043.sign_in_system.repository.SisCourseRepository;
+import team.a9043.sign_in_system.repository.SisMonitorTransRepository;
 import team.a9043.sign_in_system.repository.SisScheduleRepository;
 import team.a9043.sign_in_system.repository.SisSupervisionRepository;
+import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
 import team.a9043.sign_in_system.util.judgetime.JudgeTimeUtil;
 import team.a9043.sign_in_system.util.judgetime.ScheduleParserException;
 
@@ -35,12 +34,14 @@ public class MonitorService {
     private SisScheduleRepository sisScheduleRepository;
     @Resource
     private SisSupervisionRepository sisSupervisionRepository;
+    @Resource
+    private SisMonitorTransRepository sisMonitorTransRepository;
     @PersistenceContext
     private EntityManager entityManager;
 
     @SuppressWarnings("ConstantConditions")
     @Transactional
-    public JSONObject getCourses(SisUser sisUser) {
+    public JSONObject getCourses(@NotNull SisUser sisUser) {
         SisCourse sisCourse = new SisCourse();
         sisCourse.setMonitor(sisUser);
 
@@ -79,62 +80,9 @@ public class MonitorService {
         return jsonObject;
     }
 
-    public JSONObject modifyMonitor(SisUser sisUser, String scId) throws IncorrectParameterException, InvalidPermissionException {
-        SisCourse sisCourse = sisCourseRepository
-            .findById(scId)
-            .orElseThrow(() -> new IncorrectParameterException("No course: " + scId));
-
-        if (null != sisCourse.getMonitor()) {
-            throw new InvalidPermissionException("Invalid permission: " + scId);
-        }
-
-        sisCourse.setMonitor(sisUser);
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", null != sisCourseRepository.save(sisCourse));
-        return jsonObject;
-    }
-
     @Transactional
-    public JSONObject insertSupervision(@NotNull SisUser sisUser,
-                                        @NotNull Integer ssId,
-                                        @NotNull SisSupervision sisSupervision,
-                                        @NotNull LocalDateTime localDateTime) throws
-        IncorrectParameterException,
-        ScheduleParserException,
-        InvalidPermissionException {
-
-        JSONObject jsonObject = new JSONObject();
-
-        SisSchedule sisSchedule = sisScheduleRepository
-            .findById(ssId)
-            .orElseThrow(() -> new IncorrectParameterException("No ssId: " + ssId));
-
-        SisUser stdSisUser = sisSchedule.getSisCourse().getMonitor();
-        if (null == stdSisUser || !sisUser.getSuId().equals(stdSisUser.getSuId())) {
-            throw new InvalidPermissionException("No permission: " + sisSchedule.getSsId());
-        }
-
-        if (!JudgeTimeUtil.isCourseTime(sisSchedule,
-            sisSupervision.getSsvId().getSsvWeek(),
-            localDateTime)) {
-            jsonObject.put("success", false);
-            jsonObject.put("message", "Incorrect time");
-            return jsonObject;
-        }
-
-        SisSupervision.IdClass idClass = new SisSupervision.IdClass();
-        idClass.setSisSchedule(sisSchedule);
-        idClass.setSsvWeek(sisSupervision.getSsvId().getSsvWeek());
-        sisSupervision.setSsvId(idClass);
-
-        sisSupervisionRepository.save(sisSupervision);
-        jsonObject.put("success", true);
-        return jsonObject;
-    }
-
-    @Transactional
-    public JSONObject getSupervisions(SisUser sisUser, String scId) throws
-        IncorrectParameterException, InvalidPermissionException {
+    public JSONObject getSupervisions(@NotNull SisUser sisUser,
+                                      @NotNull String scId) throws IncorrectParameterException, InvalidPermissionException {
 
         SisCourse sisCourse = sisCourseRepository
             .findById(scId)
@@ -160,6 +108,120 @@ public class MonitorService {
         jsonObject.put("error", false);
         jsonObject.put("array", sisSchedules);
         jsonObject.put("arrSize", sisSchedules.size());
+        return jsonObject;
+    }
+
+    @Transactional
+    public JSONObject modifyMonitor(@NotNull SisUser sisUser,
+                                    @NotNull String scId) throws IncorrectParameterException, InvalidPermissionException {
+        SisCourse sisCourse = sisCourseRepository
+            .findById(scId)
+            .orElseThrow(() -> new IncorrectParameterException("No course: " + scId));
+
+        if (null != sisCourse.getMonitor()) {
+            throw new InvalidPermissionException("Invalid permission: " + scId);
+        }
+
+        sisCourse.setMonitor(sisUser);
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success", null != sisCourseRepository.save(sisCourse));
+        return jsonObject;
+    }
+
+    // TODO async
+    @Transactional
+    public JSONObject insertSupervision(@NotNull SisUser sisUser,
+                                        @NotNull Integer ssId,
+                                        @NotNull SisSupervision sisSupervision,
+                                        @NotNull LocalDateTime localDateTime) throws IncorrectParameterException, ScheduleParserException, InvalidPermissionException, InvalidTimeParameterException {
+
+        if (sisSupervisionRepository
+            .findById(sisSupervision.getSsvId())
+            .isPresent()) {
+            throw new InvalidPermissionException("Supervision exist: " + ssId + ", " + sisSupervision.getSsvId().getSsvWeek());
+        }
+
+        JSONObject jsonObject = new JSONObject();
+
+        SisSchedule sisSchedule = sisScheduleRepository
+            .findById(ssId)
+            .orElseThrow(() -> new IncorrectParameterException("No ssId: " + ssId));
+
+        SisUser stdSisUser = sisSchedule.getSisCourse().getMonitor();
+        if (null == stdSisUser || !sisUser.getSuId().equals(stdSisUser.getSuId())) {
+            throw new InvalidPermissionException("No permission: " + sisSchedule.getSsId());
+        }
+
+        if (!JudgeTimeUtil.isCourseTime(sisSchedule,
+            sisSupervision.getSsvId().getSsvWeek(),
+            localDateTime)) {
+            jsonObject.put("success", false);
+            jsonObject.put("message", "Incorrect time");
+            return jsonObject;
+        }
+
+        SisSupervision.IdClass idClass = new SisSupervision.IdClass();
+        idClass.setSisSchedule(sisSchedule);
+        idClass.setSsvWeek(sisSupervision.getSsvId().getSsvWeek());
+        sisSupervision.setSsvId(idClass);
+
+        sisSupervisionRepository.saveAndFlush(sisSupervision);
+        jsonObject.put("success", true);
+        return jsonObject;
+    }
+
+    // TODO async
+    @Transactional
+    public JSONObject applyForTransfer(@NotNull SisUser sisUser,
+                                       @NotNull SisMonitorTrans sisMonitorTrans) throws InvalidPermissionException, IncorrectParameterException {
+        if (sisMonitorTransRepository
+            .findById(sisMonitorTrans.getSmtId())
+            .isPresent()) {
+            throw new InvalidPermissionException("MonitorTrans exist: " + new JSONObject(sisMonitorTrans.getSmtId()).toString());
+        }
+
+        Integer ssId = Optional
+            .of(sisMonitorTrans)
+            .map(SisMonitorTrans::getSmtId)
+            .map(SisMonitorTrans.IdClass::getSisSchedule)
+            .map(SisSchedule::getSsId)
+            .orElseThrow(() ->
+                new IncorrectParameterException("Incorrect sisMonitorTrans" + new JSONObject(sisMonitorTrans).toString()));
+
+        SisSchedule sisSchedule = sisScheduleRepository
+            .findById(ssId)
+            .orElseThrow(() ->
+                new IncorrectParameterException("Incorrect ssId" + ssId));
+
+        Optional
+            .ofNullable(sisSchedule.getSisCourse().getMonitor())
+            .filter(monitor -> monitor.getSuId().equals(sisUser.getSuId()))
+            .orElseThrow(() ->
+                new InvalidPermissionException("Invalid Permission: ssId " + sisSchedule.getSsId()));
+
+        sisMonitorTrans.setSmtAgree(SisMonitorTrans.SmtAgree.UNTREATED);
+        sisMonitorTransRepository.saveAndFlush(sisMonitorTrans);
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success", true);
+        return jsonObject;
+    }
+
+    @Transactional
+    public JSONObject modifyTransfer(@NotNull SisUser sisUser,
+                                     @NotNull SisMonitorTrans sisMonitorTrans) throws IncorrectParameterException, InvalidPermissionException {
+        SisMonitorTrans stdSisMonitorTrans = sisMonitorTransRepository
+            .findById(sisMonitorTrans.getSmtId())
+            .orElseThrow(() ->
+                new IncorrectParameterException("Incorrect sisMonitorTrans: " + sisMonitorTrans.getSmtId().toString()));
+
+        if (!sisMonitorTrans.getSisUser().getSuId().equals(sisUser.getSuId()))
+            throw new InvalidPermissionException(
+                "Invalid Permission: sisMonitorTrans " + sisMonitorTrans.getSmtId().toString());
+
+        stdSisMonitorTrans.setSmtAgree(sisMonitorTrans.getSmtAgree());
+        sisMonitorTransRepository.saveAndFlush(sisMonitorTrans);
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success", true);
         return jsonObject;
     }
 }
