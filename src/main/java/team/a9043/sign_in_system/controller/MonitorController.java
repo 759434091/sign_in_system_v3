@@ -8,6 +8,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
+import team.a9043.sign_in_system.entity.SisMonitorTrans;
 import team.a9043.sign_in_system.entity.SisSupervision;
 import team.a9043.sign_in_system.entity.SisUser;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
@@ -66,5 +67,23 @@ public class MonitorController {
             ssId,
             sisSupervision,
             localDateTime);
+    }
+
+    @PostMapping("/schedules/{ssId}/monitor-trans")
+    private JSONObject applyForTransfer(@TokenUser @ApiIgnore SisUser sisUser,
+                                        @PathVariable Integer ssId,
+                                        @RequestBody SisMonitorTrans sisMonitorTrans,
+                                        @ApiIgnore BindingResult bindingResult) throws IncorrectParameterException, InvalidPermissionException {
+        if (bindingResult.hasErrors()) {
+            throw new IncorrectParameterException(new JSONArray(bindingResult.getAllErrors()).toString());
+        }
+        return monitorService.applyForTransfer(sisUser, ssId, sisMonitorTrans);
+    }
+
+    @PutMapping("/schedules/{ssId}/monitor-trans")
+    public JSONObject modifyTransfer(@TokenUser @ApiIgnore SisUser sisUser,
+                                     @PathVariable Integer ssId,
+                                     @RequestBody SisMonitorTrans sisMonitorTrans) throws IncorrectParameterException, InvalidPermissionException {
+        return monitorService.modifyTransfer(sisUser, ssId, sisMonitorTrans);
     }
 }

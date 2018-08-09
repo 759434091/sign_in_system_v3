@@ -173,20 +173,13 @@ public class MonitorService {
     // TODO async
     @Transactional
     public JSONObject applyForTransfer(@NotNull SisUser sisUser,
+                                       @NotNull Integer ssId,
                                        @NotNull SisMonitorTrans sisMonitorTrans) throws InvalidPermissionException, IncorrectParameterException {
         if (sisMonitorTransRepository
             .findById(sisMonitorTrans.getSmtId())
             .isPresent()) {
             throw new InvalidPermissionException("MonitorTrans exist: " + new JSONObject(sisMonitorTrans.getSmtId()).toString());
         }
-
-        Integer ssId = Optional
-            .of(sisMonitorTrans)
-            .map(SisMonitorTrans::getSmtId)
-            .map(SisMonitorTrans.IdClass::getSisSchedule)
-            .map(SisSchedule::getSsId)
-            .orElseThrow(() ->
-                new IncorrectParameterException("Incorrect sisMonitorTrans" + new JSONObject(sisMonitorTrans).toString()));
 
         SisSchedule sisSchedule = sisScheduleRepository
             .findById(ssId)
@@ -199,6 +192,7 @@ public class MonitorService {
             .orElseThrow(() ->
                 new InvalidPermissionException("Invalid Permission: ssId " + sisSchedule.getSsId()));
 
+        sisMonitorTrans.getSmtId().setSisSchedule(sisSchedule);
         sisMonitorTrans.setSmtAgree(SisMonitorTrans.SmtAgree.UNTREATED);
         sisMonitorTransRepository.saveAndFlush(sisMonitorTrans);
         JSONObject jsonObject = new JSONObject();
@@ -208,7 +202,12 @@ public class MonitorService {
 
     @Transactional
     public JSONObject modifyTransfer(@NotNull SisUser sisUser,
+                                     @NotNull Integer ssId,
                                      @NotNull SisMonitorTrans sisMonitorTrans) throws IncorrectParameterException, InvalidPermissionException {
+        SisSchedule sisSchedule = new SisSchedule();
+        sisSchedule.setSsId(ssId);
+        sisMonitorTrans.getSmtId().setSisSchedule(sisSchedule);
+
         SisMonitorTrans stdSisMonitorTrans = sisMonitorTransRepository
             .findById(sisMonitorTrans.getSmtId())
             .orElseThrow(() ->
