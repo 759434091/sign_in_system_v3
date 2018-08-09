@@ -13,12 +13,13 @@ import team.a9043.sign_in_system.repository.SisCourseRepository;
 import team.a9043.sign_in_system.repository.SisScheduleRepository;
 import team.a9043.sign_in_system.repository.SisSupervisionRepository;
 import team.a9043.sign_in_system.util.judgetime.JudgeTimeUtil;
-import team.a9043.sign_in_system.util.judgetime.ScheduleParerException;
+import team.a9043.sign_in_system.util.judgetime.ScheduleParserException;
 
 import javax.annotation.Resource;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
+import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Optional;
@@ -94,12 +95,12 @@ public class MonitorService {
     }
 
     @Transactional
-    public JSONObject insertSupervision(SisUser sisUser,
-                                        Integer ssId,
-                                        SisSupervision sisSupervision,
-                                        LocalDateTime localDateTime) throws
+    public JSONObject insertSupervision(@NotNull SisUser sisUser,
+                                        @NotNull Integer ssId,
+                                        @NotNull SisSupervision sisSupervision,
+                                        @NotNull LocalDateTime localDateTime) throws
         IncorrectParameterException,
-        ScheduleParerException,
+        ScheduleParserException,
         InvalidPermissionException {
 
         JSONObject jsonObject = new JSONObject();
@@ -114,16 +115,20 @@ public class MonitorService {
         }
 
         if (!JudgeTimeUtil.isCourseTime(sisSchedule,
-            sisSupervision.getSsvWeek(),
+            sisSupervision.getSsvId().getSsvWeek(),
             localDateTime)) {
             jsonObject.put("success", false);
             jsonObject.put("message", "Incorrect time");
             return jsonObject;
         }
 
-        sisSupervision.(sisSchedule);
-        jsonObject.put("success",
-            null == sisSupervisionRepository.save(sisSupervision));
+        SisSupervision.IdClass idClass = new SisSupervision.IdClass();
+        idClass.setSisSchedule(sisSchedule);
+        idClass.setSsvWeek(sisSupervision.getSsvId().getSsvWeek());
+        sisSupervision.setSsvId(idClass);
+
+        sisSupervisionRepository.save(sisSupervision);
+        jsonObject.put("success", true);
         return jsonObject;
     }
 
@@ -145,7 +150,7 @@ public class MonitorService {
             .forEach(sisSchedule -> {
                 sisSchedule
                     .getSisSupervisions()
-                    .forEach(sisSupervision -> sisSupervision.setSisSchedule(null));
+                    .forEach(sisSupervision -> sisSupervision.getSsvId().setSisSchedule(null));
                 sisSchedule.setSisCourse(null);
             });
 

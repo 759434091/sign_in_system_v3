@@ -11,7 +11,7 @@ import java.time.temporal.ChronoUnit;
 @SuppressWarnings("WeakerAccess")
 public class JudgeTimeUtil {
     private static Month splitMonth = Month.NOVEMBER;
-    private static LocalDate startDate = LocalDate.of(2018, splitMonth, 1);
+    private static LocalDate startDate = LocalDate.of(2018, Month.MARCH, 5);
     private static int classDuration = 45;
     private static LocalTime firstClass = LocalTime.of(8, 30);
     private static LocalTime secondClass = LocalTime.of(9, 20);
@@ -35,9 +35,20 @@ public class JudgeTimeUtil {
         splitMonth = month;
     }
 
+    public static LocalDate getScheduleDate(SisSchedule sisSchedule, int week) {
+        if (week <= 0 || week > 20) {
+            return null;
+        }
+        int week2Day = (week - 1) * 7;
+        LocalDate localDate = startDate.plus(week2Day, ChronoUnit.DAYS);
+        localDate = localDate.plus(sisSchedule.getSsDayOfWeek().getValue() - 1,
+            ChronoUnit.DAYS);
+        return localDate;
+    }
+
     public static boolean isCourseTime(SisSchedule sisSchedule,
                                        int actionWeek,
-                                       LocalDateTime localDateTime) throws ScheduleParerException {
+                                       LocalDateTime localDateTime) throws ScheduleParserException {
         boolean res1 = judgeYearEtTerm(localDateTime,
             sisSchedule.getSsYearEtTerm());
 
@@ -58,7 +69,7 @@ public class JudgeTimeUtil {
     }
 
     public static boolean judgeYearEtTerm(LocalDateTime localDateTime,
-                                          String ssYearEtTerm) throws ScheduleParerException {
+                                          String ssYearEtTerm) throws ScheduleParserException {
         int termYear =
             localDateTime.getMonth().getValue() >= splitMonth.getValue() ?
                 localDateTime.getYear() : localDateTime.getYear() - 1;
@@ -81,7 +92,7 @@ public class JudgeTimeUtil {
                 null == stdTerm)
                 throw new NumberFormatException();
         } catch (ArrayIndexOutOfBoundsException | NumberFormatException e) {
-            throw new ScheduleParerException(
+            throw new ScheduleParserException(
                 String.format("error: %s cause: %s",
                     ssYearEtTerm,
                     e.getMessage()));

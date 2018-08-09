@@ -14,7 +14,7 @@ import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
 import team.a9043.sign_in_system.security.tokenuser.TokenUser;
 import team.a9043.sign_in_system.service.MonitorService;
-import team.a9043.sign_in_system.util.judgetime.ScheduleParerException;
+import team.a9043.sign_in_system.util.judgetime.ScheduleParserException;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
@@ -55,7 +55,7 @@ public class MonitorController {
                                         @RequestBody @Valid SisSupervision sisSupervision,
                                         @ApiIgnore BindingResult bindingResult) throws
         IncorrectParameterException,
-        ScheduleParerException,
+        ScheduleParserException,
         InvalidPermissionException {
 
         if (bindingResult.hasErrors()) {

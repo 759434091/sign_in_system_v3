@@ -26,11 +26,8 @@ import java.io.Serializable;
 @ApiModel("督导记录")
 public class SisSupervision {
     @EmbeddedId
+    @ApiModelProperty(value = "主键列", notes = "联合主键")
     private IdClass ssvId;
-    @Column
-    @NotNull
-    @ApiModelProperty("督导周")
-    private Integer ssvWeek;
     @Column
     @NotNull
     @ApiModelProperty("实际上课人数")

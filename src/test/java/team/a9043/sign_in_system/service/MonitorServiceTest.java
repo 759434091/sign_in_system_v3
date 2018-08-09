@@ -11,13 +11,15 @@ import team.a9043.sign_in_system.entity.SisSupervision;
 import team.a9043.sign_in_system.entity.SisUser;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
-import team.a9043.sign_in_system.util.judgetime.ScheduleParerException;
+import team.a9043.sign_in_system.repository.SisScheduleRepository;
+import team.a9043.sign_in_system.util.judgetime.JudgeTimeUtil;
+import team.a9043.sign_in_system.util.judgetime.ScheduleParserException;
 
 import javax.annotation.Resource;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-
-import static org.junit.Assert.*;
+import java.time.LocalTime;
 
 /**
  * @author a9043
@@ -28,6 +30,8 @@ import static org.junit.Assert.*;
 public class MonitorServiceTest {
     @Resource
     private MonitorService monitorService;
+    @Resource
+    private SisScheduleRepository sisScheduleRepository;
 
     @Test
     public void getCourses() {
@@ -39,22 +43,31 @@ public class MonitorServiceTest {
 
     @Test
     public void insertSupervision() throws IncorrectParameterException,
-        ScheduleParerException, InvalidPermissionException {
+        ScheduleParserException, InvalidPermissionException {
         SisUser sisUser = new SisUser();
         sisUser.setSuId("2016220401001");
         Integer ssId = 2;
-        SisSchedule sisSchedule = new SisSchedule();
-        sisSchedule.setSsId(2);
+        SisSchedule sisSchedule =
+            sisScheduleRepository.findById(2).orElseThrow(() -> new IncorrectParameterException(""));
+        SisSupervision.IdClass idClass = new SisSupervision.IdClass();
+        idClass.setSisSchedule(sisSchedule);
+        idClass.setSsvWeek(1);
         SisSupervision sisSupervision = new SisSupervision();
-        sisSupervision.setSisSchedule(sisSchedule);
-        sisSupervision.setSsvWeek(1);
+        sisSupervision.setSsvId(idClass);
         sisSupervision.setSsvActualNum(1);
         sisSupervision.setSsvMobileNum(1);
-        sisSupervision.setSsvRecInfo(":");
         sisSupervision.setSsvSleepNum(1);
+        sisSupervision.setSsvRecInfo(":");
+
+        LocalDate localDate = JudgeTimeUtil.getScheduleDate(sisSchedule, 1);
+        LocalTime localTime =
+            JudgeTimeUtil.getClassTime(sisSchedule.getSsStartTime());
+        assert localDate != null;
+        assert localTime != null;
+        LocalDateTime localDateTime = LocalDateTime.of(localDate, localTime);
         JSONObject jsonObject = monitorService.insertSupervision(sisUser, ssId,
             sisSupervision,
-            LocalDateTime.now());
+            localDateTime);
         log.info(jsonObject.toString(2));
     }
 
