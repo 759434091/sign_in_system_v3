@@ -184,16 +184,17 @@ public class MonitorService {
     public JSONObject applyForTransfer(@NotNull SisUser sisUser,
                                        @NotNull Integer ssId,
                                        @NotNull SisMonitorTrans sisMonitorTrans) throws InvalidPermissionException, IncorrectParameterException {
+        SisSchedule sisSchedule = sisScheduleRepository
+            .findById(ssId)
+            .orElseThrow(() ->
+                new IncorrectParameterException("Incorrect ssId" + ssId));
+
+        sisMonitorTrans.getSmtId().setSisSchedule(sisSchedule);
         if (sisMonitorTransRepository
             .findById(sisMonitorTrans.getSmtId())
             .isPresent()) {
             throw new InvalidPermissionException("MonitorTrans exist: " + new JSONObject(sisMonitorTrans.getSmtId()).toString());
         }
-
-        SisSchedule sisSchedule = sisScheduleRepository
-            .findById(ssId)
-            .orElseThrow(() ->
-                new IncorrectParameterException("Incorrect ssId" + ssId));
 
         Optional
             .ofNullable(sisSchedule.getSisCourse().getMonitor())
@@ -201,7 +202,6 @@ public class MonitorService {
             .orElseThrow(() ->
                 new InvalidPermissionException("Invalid Permission: ssId " + sisSchedule.getSsId()));
 
-        sisMonitorTrans.getSmtId().setSisSchedule(sisSchedule);
         sisMonitorTrans.setSmtAgree(SisMonitorTrans.SmtAgree.UNTREATED);
         sisMonitorTransRepository.saveAndFlush(sisMonitorTrans);
         JSONObject jsonObject = new JSONObject();

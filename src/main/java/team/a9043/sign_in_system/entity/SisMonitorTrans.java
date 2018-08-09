@@ -9,6 +9,7 @@ import org.hibernate.annotations.DynamicUpdate;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Null;
 import java.io.Serializable;
 
 /**
@@ -58,7 +59,6 @@ public class SisMonitorTrans {
     public static class IdClass implements Serializable {
         @ManyToOne
         @ApiModelProperty("督导课程排课")
-        @NotNull
         @JoinColumn(name = "ssId", referencedColumnName = "ssId")
         private SisSchedule sisSchedule;
 

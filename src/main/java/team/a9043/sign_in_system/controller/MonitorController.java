@@ -70,8 +70,11 @@ public class MonitorController {
     }
 
     @PostMapping("/schedules/{ssId}/monitor-trans")
+    @PreAuthorize("hasAuthority('MONITOR')")
+    @ApiOperation(value = "申请转接", notes = "根据SisMonitorTrans和ssId",
+        httpMethod = "POST", produces = "application/json")
     private JSONObject applyForTransfer(@TokenUser @ApiIgnore SisUser sisUser,
-                                        @PathVariable Integer ssId,
+                                        @PathVariable @ApiParam("排课号") Integer ssId,
                                         @RequestBody SisMonitorTrans sisMonitorTrans,
                                         @ApiIgnore BindingResult bindingResult) throws IncorrectParameterException, InvalidPermissionException {
         if (bindingResult.hasErrors()) {
@@ -81,6 +84,9 @@ public class MonitorController {
     }
 
     @PutMapping("/schedules/{ssId}/monitor-trans")
+    @PreAuthorize("hasAuthority('MONITOR')")
+    @ApiOperation(value = "接受或拒绝转接", notes = "根据SisMonitorTrans和ssId",
+        httpMethod = "POST", produces = "application/json")
     public JSONObject modifyTransfer(@TokenUser @ApiIgnore SisUser sisUser,
                                      @PathVariable Integer ssId,
                                      @RequestBody SisMonitorTrans sisMonitorTrans) throws IncorrectParameterException, InvalidPermissionException {
