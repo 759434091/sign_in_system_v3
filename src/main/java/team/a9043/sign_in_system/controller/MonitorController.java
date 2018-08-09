@@ -30,7 +30,7 @@ public class MonitorController {
 
     @PostMapping("/courses/{scId}/monitor")
     @ApiOperation(value = "领取督导池", notes = "只可领取, 不可取消")
-    public JSONObject modifyMonitor(@TokenUser SisUser sisUser,
+    public JSONObject modifyMonitor(@TokenUser @ApiIgnore SisUser sisUser,
                                     @PathVariable @ApiParam(value = "课程序号") String scId) throws
         InvalidPermissionException, IncorrectParameterException {
 
@@ -39,8 +39,8 @@ public class MonitorController {
 
     @GetMapping("/courses/{scId}/supervisions")
     @PreAuthorize("hasAuthority('MONITOR')")
-    @ApiOperation(value = "获取督导记录", notes = "根据课程序号获取督导记录")
-    public JSONObject getSupervisions(@TokenUser SisUser sisUser,
+    @ApiOperation(value = "获取督导记录", notes = "根据课程序号获取督导记录", httpMethod = "GET")
+    public JSONObject getSupervisions(@TokenUser @ApiIgnore SisUser sisUser,
                                       @PathVariable @ApiParam(value = "课程序号") String scId) throws
         InvalidPermissionException, IncorrectParameterException {
         return monitorService.getSupervisions(sisUser, scId);
@@ -48,8 +48,9 @@ public class MonitorController {
 
     @PostMapping("/schedules/{ssId}/supervisions")
     @PreAuthorize("hasAuthority('MONITOR')")
-    @ApiOperation(value = "插入督导记录", notes = "根据排课号插入督导记录")
-    public JSONObject insertSupervision(@TokenUser SisUser sisUser,
+    @ApiOperation(value = "插入督导记录", notes = "根据排课号插入督导记录", httpMethod = "POST"
+        , produces = "application/json")
+    public JSONObject insertSupervision(@TokenUser @ApiIgnore SisUser sisUser,
                                         @PathVariable
                                         @ApiParam(value = "排课号") Integer ssId,
                                         @RequestBody @Valid SisSupervision sisSupervision,

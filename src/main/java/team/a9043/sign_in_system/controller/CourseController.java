@@ -53,7 +53,7 @@ public class CourseController {
     @ApiOperation(value = "获得课程",
         notes = "根据getType获取课程",
         produces = "application/json")
-    public JSONObject getCourses(@TokenUser SisUser sisUser,
+    public JSONObject getCourses(@TokenUser @ApiIgnore SisUser sisUser,
                                  @RequestParam(required = false) @ApiParam(value = "是否需要督导filter") Boolean needMonitor,
                                  @RequestParam(required = false) @ApiParam(value = "是否已有督导员filter") Boolean hasMonitor,
                                  @RequestParam(required = false) @ApiParam(value = "分页filter") Integer page,
