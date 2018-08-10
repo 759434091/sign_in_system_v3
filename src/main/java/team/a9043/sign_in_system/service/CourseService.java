@@ -1,22 +1,18 @@
 package team.a9043.sign_in_system.service;
 
-import lombok.Getter;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Example;
-import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import team.a9043.sign_in_system.entity.SisCourse;
 import team.a9043.sign_in_system.entity.SisJoinCourse;
-import team.a9043.sign_in_system.entity.SisSchedule;
 import team.a9043.sign_in_system.entity.SisUser;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.repository.SisCourseRepository;
 import team.a9043.sign_in_system.repository.SisJoinCourseRepository;
-import team.a9043.sign_in_system.repository.SisScheduleRepository;
 import team.a9043.sign_in_system.security.tokenuser.TokenUser;
 
 import javax.annotation.Resource;
@@ -44,7 +40,7 @@ public class CourseService {
 
     @SuppressWarnings({"ResultOfMethodCallIgnored", "ConstantConditions"})
     @Transactional
-    public JSONObject getCourses(@Nullable Boolean needMonitor ,
+    public JSONObject getCourses(@Nullable Boolean needMonitor,
                                  @Nullable Boolean hasMonitor,
                                  @Nullable Integer page) {
         page = null == page ? 0 : page;
