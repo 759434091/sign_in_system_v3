@@ -175,4 +175,11 @@ public class JudgeTimeUtil {
                 throw new InvalidTimeParameterException("Invalid time: " + value);
         }
     }
+
+    public static Integer getWeek(LocalDate localDate) throws InvalidTimeParameterException {
+        int days = Period.between(startDate, localDate).getDays();
+        if (days <= 0)
+            throw new InvalidTimeParameterException("Invalid localDate: " + localDate);
+        return days / 7 + 1;
+    }
 }
