@@ -8,6 +8,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import team.a9043.sign_in_system.entity.*;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
+import team.a9043.sign_in_system.exception.InvalidPermissionException;
 import team.a9043.sign_in_system.repository.SisScheduleRepository;
 import team.a9043.sign_in_system.repository.SisSignInDetailRepository;
 import team.a9043.sign_in_system.repository.SisSignInRepository;
@@ -49,10 +50,23 @@ public class SignInService {
     private ScheduledThreadPoolExecutor scheduledThreadPoolExecutor;
 
     @Transactional
-    public boolean createSignIn(Integer ssId, LocalDateTime localDateTime) throws InvalidTimeParameterException {
+    public boolean createSignIn(SisUser sisUser,
+                                Integer ssId,
+                                LocalDateTime localDateTime) throws InvalidTimeParameterException, InvalidPermissionException {
         SisSchedule sisSchedule = sisScheduleRepository
             .findById(ssId)
             .orElseThrow(() -> new InvalidParameterException("Invalid ssId: " + ssId));
+        sisSchedule
+            .getSisCourse()
+            .getSisJoinCourseList()
+            .parallelStream()
+            .filter(sisJoinCourse ->
+                sisJoinCourse.getJoinCourseType().equals(SisJoinCourse.JoinCourseType.TEACHING) &&
+                    sisJoinCourse.getSisUser().getSuId().equals(sisUser.getSuId()))
+            .findAny()
+            .orElseThrow(() -> new InvalidPermissionException(
+                "Invalid Permission in: " + ssId));
+
 
         List<SisUser> sisUserList = sisSchedule
             .getSisCourse()
@@ -73,8 +87,8 @@ public class SignInService {
         redisTemplate.opsForHash()
             .put(key, "create_time", localDateTime);
         sisUserList
-            .forEach(sisUser -> redisTemplate.opsForHash()
-                .put(key, sisUser.getSuId(), false));
+            .forEach(tSisUser -> redisTemplate.opsForHash()
+                .put(key, tSisUser.getSuId(), false));
 
         scheduledThreadPoolExecutor.schedule(new EndSignInTask(key, ssId,
             week), 10L, TimeUnit.MINUTES);

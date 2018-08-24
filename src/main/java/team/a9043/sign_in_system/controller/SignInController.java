@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 import springfox.documentation.annotations.ApiIgnore;
 import team.a9043.sign_in_system.entity.SisUser;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
+import team.a9043.sign_in_system.exception.InvalidPermissionException;
 import team.a9043.sign_in_system.security.tokenuser.TokenUser;
 import team.a9043.sign_in_system.service.SignInService;
 import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
@@ -24,11 +25,12 @@ public class SignInController {
     private SignInService signInService;
 
     @PostMapping("/schedules/{ssId}/signIns")
-    public JSONObject createSignIn(@PathVariable Integer ssId) throws InvalidTimeParameterException {
+    public JSONObject createSignIn(@TokenUser @ApiIgnore SisUser sisUser,
+                                   @PathVariable Integer ssId) throws InvalidTimeParameterException, InvalidPermissionException {
         LocalDateTime localDateTime = LocalDateTime.now();
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("success",
-            signInService.createSignIn(ssId, localDateTime));
+            signInService.createSignIn(sisUser,ssId, localDateTime));
         return jsonObject;
     }
 
