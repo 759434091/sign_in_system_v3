@@ -10,6 +10,7 @@ import team.a9043.sign_in_system.entity.SisSchedule;
 import team.a9043.sign_in_system.entity.SisSignIn;
 import team.a9043.sign_in_system.entity.SisSignInDetail;
 import team.a9043.sign_in_system.entity.SisUser;
+import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.repository.SisSignInDetailRepository;
 import team.a9043.sign_in_system.repository.SisSignInRepository;
 
@@ -60,6 +61,12 @@ public class SignInServiceTest {
     @Test
     public void getSignIn() {
         JSONObject jsonObject = signInService.getSignIn(2, 1);
+        log.info(jsonObject.toString(2));
+    }
+
+    @Test
+    public void getSignIns() throws IncorrectParameterException {
+        JSONObject jsonObject = signInService.getSignIns("A");
         log.info(jsonObject.toString(2));
     }
 }

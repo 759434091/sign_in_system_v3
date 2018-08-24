@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import team.a9043.sign_in_system.entity.*;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
+import team.a9043.sign_in_system.repository.SisCourseRepository;
 import team.a9043.sign_in_system.repository.SisScheduleRepository;
 import team.a9043.sign_in_system.repository.SisSignInDetailRepository;
 import team.a9043.sign_in_system.repository.SisSignInRepository;
@@ -22,10 +23,7 @@ import javax.transaction.Transactional;
 import java.security.InvalidParameterException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -39,6 +37,8 @@ public class SignInService {
     @PersistenceContext
     private EntityManager entityManager;
     @Resource
+    private ScheduledThreadPoolExecutor scheduledThreadPoolExecutor;
+    @Resource
     private RedisTemplate<String, Object> redisTemplate;
     @Resource
     private SisScheduleRepository sisScheduleRepository;
@@ -47,7 +47,7 @@ public class SignInService {
     @Resource
     private SisSignInDetailRepository sisSignInDetailRepository;
     @Resource
-    private ScheduledThreadPoolExecutor scheduledThreadPoolExecutor;
+    private SisCourseRepository sisCourseRepository;
 
     @Transactional
     public boolean createSignIn(SisUser sisUser,
@@ -153,6 +153,98 @@ public class SignInService {
                 jsonObject.put("message", "Not found");
                 return jsonObject;
             });
+    }
+
+    @SuppressWarnings("Duplicates")
+    @Transactional
+    public JSONObject getSignIns(SisUser sisUser, String scId) throws IncorrectParameterException {
+        SisCourse sisCourse = sisCourseRepository
+            .findById(scId)
+            .orElseThrow(() -> new IncorrectParameterException(
+                "Incorrect scId: " + scId));
+
+        sisCourse.setMonitor(null);
+        sisCourse.setSisJoinCourseList(null);
+        sisCourse
+            .getSisSchedules()
+            .forEach(sisSchedule -> {
+                sisSchedule.setSisCourse(null);
+                sisSchedule.setSisSupervisions(null);
+
+                Collection<SisSignIn> sisSignIns = sisSchedule.getSisSignIns();
+                sisSignIns
+                    .forEach(sisSignIn -> {
+                        sisSignIn.setSisSchedule(null);
+
+                        Collection<SisSignInDetail> sisSignInDetails =
+                            sisSignIn.getSisSignInDetails();
+                        sisSignIn.setSisSignInDetails(sisSignInDetails
+                            .parallelStream()
+                            .filter(sisSignInDetail ->
+                                sisSignInDetail.getSisUser().getSuId().equals(sisUser.getSuId()))
+                            .peek(sisSignInDetail -> {
+                                sisSignInDetail.setSisSignIn(null);
+                                SisUser user = sisSignInDetail.getSisUser();
+                                user.setSisMonitorTrans(null);
+                                user.setSuPassword(null);
+                                user.setSisCourses(null);
+                                user.setSisJoinCourses(null);
+                                user.setSisSignInDetails(null);
+                            })
+                            .collect(Collectors.toCollection(ArrayList::new)));
+                    });
+            });
+        entityManager.clear();
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success", true);
+        jsonObject.put("error", false);
+        jsonObject.put("course", new JSONObject(sisCourse));
+        return jsonObject;
+    }
+
+    @SuppressWarnings("Duplicates")
+    @Transactional
+    public JSONObject getSignIns(String scId) throws IncorrectParameterException {
+        SisCourse sisCourse = sisCourseRepository
+            .findById(scId)
+            .orElseThrow(() -> new IncorrectParameterException(
+                "Incorrect scId: " + scId));
+
+        sisCourse.setMonitor(null);
+        sisCourse.setSisJoinCourseList(null);
+        sisCourse
+            .getSisSchedules()
+            .forEach(sisSchedule -> {
+                sisSchedule.setSisCourse(null);
+                sisSchedule.setSisSupervisions(null);
+
+                Collection<SisSignIn> sisSignIns = sisSchedule.getSisSignIns();
+                sisSignIns
+                    .forEach(sisSignIn -> {
+                        sisSignIn.setSisSchedule(null);
+
+                        Collection<SisSignInDetail> sisSignInDetails =
+                            sisSignIn.getSisSignInDetails();
+                        sisSignInDetails
+                            .parallelStream()
+                            .forEach(sisSignInDetail -> {
+                                sisSignInDetail.setSisSignIn(null);
+                                SisUser sisUser = sisSignInDetail.getSisUser();
+                                sisUser.setSisMonitorTrans(null);
+                                sisUser.setSuPassword(null);
+                                sisUser.setSisCourses(null);
+                                sisUser.setSisJoinCourses(null);
+                                sisUser.setSisSignInDetails(null);
+                            });
+                    });
+            });
+        entityManager.clear();
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success", true);
+        jsonObject.put("error", false);
+        jsonObject.put("course", new JSONObject(sisCourse));
+        return jsonObject;
+
     }
 
     public boolean signIn(SisUser sisUser,

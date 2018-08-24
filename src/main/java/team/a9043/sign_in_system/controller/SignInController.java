@@ -1,10 +1,7 @@
 package team.a9043.sign_in_system.controller;
 
 import org.json.JSONObject;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 import team.a9043.sign_in_system.entity.SisUser;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
@@ -24,13 +21,30 @@ public class SignInController {
     @Resource
     private SignInService signInService;
 
+    @GetMapping("/courses/{scId}/signIns")
+    public JSONObject getSignIns(@TokenUser @ApiIgnore SisUser sisUser,
+                                 @PathVariable String scId,
+                                 @RequestParam String queryType) throws IncorrectParameterException {
+        switch (queryType) {
+            case "teacher":
+                return signInService.getSignIns(scId);
+            case "administrator":
+                return signInService.getSignIns(scId);
+            case "student":
+                return signInService.getSignIns(sisUser, scId);
+            default:
+                throw new IncorrectParameterException(
+                    "Incorrect queryType: " + queryType);
+        }
+    }
+
     @PostMapping("/schedules/{ssId}/signIns")
     public JSONObject createSignIn(@TokenUser @ApiIgnore SisUser sisUser,
                                    @PathVariable Integer ssId) throws InvalidTimeParameterException, InvalidPermissionException {
         LocalDateTime localDateTime = LocalDateTime.now();
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("success",
-            signInService.createSignIn(sisUser,ssId, localDateTime));
+            signInService.createSignIn(sisUser, ssId, localDateTime));
         return jsonObject;
     }
 
