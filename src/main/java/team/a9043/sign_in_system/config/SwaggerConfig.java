@@ -48,7 +48,7 @@ public class SwaggerConfig implements WebMvcConfigurer {
             "https://lohoknang.blog/",
             "zzz13129180808@gmail.com");
         return new ApiInfoBuilder()
-            .title("Knowledge Sharing APIs")
+            .title("Sign In System APIs")
             .description("https://github.com/759434091")
             .termsOfServiceUrl("https://github.com/759434091/")
             .contact(contact)

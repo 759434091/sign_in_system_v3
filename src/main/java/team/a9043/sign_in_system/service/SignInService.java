@@ -3,6 +3,8 @@ package team.a9043.sign_in_system.service;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
 import team.a9043.sign_in_system.entity.SisJoinCourse;
 import team.a9043.sign_in_system.entity.SisSchedule;
@@ -24,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.stream.Collectors;
 
 /**
@@ -35,6 +38,8 @@ public class SignInService {
     private RedisTemplate<String, Object> redisTemplate;
     @Resource
     private SisScheduleRepository sisScheduleRepository;
+    @Resource
+    private ScheduledThreadPoolExecutor scheduledThreadPoolExecutor;
 
     @Transactional
     public void createSignIn(Integer ssId, LocalDateTime localDateTime) throws InvalidTimeParameterException {
@@ -60,6 +65,7 @@ public class SignInService {
             .forEach(sisUser -> redisTemplate.opsForHash()
                 .put(hashKey, sisUser.getSuId(), false));
 
+        scheduledThreadPoolExecutor.schedule()
         Timer timer = new Timer();
         timer.schedule(new EndSignInTask(hashKey), 60 * 10 * 1000);
     }
