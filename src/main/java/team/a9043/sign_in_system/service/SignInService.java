@@ -4,11 +4,11 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-import team.a9043.sign_in_system.entity.SisJoinCourse;
-import team.a9043.sign_in_system.entity.SisSchedule;
-import team.a9043.sign_in_system.entity.SisUser;
+import team.a9043.sign_in_system.entity.*;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.repository.SisScheduleRepository;
+import team.a9043.sign_in_system.repository.SisSignInDetailRepository;
+import team.a9043.sign_in_system.repository.SisSignInRepository;
 import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
 import team.a9043.sign_in_system.util.judgetime.JudgeTimeUtil;
 
@@ -17,8 +17,10 @@ import javax.transaction.Transactional;
 import java.security.InvalidParameterException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -33,6 +35,10 @@ public class SignInService {
     private RedisTemplate<String, Object> redisTemplate;
     @Resource
     private SisScheduleRepository sisScheduleRepository;
+    @Resource
+    private SisSignInRepository sisSignInRepository;
+    @Resource
+    private SisSignInDetailRepository sisSignInDetailRepository;
     @Resource
     private ScheduledThreadPoolExecutor scheduledThreadPoolExecutor;
 
@@ -64,7 +70,8 @@ public class SignInService {
             .forEach(sisUser -> redisTemplate.opsForHash()
                 .put(key, sisUser.getSuId(), false));
 
-        scheduledThreadPoolExecutor.schedule(new EndSignInTask(key, ssId, week), 10L, TimeUnit.MINUTES);
+        scheduledThreadPoolExecutor.schedule(new EndSignInTask(key, ssId,
+            week), 10L, TimeUnit.MINUTES);
         return true;
     }
 
@@ -105,17 +112,33 @@ public class SignInService {
         }
 
         @Override
+        @Transactional
         public void run() {
-            Map<Object, Object> map = redisTemplate.opsForHash().entries(key);
+            SisSchedule sisSchedule = new SisSchedule();
+            sisSchedule.setSsId(ssId);
+            SisSignIn sisSignIn = new SisSignIn();
+            sisSignIn.setSisSchedule(sisSchedule);
+            sisSignIn.setSsiWeek(week);
 
-            map
+            Map<Object, Object> map = redisTemplate.opsForHash().entries(key);
+            Collection<SisSignInDetail> sisSignInDetails = map
                 .entrySet()
                 .stream()
-                .filter(entry -> entry.getValue().equals(false))
-                .collect(Collectors.toSet());
+                .map(entry -> {
+                    SisUser sisUser = new SisUser();
+                    sisUser.setSuId((String) entry.getKey());
+                    SisSignInDetail sisSignInDetail = new SisSignInDetail();
+                    sisSignInDetail.setSisUser(sisUser);
+                    sisSignInDetail.setSsidStatus((boolean) entry.getValue());
+                    sisSignInDetail.setSisSignIn(sisSignIn);
+                    return sisSignInDetail;
+                })
+                .collect(Collectors.toList());
 
-
-
+            sisSignIn.setSisSignInDetails(sisSignInDetails);
+            sisSignInRepository.save(sisSignIn);
+            sisSignInDetailRepository.saveAll(sisSignInDetails);
+            redisTemplate.opsForHash().delete(key);
         }
     }
 }

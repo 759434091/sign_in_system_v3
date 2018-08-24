@@ -133,6 +133,7 @@ public class CourseService {
             .forEach(sisJoinCourse -> {
                 sisJoinCourse.setSisUser(null);
                 SisCourse sisCourse = sisJoinCourse.getSisCourse();
+                sisCourse.setMonitor(null);
                 sisCourse
                     .getSisSchedules()
                     .forEach(sisSchedule -> sisSchedule.setSisCourse(null));

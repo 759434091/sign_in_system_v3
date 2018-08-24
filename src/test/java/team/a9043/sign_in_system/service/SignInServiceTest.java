@@ -5,7 +5,17 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+import team.a9043.sign_in_system.entity.SisSchedule;
+import team.a9043.sign_in_system.entity.SisSignIn;
+import team.a9043.sign_in_system.entity.SisSignInDetail;
+import team.a9043.sign_in_system.entity.SisUser;
+import team.a9043.sign_in_system.repository.SisSignInDetailRepository;
+import team.a9043.sign_in_system.repository.SisSignInRepository;
 
+import javax.annotation.Resource;
+import javax.transaction.Transactional;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -16,15 +26,32 @@ import java.util.TimerTask;
 @SpringBootTest
 @Log
 public class SignInServiceTest {
+    @Resource
+    private SisSignInRepository sisSignInRepository;
+    @Resource
+    private SisSignInDetailRepository sisSignInDetailRepository;
+
     @Test
+    @Transactional
     public void test() {
-        log.info("start!");
-        Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                System.out.println("task start!");
-            }
-        }, 2 * 1000,1000);
+        SisSchedule sisSchedule = new SisSchedule();
+        sisSchedule.setSsId(2);
+        SisSignIn sisSignIn = new SisSignIn();
+        sisSignIn.setSisSchedule(sisSchedule);
+        sisSignIn.setSsiWeek(1);
+
+        ArrayList<SisSignInDetail> sisSignInDetails = new ArrayList<>();
+        SisUser sisUser = new SisUser();
+        sisUser.setSuId("2016220401001");
+        SisSignInDetail sisSignInDetail = new SisSignInDetail();
+        sisSignInDetail.setSisUser(sisUser);
+        sisSignInDetail.setSisSignIn(sisSignIn);
+        sisSignInDetail.setSsidStatus(true);
+        sisSignInDetails.add(sisSignInDetail);
+
+        sisSignIn.setSisSignInDetails(sisSignInDetails);
+
+        sisSignInRepository.save(sisSignIn);
+        sisSignInDetailRepository.saveAll(sisSignInDetails);
     }
 }

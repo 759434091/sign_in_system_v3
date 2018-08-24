@@ -75,6 +75,10 @@ public class SisUser {
     @JoinColumn(name = "suId", referencedColumnName = "suId")
     private Collection<SisJoinCourse> sisJoinCourses = new ArrayList<>();
 
+    @OneToMany(cascade = {CascadeType.ALL})
+    @JoinColumn(name = "suId", referencedColumnName = "suId")
+    private Collection<SisSignInDetail> sisSignInDetails = new ArrayList<>();
+
     public List<GrantedAuthority> getSuAuthorities() {
         if (null == suAuthoritiesStr) {
             return null;

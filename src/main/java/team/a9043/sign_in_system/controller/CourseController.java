@@ -59,7 +59,7 @@ public class CourseController {
                                  @RequestParam(required = false) @ApiParam(value = "分页filter") Integer page,
                                  @RequestParam
                                  @ApiParam(value = "获得方式",
-                                     example = "student,monitor,administrator")
+                                     allowableValues = "student,monitor,administrator")
                                      String getType) throws
         IncorrectParameterException, InvalidPermissionException {
 

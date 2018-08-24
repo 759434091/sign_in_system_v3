@@ -73,6 +73,10 @@ public class SisSchedule {
     @JoinColumn(name = "ssId", referencedColumnName = "ssId")
     private Collection<SisSupervision> sisSupervisions = new ArrayList<>();
 
+    @OneToMany(cascade = {CascadeType.ALL})
+    @JoinColumn(name = "ssId", referencedColumnName = "ssId")
+    private Collection<SisSignIn> sisSignIns = new ArrayList<>();
+
     public enum SsFortnight {
         FULL(0), ODD(1), EVEN(2);
 

@@ -8,8 +8,13 @@ import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.Collection;
 
 @Entity
+@Table(uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"ssId", " ssiWeek"})
+})
 @Getter
 @Setter
 @DynamicUpdate
@@ -17,6 +22,7 @@ import javax.persistence.*;
 @ApiModel("排课签到记录")
 public class SisSignIn {
     @Id
+    @Column
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer ssiId;
 
@@ -26,5 +32,10 @@ public class SisSignIn {
     private SisSchedule sisSchedule;
 
     @ApiModelProperty("签到周")
-    private Integer week;
+    @Column
+    private Integer ssiWeek;
+
+    @OneToMany(cascade = {CascadeType.ALL})
+    @JoinColumn(name = "ssiId", referencedColumnName = "ssiId")
+    private Collection<SisSignInDetail> sisSignInDetails = new ArrayList<>();
 }
