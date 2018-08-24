@@ -5,7 +5,11 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.models.HttpMethod;
 import org.json.JSONObject;
 import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
+import team.a9043.sign_in_system.entity.SisUser;
+import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.WxServerException;
+import team.a9043.sign_in_system.security.tokenuser.TokenUser;
 import team.a9043.sign_in_system.service.UserService;
 
 import javax.annotation.Resource;
@@ -26,6 +30,16 @@ public class UserController {
         return userService.getTokensByCode(code);
     }
 
+
+    @ApiOperation(value = "修改微信绑定", notes = "根据code修改微信绑定")
+    @PutMapping(value = "/users/{suId}")
+    public JSONObject modifyBindUser(@TokenUser @ApiIgnore SisUser sisUser,
+                                     @PathVariable @ApiParam("用户名") String suId,
+                                     @RequestParam @ApiParam("微信code") String code) throws WxServerException, IncorrectParameterException {
+        if (!sisUser.getSuId().equals(suId))
+            throw new IncorrectParameterException("Incorrect suId: " + suId);
+        return userService.modifyBindUser(sisUser, code);
+    }
 
     @ApiOperation(value = "获取Token",
         notes = "用户名密码获取Token",

@@ -55,7 +55,52 @@ public class UserService {
     @Transactional
     public boolean createUser(SisUser sisUser) {
         sisUser.setSuPassword(bCryptPasswordEncoder.encode(sisUser.getSuPassword()));
-        return null != sisUserRepository.save(sisUser);
+        sisUserRepository.saveAndFlush(sisUser);
+        return true;
+    }
+
+    @SuppressWarnings("Duplicates")
+    public JSONObject modifyBindUser(SisUser sisUser, String code) throws WxServerException {
+        JSONObject jsonObject = new JSONObject();
+        JSONObject wxUserInfo = restTemplate.getForObject(String.format(
+            apiurl, appid, secret, code
+        ), JSONObject.class);
+
+        if (null == wxUserInfo) {
+            throw new WxServerException("WX Server error");
+        }
+        if (!wxUserInfo.has("openid")) {
+            jsonObject.put("success", false);
+            jsonObject.put("error", true);
+            jsonObject.put("message", wxUserInfo.toString());
+            return jsonObject;
+        }
+
+        String openid = wxUserInfo.getString("openid");
+        return sisUserRepository
+            .findById(sisUser.getSuId())
+            .map(stdSisUser -> {
+                stdSisUser.setSuOpenid(openid);
+                sisUserRepository.saveAndFlush(stdSisUser);
+
+                Map<String, Object> claimsMap = new HashMap<>();
+                claimsMap.put("suId", sisUser.getSuId());
+                claimsMap.put("suName", sisUser.getSuId());
+                claimsMap.put("suAuthoritiesStr",
+                    sisUser.getSuAuthoritiesStr());
+
+                jsonObject.put("success", true);
+                jsonObject.put("error", false);
+                jsonObject.put("access_token", JwtUtil.createJWT(claimsMap));
+                return jsonObject;
+            })
+            .orElseGet(() -> {
+                jsonObject.put("success", false);
+                jsonObject.put("error", true);
+                jsonObject.put("message", "Token user not found ");
+                jsonObject.put("token_user", new JSONObject(sisUser));
+                return jsonObject;
+            });
     }
 
     /**
@@ -66,6 +111,7 @@ public class UserService {
      * @return JSON
      * @throws WxServerException 微信服务器错误
      */
+    @SuppressWarnings("Duplicates")
     public JSONObject getTokensByCode(String code) throws WxServerException {
         JSONObject jsonObject = new JSONObject();
         JSONObject wxUserInfo = restTemplate.getForObject(String.format(
