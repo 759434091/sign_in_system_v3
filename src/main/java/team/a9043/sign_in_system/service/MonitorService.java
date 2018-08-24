@@ -126,8 +126,9 @@ public class MonitorService {
         }
 
         sisCourse.setMonitor(sisUser);
+        sisCourseRepository.save(sisCourse);
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", null != sisCourseRepository.save(sisCourse));
+        jsonObject.put("success", true);
         return jsonObject;
     }
 

@@ -1,6 +1,7 @@
 package team.a9043.sign_in_system.service;
 
 import lombok.extern.java.Log;
+import org.json.JSONObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -30,9 +31,10 @@ public class SignInServiceTest {
     private SisSignInRepository sisSignInRepository;
     @Resource
     private SisSignInDetailRepository sisSignInDetailRepository;
+    @Resource
+    private SignInService signInService;
 
     @Test
-    @Transactional
     public void test() {
         SisSchedule sisSchedule = new SisSchedule();
         sisSchedule.setSsId(2);
@@ -53,5 +55,11 @@ public class SignInServiceTest {
 
         sisSignInRepository.save(sisSignIn);
         sisSignInDetailRepository.saveAll(sisSignInDetails);
+    }
+
+    @Test
+    public void getSignIn() {
+        JSONObject jsonObject = signInService.getSignIn(2, 1);
+        log.info(jsonObject.toString(2));
     }
 }

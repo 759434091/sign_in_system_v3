@@ -2,6 +2,8 @@ package team.a9043.sign_in_system.service;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.json.JSONObject;
+import org.springframework.data.domain.Example;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import team.a9043.sign_in_system.entity.*;
@@ -13,6 +15,8 @@ import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
 import team.a9043.sign_in_system.util.judgetime.JudgeTimeUtil;
 
 import javax.annotation.Resource;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
 import java.security.InvalidParameterException;
 import java.time.LocalDateTime;
@@ -31,6 +35,8 @@ import java.util.stream.Collectors;
 @Service
 public class SignInService {
     private String signInKeyFormat = "sis_ssId_%d_week_%d";
+    @PersistenceContext
+    private EntityManager entityManager;
     @Resource
     private RedisTemplate<String, Object> redisTemplate;
     @Resource
@@ -75,6 +81,66 @@ public class SignInService {
         return true;
     }
 
+    @Transactional
+    public JSONObject getSignIn(Integer ssId, Integer week) {
+        String key = String.format(signInKeyFormat, ssId, week);
+        if (Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("success", true);
+            jsonObject.put("error", false);
+            jsonObject.put("code", 1);
+            jsonObject.put("message", "Processing");
+            return jsonObject;
+        }
+
+        SisSchedule tSisSchedule = new SisSchedule();
+        tSisSchedule.setSsId(ssId);
+        SisSignIn tSisSignIn = new SisSignIn();
+        tSisSignIn.setSisSchedule(tSisSchedule);
+        tSisSignIn.setSsiWeek(week);
+        Example<SisSignIn> sisSignInExample = Example.of(tSisSignIn);
+        return sisSignInRepository
+            .findOne(sisSignInExample)
+            .map(sisSignIn -> {
+                SisSchedule sisSchedule = sisSignIn.getSisSchedule();
+                sisSchedule.setSisSignIns(null);
+                sisSchedule.setSisSupervisions(null);
+
+                SisCourse sisCourse = sisSchedule.getSisCourse();
+                sisCourse.setSisSchedules(null);
+                sisCourse.setMonitor(null);
+                sisCourse.setSisJoinCourseList(null);
+
+                Collection<SisSignInDetail> sisSignInDetails =
+                    sisSignIn.getSisSignInDetails();
+                sisSignInDetails.forEach(sisSignInDetail -> {
+                    sisSignInDetail.setSisSignIn(null);
+                    SisUser sisUser = sisSignInDetail.getSisUser();
+                    sisUser.setSisSignInDetails(null);
+                    sisUser.setSisJoinCourses(null);
+                    sisUser.setSisCourses(null);
+                    sisUser.setSisMonitorTrans(null);
+                });
+
+                entityManager.clear();
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("success", true);
+                jsonObject.put("error", false);
+                jsonObject.put("code", 0);
+                jsonObject.put("record", new JSONObject(sisSignIn));
+                jsonObject.put("message", "End");
+                return jsonObject;
+            })
+            .orElseGet(() -> {
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("success", true);
+                jsonObject.put("error", false);
+                jsonObject.put("code", 2);
+                jsonObject.put("message", "Not found");
+                return jsonObject;
+            });
+    }
+
     public boolean signIn(SisUser sisUser,
                           Integer ssId,
                           LocalDateTime localDateTime) throws InvalidTimeParameterException, IncorrectParameterException {
@@ -86,8 +152,8 @@ public class SignInService {
             .opsForHash()
             .get(key, "create_time");
         if (null == createTime)
-            throw new IncorrectParameterException("Sign in not found: " +
-                ssId + "_" + localDateTime);
+            throw new IncorrectParameterException(
+                String.format("Sign in not found: %d_%s", ssId, localDateTime));
 
         long until = createTime.until(localDateTime, ChronoUnit.MINUTES);
         if (until > 10 || until < 0) {

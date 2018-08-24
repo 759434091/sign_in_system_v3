@@ -17,10 +17,13 @@ import team.a9043.sign_in_system.exception.InvalidPermissionException;
 import team.a9043.sign_in_system.security.tokenuser.TokenUser;
 import team.a9043.sign_in_system.service.CourseService;
 import team.a9043.sign_in_system.service.MonitorService;
+import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
+import team.a9043.sign_in_system.util.judgetime.JudgeTimeUtil;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.time.LocalDateTime;
 
 /**
  * @author a9043
@@ -31,6 +34,16 @@ public class CourseController {
     private CourseService courseService;
     @Resource
     private MonitorService monitorService;
+
+    @GetMapping("/week")
+    public JSONObject getWeek() throws InvalidTimeParameterException {
+        LocalDateTime localDateTime = LocalDateTime.now();
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("server_time", localDateTime);
+        jsonObject.put("week",
+            JudgeTimeUtil.getWeek(localDateTime.toLocalDate()));
+        return jsonObject;
+    }
 
     /**
      * 获得课程
@@ -59,7 +72,8 @@ public class CourseController {
                                  @RequestParam(required = false) @ApiParam(value = "分页filter") Integer page,
                                  @RequestParam
                                  @ApiParam(value = "获得方式",
-                                     allowableValues = "student,monitor,administrator")
+                                     allowableValues = "student,monitor," +
+                                         "administrator")
                                      String getType) throws
         IncorrectParameterException, InvalidPermissionException {
 
