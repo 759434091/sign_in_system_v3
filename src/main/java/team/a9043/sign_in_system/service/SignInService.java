@@ -3,8 +3,6 @@ package team.a9043.sign_in_system.service;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
 import team.a9043.sign_in_system.entity.SisJoinCourse;
 import team.a9043.sign_in_system.entity.SisSchedule;
@@ -17,16 +15,12 @@ import team.a9043.sign_in_system.util.judgetime.JudgeTimeUtil;
 import javax.annotation.Resource;
 import javax.transaction.Transactional;
 import java.security.InvalidParameterException;
-import java.time.Duration;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.Period;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.Map;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -34,6 +28,7 @@ import java.util.stream.Collectors;
  */
 @Service
 public class SignInService {
+    private String signInKeyFormat = "sis_ssId_%d_week_%d";
     @Resource
     private RedisTemplate<String, Object> redisTemplate;
     @Resource
@@ -42,7 +37,7 @@ public class SignInService {
     private ScheduledThreadPoolExecutor scheduledThreadPoolExecutor;
 
     @Transactional
-    public void createSignIn(Integer ssId, LocalDateTime localDateTime) throws InvalidTimeParameterException {
+    public boolean createSignIn(Integer ssId, LocalDateTime localDateTime) throws InvalidTimeParameterException {
         SisSchedule sisSchedule = sisScheduleRepository
             .findById(ssId)
             .orElseThrow(() -> new InvalidParameterException("Invalid ssId: " + ssId));
@@ -55,31 +50,34 @@ public class SignInService {
             .map(SisJoinCourse::getSisUser)
             .collect(Collectors.toList());
 
-        String hashKey =
-            String.format("sis_ssId_%d_week_%d", ssId,
-                JudgeTimeUtil.getWeek(localDateTime.toLocalDate()));
+        Integer week = JudgeTimeUtil.getWeek(localDateTime.toLocalDate());
+        String key =
+            String.format(signInKeyFormat, ssId,
+                week);
 
+        if (Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
+            return false;
+        }
         redisTemplate.opsForHash()
-            .put(hashKey, "create_time", localDateTime);
+            .put(key, "create_time", localDateTime);
         sisUserList
             .forEach(sisUser -> redisTemplate.opsForHash()
-                .put(hashKey, sisUser.getSuId(), false));
+                .put(key, sisUser.getSuId(), false));
 
-        scheduledThreadPoolExecutor.schedule()
-        Timer timer = new Timer();
-        timer.schedule(new EndSignInTask(hashKey), 60 * 10 * 1000);
+        scheduledThreadPoolExecutor.schedule(new EndSignInTask(key, ssId, week), 10L, TimeUnit.MINUTES);
+        return true;
     }
 
     public boolean signIn(SisUser sisUser,
                           Integer ssId,
                           LocalDateTime localDateTime) throws InvalidTimeParameterException, IncorrectParameterException {
-        String hashKey =
-            String.format("sis_ssId_%d_week_%d", ssId,
+        String key =
+            String.format(signInKeyFormat, ssId,
                 JudgeTimeUtil.getWeek(localDateTime.toLocalDate()));
 
         LocalDateTime createTime = (LocalDateTime) redisTemplate
             .opsForHash()
-            .get(hashKey, "create_time");
+            .get(key, "create_time");
         if (null == createTime)
             throw new IncorrectParameterException("Sign in not found: " +
                 ssId + "_" + localDateTime);
@@ -89,22 +87,35 @@ public class SignInService {
             return false;
         }
 
-        redisTemplate.opsForHash().put(hashKey, sisUser.getSuId(), true);
+        redisTemplate.opsForHash().put(key, sisUser.getSuId(), true);
         return true;
     }
 
     @Getter
     @Setter
-    static class EndSignInTask extends TimerTask {
-        private String hashKey;
+    class EndSignInTask implements Runnable {
+        private String key;
+        private Integer ssId;
+        private Integer week;
 
-        EndSignInTask(String hashKey) {
-            this.hashKey = hashKey;
+        EndSignInTask(String key, Integer ssId, Integer week) {
+            this.key = key;
+            this.ssId = ssId;
+            this.week = week;
         }
 
         @Override
         public void run() {
-            System.out.println("task: " + hashKey);
+            Map<Object, Object> map = redisTemplate.opsForHash().entries(key);
+
+            map
+                .entrySet()
+                .stream()
+                .filter(entry -> entry.getValue().equals(false))
+                .collect(Collectors.toSet());
+
+
+
         }
     }
 }
