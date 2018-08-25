@@ -38,7 +38,8 @@ public class CourseService {
     @PersistenceContext
     private EntityManager entityManager;
 
-    @SuppressWarnings({"ResultOfMethodCallIgnored", "ConstantConditions"})
+    @SuppressWarnings({"ResultOfMethodCallIgnored", "ConstantConditions",
+        "Duplicates"})
     @Transactional
     public JSONObject getCourses(@Nullable Boolean needMonitor,
                                  @Nullable Boolean hasMonitor,
@@ -107,12 +108,14 @@ public class CourseService {
                         sisUser.setSisSignInDetails(null);
                         sisUser.setSisMonitorTrans(null);
                     });
-                SisUser sisUser = sisCourse.getMonitor();
-                sisUser.setSisMonitorTrans(null);
-                sisUser.setSisSignInDetails(null);
-                sisUser.setSisCourses(null);
-                sisUser.setSisJoinCourses(null);
-                sisUser.setSuPassword(null);
+                Optional.ofNullable(sisCourse.getMonitor())
+                    .ifPresent(sisUser -> {
+                        sisUser.setSisMonitorTrans(null);
+                        sisUser.setSisSignInDetails(null);
+                        sisUser.setSisCourses(null);
+                        sisUser.setSisJoinCourses(null);
+                        sisUser.setSuPassword(null);
+                    });
             });
 
         entityManager.clear();
@@ -122,7 +125,8 @@ public class CourseService {
         return jsonObject;
     }
 
-    @SuppressWarnings({"ResultOfMethodCallIgnored", "ConstantConditions"})
+    @SuppressWarnings({"ResultOfMethodCallIgnored", "ConstantConditions",
+        "Duplicates"})
     @Transactional
     public JSONObject getCourses(@TokenUser SisUser sisUser) {
         SisJoinCourse tempJoinCourse = new SisJoinCourse();
@@ -168,12 +172,13 @@ public class CourseService {
                     })
                     .collect(Collectors.toList()));
 
-                SisUser monitor = sisCourse.getMonitor();
-                monitor.setSisMonitorTrans(null);
-                monitor.setSisSignInDetails(null);
-                monitor.setSisCourses(null);
-                monitor.setSisJoinCourses(null);
-                monitor.setSuPassword(null);
+                Optional.ofNullable(sisCourse.getMonitor()).ifPresent(monitor -> {
+                    monitor.setSisMonitorTrans(null);
+                    monitor.setSisSignInDetails(null);
+                    monitor.setSisCourses(null);
+                    monitor.setSisJoinCourses(null);
+                    monitor.setSuPassword(null);
+                });
             });
 
         entityManager.clear();

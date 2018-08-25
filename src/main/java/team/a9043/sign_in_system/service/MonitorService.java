@@ -214,7 +214,8 @@ public class MonitorService {
                     .forEach(sisJoinCourse -> {
                         sisJoinCourse.setSisCourse(null);
 
-                        SisUser joinUser = sisJoinCourse.getSisUser();;
+                        SisUser joinUser = sisJoinCourse.getSisUser();
+                        ;
                         joinUser.setSisCourses(null);
                         joinUser.setSuPassword(null);
                         joinUser.setSisMonitorTrans(null);
@@ -223,8 +224,14 @@ public class MonitorService {
                     });
                 sisCourse.setSisSchedules(null);
 
-                SisUser monitor = sisCourse.getMonitor();
-                monitor.setSisCourses(null);
+                Optional.ofNullable(sisCourse.getMonitor())
+                    .ifPresent(monitor -> {
+                        monitor.setSisCourses(null);
+                        monitor.setSuPassword(null);
+                        monitor.setSisJoinCourses(null);
+                        monitor.setSisSignInDetails(null);
+                        monitor.setSisMonitorTrans(null);
+                    });
             })
             .collect(Collectors.toList());
 

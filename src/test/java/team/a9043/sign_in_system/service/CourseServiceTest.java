@@ -33,13 +33,8 @@ public class CourseServiceTest {
     public void getCourses1() {
         SisUser sisUser = new SisUser();
         sisUser.setSuId("2016220401001");
-        LocalTime start = LocalTime.now();
         JSONObject jsonObject = courseService.getCourses(sisUser);
-        LocalTime end1 = LocalTime.now();
         log.info(jsonObject.toString(2));
-        LocalTime end2 = LocalTime.now();
-        log.info("use " + (end1.toNanoOfDay() - start.toNanoOfDay()) / 1000000);
-        log.info("use " + (end2.toNanoOfDay() - start.toNanoOfDay()) / 1000000);
     }
 
     @Test
