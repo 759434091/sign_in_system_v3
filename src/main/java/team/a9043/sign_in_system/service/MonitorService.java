@@ -61,6 +61,8 @@ public class MonitorService {
                     .forEach(sisJoinCourse -> {
                         sisJoinCourse.setSisCourse(null);
                         SisUser tSisUser = sisJoinCourse.getSisUser();
+                        tSisUser.setSisSignInDetails(null);
+                        tSisUser.setSisMonitorTrans(null);
                         tSisUser.setSisJoinCourses(null);
                         tSisUser.setSisCourses(null);
                         tSisUser.setSuPassword(null);
@@ -69,6 +71,7 @@ public class MonitorService {
                 stdSisCourse
                     .getSisSchedules()
                     .forEach(sisSchedule -> {
+                        sisSchedule.setSisSignIns(null);
                         sisSchedule.setSisCourse(null);
                         sisSchedule.setSisSupervisions(null);
                     });
@@ -103,7 +106,11 @@ public class MonitorService {
                     .getSisSupervisions()
                     .forEach(sisSupervision -> sisSupervision.getSsvId().setSisSchedule(null));
                 sisSchedule.setSisCourse(null);
+                sisSchedule.setSisSignIns(null);
             });
+
+        sisCourse.setSisJoinCourseList(null);
+        sisCourse.setMonitor(null);
 
         entityManager.clear();
         JSONObject jsonObject = new JSONObject();
@@ -197,6 +204,8 @@ public class MonitorService {
                 SisSchedule sisSchedule =
                     sisMonitorTrans.getSmtId().getSisSchedule();
                 sisSchedule.setSisSupervisions(null);
+                sisSchedule.setSisSignIns(null);
+                sisSchedule.setSisSupervisions(null);
 
                 SisCourse sisCourse = sisSchedule.getSisCourse();
 
@@ -204,11 +213,13 @@ public class MonitorService {
                     .getSisJoinCourseList()
                     .forEach(sisJoinCourse -> {
                         sisJoinCourse.setSisCourse(null);
-                        SisUser joinUser = sisJoinCourse.getSisUser();
+
+                        SisUser joinUser = sisJoinCourse.getSisUser();;
+                        joinUser.setSisCourses(null);
                         joinUser.setSuPassword(null);
                         joinUser.setSisMonitorTrans(null);
                         joinUser.setSisJoinCourses(null);
-                        joinUser.setSisJoinCourses(null);
+                        joinUser.setSisSignInDetails(null);
                     });
                 sisCourse.setSisSchedules(null);
 
