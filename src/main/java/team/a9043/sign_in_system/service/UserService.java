@@ -137,7 +137,7 @@ public class UserService {
             .map(sisUser -> {
                 Map<String, Object> claimsMap = new HashMap<>();
                 claimsMap.put("suId", sisUser.getSuId());
-                claimsMap.put("suName", sisUser.getSuId());
+                claimsMap.put("suName", sisUser.getSuName());
                 claimsMap.put("suAuthoritiesStr",
                     sisUser.getSuAuthoritiesStr());
 

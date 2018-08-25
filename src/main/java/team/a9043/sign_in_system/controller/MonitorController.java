@@ -41,7 +41,7 @@ public class MonitorController {
 
     @GetMapping("/courses/{scId}/supervisions")
     @PreAuthorize("hasAuthority('MONITOR')")
-    @ApiOperation(value = "获取督导记录", notes = "根据课程序号获取督导记录", httpMethod = "GET")
+    @ApiOperation(value = "获取督导记录", notes = "根据课程序号获取督导记录")
     public JSONObject getSupervisions(@TokenUser @ApiIgnore SisUser sisUser,
                                       @PathVariable @ApiParam(value = "课程序号") String scId) throws InvalidPermissionException, IncorrectParameterException {
         return monitorService.getSupervisions(sisUser, scId);
@@ -49,7 +49,7 @@ public class MonitorController {
 
     @PostMapping("/schedules/{ssId}/supervisions")
     @PreAuthorize("hasAuthority('MONITOR')")
-    @ApiOperation(value = "插入督导记录", notes = "根据排课号插入督导记录", httpMethod = "POST"
+    @ApiOperation(value = "插入督导记录", notes = "根据排课号插入督导记录"
         , produces = "application/json")
     public JSONObject insertSupervision(@TokenUser @ApiIgnore SisUser sisUser,
                                         @PathVariable
@@ -73,7 +73,8 @@ public class MonitorController {
     @PostMapping("/schedules/{ssId}/monitor-trans")
     @PreAuthorize("hasAuthority('MONITOR')")
     @ApiOperation(value = "申请转接", notes = "根据SisMonitorTrans和ssId",
-        httpMethod = "POST", produces = "application/json")
+        produces
+            = "application/json")
     private JSONObject applyForTransfer(@TokenUser @ApiIgnore SisUser sisUser,
                                         @PathVariable @ApiParam("排课号") Integer ssId,
                                         @RequestBody SisMonitorTrans sisMonitorTrans,
@@ -87,7 +88,7 @@ public class MonitorController {
     @PutMapping("/schedules/{ssId}/monitor-trans")
     @PreAuthorize("hasAuthority('MONITOR')")
     @ApiOperation(value = "接受或拒绝转接", notes = "根据SisMonitorTrans和ssId",
-        httpMethod = "POST", produces = "application/json")
+        produces = "application/json")
     public JSONObject modifyTransfer(@TokenUser @ApiIgnore SisUser sisUser,
                                      @PathVariable Integer ssId,
                                      @RequestBody SisMonitorTrans sisMonitorTrans) throws IncorrectParameterException, InvalidPermissionException {
@@ -97,7 +98,8 @@ public class MonitorController {
     @GetMapping("/schedules/monitor-trans")
     @PreAuthorize("hasAuthority('MONITOR')")
     @ApiOperation(value = "获取转接课程", notes = "根据smtStatus获取转接课程",
-        httpMethod = "POST", produces = "application/json")
+        produces =
+            "application/json")
     public JSONObject getTransCourses(@TokenUser @ApiIgnore SisUser sisUser,
                                       @RequestParam
                                       @ApiParam(value = "获得方式",
