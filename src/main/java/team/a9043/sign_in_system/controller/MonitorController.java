@@ -103,7 +103,7 @@ public class MonitorController {
     public JSONObject getTransCourses(@TokenUser @ApiIgnore SisUser sisUser,
                                       @RequestParam
                                       @ApiParam(value = "获得方式",
-                                          example = "untreated,agree,disagree")
+                                          allowableValues = "untreated,agree,disagree")
                                           String smtStatus) throws String2EnumException {
         return monitorService.getTransCourses(sisUser,
             SisMonitorTrans.SmtStatus.lowercase2Enum(smtStatus));
