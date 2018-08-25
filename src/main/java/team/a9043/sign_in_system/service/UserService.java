@@ -17,6 +17,7 @@ import team.a9043.sign_in_system.util.JwtUtil;
 
 import javax.annotation.Resource;
 import javax.transaction.Transactional;
+import java.security.InvalidParameterException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,6 +45,28 @@ public class UserService {
             .additionalMessageConverters(jsonObjectHttpMessageConverter)
             .rootUri(rooturl)
             .build();
+    }
+
+    @Deprecated
+    @SuppressWarnings("ConstantConditions")
+    public JSONObject getUser(SisUser sisUser) throws InvalidParameterException {
+        return sisUserRepository
+            .findById(sisUser.getSuId())
+            .map(stdSisUser -> {
+                stdSisUser.setSisMonitorTrans(null);
+                stdSisUser.setSisSignInDetails(null);
+                stdSisUser.setSisCourses(null);
+                stdSisUser.setSisJoinCourses(null);
+                stdSisUser.setSuPassword(null);
+
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("success", true);
+                jsonObject.put("error", false);
+                jsonObject.put("user", new JSONObject(stdSisUser));
+                return jsonObject;
+            })
+            .orElseThrow(() -> new InvalidParameterException(
+                "Token user not found: " + sisUser.getSuId()));
     }
 
     /**
@@ -111,7 +134,7 @@ public class UserService {
      * @return JSON
      * @throws WxServerException 微信服务器错误
      */
-    @SuppressWarnings("Duplicates")
+    @SuppressWarnings({"Duplicates", "ConstantConditions"})
     public JSONObject getTokensByCode(String code) throws WxServerException {
         JSONObject jsonObject = new JSONObject();
         JSONObject wxUserInfo = restTemplate.getForObject(String.format(
@@ -141,6 +164,13 @@ public class UserService {
                 claimsMap.put("suAuthoritiesStr",
                     sisUser.getSuAuthoritiesStr());
 
+                sisUser.setSisMonitorTrans(null);
+                sisUser.setSisSignInDetails(null);
+                sisUser.setSisCourses(null);
+                sisUser.setSisJoinCourses(null);
+                sisUser.setSuPassword(null);
+
+                jsonObject.put("user", new JSONObject(sisUser));
                 jsonObject.put("success", true);
                 jsonObject.put("error", false);
                 jsonObject.put("access_token", JwtUtil.createJWT(claimsMap));
