@@ -85,24 +85,34 @@ public class CourseService {
                         monitor.setSuPassword(null);
                         monitor.setSisCourses(null);
                         monitor.setSisJoinCourses(null);
+                        monitor.setSisSignInDetails(null);
                     });
                 sisCourse.getSisSchedules()
                     .forEach(sisSchedule -> {
-                        sisSchedule.getSisSupervisions();
+                        sisSchedule.getSisSupervisions().forEach(sisSupervision -> {
+                            sisSupervision.getSsvId().setSisSchedule(null);
+                        });
 
                         sisSchedule.setSisCourse(null);
+                        sisSchedule.setSisSignIns(null);
                     });
                 sisCourse.getSisJoinCourseList()
                     .forEach(sisJoinCourse -> {
-                        Optional
-                            .ofNullable(sisJoinCourse.getSisUser())
-                            .ifPresent(sisUser -> {
-                                sisUser.setSuPassword(null);
-                                sisUser.setSisJoinCourses(null);
-                                sisUser.setSisCourses(null);
-                            });
                         sisJoinCourse.setSisCourse(null);
+
+                        SisUser sisUser = sisJoinCourse.getSisUser();
+                        sisUser.setSuPassword(null);
+                        sisUser.setSisJoinCourses(null);
+                        sisUser.setSisCourses(null);
+                        sisUser.setSisSignInDetails(null);
+                        sisUser.setSisMonitorTrans(null);
                     });
+                SisUser sisUser = sisCourse.getMonitor();
+                sisUser.setSisMonitorTrans(null);
+                sisUser.setSisSignInDetails(null);
+                sisUser.setSisCourses(null);
+                sisUser.setSisJoinCourses(null);
+                sisUser.setSuPassword(null);
             });
 
         entityManager.clear();
@@ -134,9 +144,15 @@ public class CourseService {
                 sisJoinCourse.setSisUser(null);
                 SisCourse sisCourse = sisJoinCourse.getSisCourse();
                 sisCourse.setMonitor(null);
+
                 sisCourse
                     .getSisSchedules()
-                    .forEach(sisSchedule -> sisSchedule.setSisCourse(null));
+                    .forEach(sisSchedule -> {
+                        sisSchedule.setSisCourse(null);
+                        sisSchedule.setSisSignIns(null);
+                        sisSchedule.setSisSupervisions(null);
+                    });
+
                 sisCourse.setSisJoinCourseList(sisCourse
                     .getSisJoinCourseList()
                     .stream()
@@ -144,10 +160,20 @@ public class CourseService {
                     .peek(tSisJoinCourse -> {
                         SisUser sisUser1 = tSisJoinCourse.getSisUser();
                         sisUser1.setSisJoinCourses(null);
+                        sisUser1.setSisCourses(null);
+                        sisUser1.setSisSignInDetails(null);
+                        sisUser1.setSisMonitorTrans(null);
                         sisUser1.setSuPassword(null);
                         tSisJoinCourse.setSisCourse(null);
                     })
                     .collect(Collectors.toList()));
+
+                SisUser monitor = sisCourse.getMonitor();
+                monitor.setSisMonitorTrans(null);
+                monitor.setSisSignInDetails(null);
+                monitor.setSisCourses(null);
+                monitor.setSisJoinCourses(null);
+                monitor.setSuPassword(null);
             });
 
         entityManager.clear();
