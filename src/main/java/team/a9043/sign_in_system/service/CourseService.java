@@ -160,14 +160,17 @@ public class CourseService {
                 sisCourse.setSisJoinCourseList(sisCourse
                     .getSisJoinCourseList()
                     .stream()
-                    .filter(tSisJoinCourse -> tSisJoinCourse.getJoinCourseType().equals(SisJoinCourse.JoinCourseType.ATTENDANCE))
+                    .filter(tSisJoinCourse -> tSisJoinCourse.getJoinCourseType().equals(SisJoinCourse.JoinCourseType.TEACHING))
                     .peek(tSisJoinCourse -> {
-                        SisUser sisUser1 = tSisJoinCourse.getSisUser();
-                        sisUser1.setSisJoinCourses(null);
-                        sisUser1.setSisCourses(null);
-                        sisUser1.setSisSignInDetails(null);
-                        sisUser1.setSisMonitorTrans(null);
-                        sisUser1.setSuPassword(null);
+                        Optional.ofNullable(tSisJoinCourse.getSisUser())
+                            .ifPresent(sisUser1 -> {
+                                sisUser1.setSisJoinCourses(null);
+                                sisUser1.setSisCourses(null);
+                                sisUser1.setSisSignInDetails(null);
+                                sisUser1.setSisMonitorTrans(null);
+                                sisUser1.setSuPassword(null);
+                            });
+
                         tSisJoinCourse.setSisCourse(null);
                     })
                     .collect(Collectors.toList()));
