@@ -160,7 +160,7 @@ public class CourseService {
                 sisCourse.setSisJoinCourseList(sisCourse
                     .getSisJoinCourseList()
                     .stream()
-                    .filter(tSisJoinCourse -> tSisJoinCourse.getJoinCourseType().equals(SisJoinCourse.JoinCourseType.TEACHING))
+                    .filter(tSisJoinCourse -> tSisJoinCourse.getJoinCourseType().equals(SisJoinCourse.JoinCourseType.ATTENDANCE))
                     .peek(tSisJoinCourse -> {
                         SisUser sisUser1 = tSisJoinCourse.getSisUser();
                         sisUser1.setSisJoinCourses(null);
