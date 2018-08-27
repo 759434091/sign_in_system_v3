@@ -41,17 +41,12 @@ public class CourseService {
     @Resource
     private SisCourseMapper sisCourseMapper;
     @Resource
-    private SisUserMapper sisUserMapper;
-    @Resource
-    private SisScheduleMapper sisScheduleMapper;
-    @Resource
-    private SisJoinCourseMapper sisJoinCourseMapper;
-    @Resource
-    private SisSupervisionMapper sisSupervisionMapper;
-    @Resource
     private AsyncJoinService asyncJoinService;
     @PersistenceContext
     private EntityManager entityManager;
+
+    public CourseService() {
+    }
 
     @SuppressWarnings("Duplicates")
     public JSONObject getCourses(@Nullable Boolean needMonitor,
