@@ -189,6 +189,7 @@ public class CourseService {
             .map(SisJoinCourse::getScId)
             .collect(Collectors.toList());
 
+        //join course schedule joinCourse
         Future<List<SisCourse>> sisCourseListFuture =
             asyncJoinService.joinSisCourseById(scIdList);
         Future<List<SisSchedule>> sisScheduleListFuture =
@@ -222,10 +223,10 @@ public class CourseService {
             if (null == sisCourse)
                 return;
 
-            //join course
+            //merge course
             JSONObject sisCourseJson = new JSONObject(sisCourse);
 
-            //join course -> schedule
+            //merge course -> schedule
             List<SisSchedule> tSisScheduleList =
                 sisScheduleList.parallelStream()
                     .filter(sisSchedule -> sisSchedule.getScId().equals(scId))
@@ -233,7 +234,7 @@ public class CourseService {
             sisCourseJson.put("sisScheduleList",
                 new JSONArray(tSisScheduleList));
 
-            //join course -> joinCourse
+            //merge course -> joinCourse
             List<SisJoinCourse> tSisJoinCourseList =
                 sisJoinCourseList1.parallelStream()
                     .filter(sisJoinCourse -> sisJoinCourse.getScId().equals(scId))
