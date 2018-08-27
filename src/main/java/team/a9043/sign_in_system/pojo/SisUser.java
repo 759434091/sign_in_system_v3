@@ -1,5 +1,12 @@
 package team.a9043.sign_in_system.pojo;
 
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class SisUser {
     /**
      *
@@ -164,5 +171,22 @@ public class SisUser {
      */
     public void setSuPassword(String suPassword) {
         this.suPassword = suPassword == null ? null : suPassword.trim();
+    }
+
+    public List<GrantedAuthority> getSuAuthorities() {
+        if (null == suAuthoritiesStr) {
+            return null;
+        }
+        return Arrays
+            .stream(suAuthoritiesStr.split(","))
+            .map(String::trim)
+            .map(String::toUpperCase)
+            .map(SimpleGrantedAuthority::new)
+            .collect(Collectors.toList());
+    }
+
+    public void setSuAuthorities(List<String> suAuthorityList) {
+        this.suAuthoritiesStr = String.join(",",
+            (String[]) suAuthorityList.toArray());
     }
 }

@@ -11,7 +11,9 @@ import team.a9043.sign_in_system.entity.SisUser;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 
 /**
  * @author a9043
@@ -24,8 +26,8 @@ public class CourseServiceTest {
     private CourseService courseService;
 
     @Test
-    public void getCourses() {
-        JSONObject jsonObject = courseService.getCourses(null, null, 0);
+    public void getCourses() throws IncorrectParameterException {
+        JSONObject jsonObject = courseService.getCourses(true, null, 1);
         log.info(jsonObject.toString(2));
     }
 

@@ -69,7 +69,7 @@ public class CourseController {
     public JSONObject getCourses(@TokenUser @ApiIgnore SisUser sisUser,
                                  @RequestParam(required = false) @ApiParam(value = "是否需要督导filter") Boolean needMonitor,
                                  @RequestParam(required = false) @ApiParam(value = "是否已有督导员filter") Boolean hasMonitor,
-                                 @RequestParam(required = false) @ApiParam(value = "分页filter") Integer page,
+                                 @RequestParam @ApiParam(value = "分页filter") Integer page,
                                  @RequestParam
                                  @ApiParam(value = "获得方式",
                                      allowableValues = "student,monitor," +
@@ -89,6 +89,9 @@ public class CourseController {
                 if (!sisUser.getSuAuthoritiesStr().contains("MONITOR")) {
                     throw new InvalidPermissionException(
                         "Invalid permission:" + getType);
+                }
+                if (needMonitor && !hasMonitor) {
+                    return courseService.getCourses(true, false, page);
                 }
                 return monitorService.getCourses(sisUser);
             }
