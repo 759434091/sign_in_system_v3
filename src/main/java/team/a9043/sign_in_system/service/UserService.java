@@ -4,15 +4,14 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.data.domain.Example;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.client.RestTemplate;
 import team.a9043.sign_in_system.convertor.JsonObjectHttpMessageConverter;
-import team.a9043.sign_in_system.entity.SisUser;
 import team.a9043.sign_in_system.exception.WxServerException;
-import team.a9043.sign_in_system.repository.SisUserRepository;
+import team.a9043.sign_in_system.mapper.SisUserMapper;
+import team.a9043.sign_in_system.pojo.SisUser;
+import team.a9043.sign_in_system.pojo.SisUserExample;
 import team.a9043.sign_in_system.util.JwtUtil;
 
 import javax.annotation.Resource;
@@ -20,6 +19,7 @@ import javax.transaction.Transactional;
 import java.security.InvalidParameterException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * @author a9043
@@ -34,9 +34,9 @@ public class UserService {
     @Value("${wxapp.secret}")
     private String secret;
     @Resource
-    private SisUserRepository sisUserRepository;
-    @Resource
     private BCryptPasswordEncoder bCryptPasswordEncoder;
+    @Resource
+    private SisUserMapper sisUserMapper;
 
     public UserService(@Value("${wxapp.rooturl}") String rooturl,
                        @Autowired JsonObjectHttpMessageConverter jsonObjectHttpMessageConverter) {
@@ -50,13 +50,9 @@ public class UserService {
     @Deprecated
     @SuppressWarnings("ConstantConditions")
     public JSONObject getUser(SisUser sisUser) throws InvalidParameterException {
-        return sisUserRepository
-            .findById(sisUser.getSuId())
+        return Optional
+            .ofNullable(sisUserMapper.selectByPrimaryKey(sisUser.getSuId()))
             .map(stdSisUser -> {
-                stdSisUser.setSisMonitorTrans(null);
-                stdSisUser.setSisSignInDetails(null);
-                stdSisUser.setSisCourses(null);
-                stdSisUser.setSisJoinCourses(null);
                 stdSisUser.setSuPassword(null);
 
                 JSONObject jsonObject = new JSONObject();
@@ -78,8 +74,7 @@ public class UserService {
     @Transactional
     public boolean createUser(SisUser sisUser) {
         sisUser.setSuPassword(bCryptPasswordEncoder.encode(sisUser.getSuPassword()));
-        sisUserRepository.saveAndFlush(sisUser);
-        return true;
+        return sisUserMapper.insert(sisUser) > 0;
     }
 
     @SuppressWarnings("Duplicates")
@@ -100,11 +95,13 @@ public class UserService {
         }
 
         String openid = wxUserInfo.getString("openid");
-        return sisUserRepository
-            .findById(sisUser.getSuId())
+        return Optional
+            .ofNullable(sisUserMapper.selectByPrimaryKey(sisUser.getSuId()))
             .map(stdSisUser -> {
-                stdSisUser.setSuOpenid(openid);
-                sisUserRepository.saveAndFlush(stdSisUser);
+                SisUser updatedSisUser = new SisUser();
+                updatedSisUser.setSuId(sisUser.getSuId());
+                updatedSisUser.setSuOpenid(openid);
+                sisUserMapper.updateByPrimaryKeySelective(updatedSisUser);
 
                 Map<String, Object> claimsMap = new HashMap<>();
                 claimsMap.put("suId", sisUser.getSuId());
@@ -152,11 +149,13 @@ public class UserService {
         }
 
         String openid = wxUserInfo.getString("openid");
-        SisUser exampleSisUser = new SisUser();
-        exampleSisUser.setSuOpenid(openid);
+        SisUserExample sisUserExample = new SisUserExample();
+        sisUserExample.createCriteria().andSuOpenidEqualTo(openid);
 
-        return sisUserRepository
-            .findOne(Example.of(exampleSisUser))
+
+        return sisUserMapper.selectByExample(sisUserExample)
+            .stream()
+            .findAny()
             .map(sisUser -> {
                 Map<String, Object> claimsMap = new HashMap<>();
                 claimsMap.put("suId", sisUser.getSuId());
@@ -164,10 +163,6 @@ public class UserService {
                 claimsMap.put("suAuthoritiesStr",
                     sisUser.getSuAuthoritiesStr());
 
-                sisUser.setSisMonitorTrans(null);
-                sisUser.setSisSignInDetails(null);
-                sisUser.setSisCourses(null);
-                sisUser.setSisJoinCourses(null);
                 sisUser.setSuPassword(null);
 
                 jsonObject.put("user", new JSONObject(sisUser));
