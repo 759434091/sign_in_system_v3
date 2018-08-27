@@ -209,7 +209,7 @@ public class CourseService {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("success", true);
         jsonObject.put("page", page);
-        jsonObject.put("array", pageJson);
+        jsonObject.put("data", pageJson);
         return jsonObject;
     }
 
