@@ -208,6 +208,7 @@ public class CourseService {
         List<team.a9043.sign_in_system.pojo.SisUser> sisUserList =
             sisUserMapper.selectByExample(sisUserExample);
 
+        //merge sisJoinCourse
         JSONArray jsonArray = new JSONArray(sisJoinCourseList);
         jsonArray.forEach(sisJoinCourseObj -> {
             JSONObject sisJoinCourseJson = (JSONObject) sisJoinCourseObj;
