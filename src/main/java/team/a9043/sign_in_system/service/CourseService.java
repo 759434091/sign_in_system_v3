@@ -51,7 +51,10 @@ public class CourseService {
     @SuppressWarnings("Duplicates")
     public JSONObject getCourses(@Nullable Boolean needMonitor,
                                  @Nullable Boolean hasMonitor,
-                                 @NonNull Integer page) throws IncorrectParameterException, ExecutionException, InterruptedException {
+                                 @Nullable Integer page) throws IncorrectParameterException, ExecutionException, InterruptedException {
+        if (null == page) {
+            throw new IncorrectParameterException("Incorrect page: " + page);
+        }
         if (page < 1)
             throw new IncorrectParameterException("Incorrect page: " + page +
                 " (must equal or bigger than 1)");

@@ -70,7 +70,8 @@ public class CourseController {
     public JSONObject getCourses(@TokenUser @ApiIgnore SisUser sisUser,
                                  @RequestParam(required = false) @ApiParam(value = "是否需要督导filter,若该参数为null则忽略hasMonitor") Boolean needMonitor,
                                  @RequestParam(required = false) @ApiParam(value = "是否已有督导员filter") Boolean hasMonitor,
-                                 @RequestParam @ApiParam(value = "分页filter") Integer page,
+                                 @RequestParam(required = false) @ApiParam(value =
+                                     "分页filter") Integer page,
                                  @RequestParam
                                  @ApiParam(value = "获得方式",
                                      allowableValues = "student,monitor," +
