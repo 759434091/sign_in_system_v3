@@ -38,7 +38,7 @@ public class CourseServiceTest {
     }
 
     @Test
-    public void getCourses1() {
+    public void getCourses1() throws ExecutionException, InterruptedException {
         SisUser sisUser = new SisUser();
         sisUser.setSuId("2016220401001");
         JSONObject jsonObject = courseService.getCourses(sisUser);

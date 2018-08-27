@@ -3,10 +3,7 @@ package team.a9043.sign_in_system.async;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.stereotype.Component;
-import team.a9043.sign_in_system.mapper.SisJoinCourseMapper;
-import team.a9043.sign_in_system.mapper.SisScheduleMapper;
-import team.a9043.sign_in_system.mapper.SisSupervisionMapper;
-import team.a9043.sign_in_system.mapper.SisUserMapper;
+import team.a9043.sign_in_system.mapper.*;
 import team.a9043.sign_in_system.pojo.*;
 
 import javax.annotation.Resource;
@@ -27,9 +24,11 @@ public class AsyncJoinService {
     private SisJoinCourseMapper sisJoinCourseMapper;
     @Resource
     private SisSupervisionMapper sisSupervisionMapper;
+    @Resource
+    private SisCourseMapper sisCourseMapper;
 
     @Async
-    public Future<List<SisUser>> joinSisUser(List<String> suIdList) {
+    public Future<List<SisUser>> joinSisUserById(List<String> suIdList) {
         if (suIdList.isEmpty()) {
             return new AsyncResult<>(new ArrayList<>());
         } else {
@@ -39,8 +38,18 @@ public class AsyncJoinService {
         }
     }
 
+    public Future<List<SisCourse>> joinSisCourseById(List<String> scIdList) {
+        if (scIdList.isEmpty()) {
+            return new AsyncResult<>(new ArrayList<>());
+        } else {
+            SisCourseExample sisCourseExample = new SisCourseExample();
+            sisCourseExample.createCriteria().andScIdIn(scIdList);
+            return new AsyncResult<>(sisCourseMapper.selectByExample(sisCourseExample));
+        }
+    }
+
     @Async
-    public Future<List<SisSchedule>> joinSisSchedule(List<String> scIdList) {
+    public Future<List<SisSchedule>> joinSisScheduleByForeignKey(List<String> scIdList) {
         if (scIdList.isEmpty()) {
             return new AsyncResult<>(new ArrayList<>());
         } else {
@@ -51,7 +60,7 @@ public class AsyncJoinService {
     }
 
     @Async
-    public Future<List<SisJoinCourse>> joinSisJoinCourse(List<String> scIdList) {
+    public Future<List<SisJoinCourse>> joinSisJoinCourseByForeignKey(List<String> scIdList) {
         if (scIdList.isEmpty()) {
             return new AsyncResult<>(new ArrayList<>());
         } else {
@@ -63,7 +72,7 @@ public class AsyncJoinService {
     }
 
     @Async
-    public Future<List<SisSupervision>> joinSisSupervision(List<Integer> ssIdList) {
+    public Future<List<SisSupervision>> joinSisSupervisionByForeignKey(List<Integer> ssIdList) {
         if (ssIdList.isEmpty()) {
             return new AsyncResult<>(new ArrayList<>());
         } else {

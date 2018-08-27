@@ -5,8 +5,6 @@ import com.github.pagehelper.PageInfo;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Example;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import team.a9043.sign_in_system.async.AsyncJoinService;
@@ -37,13 +35,13 @@ public class CourseService {
     @Resource
     private SisCourseRepository sisCourseRepository;
     @Resource
-    private SisJoinCourseRepository sisJoinCourseRepository;
-    @Resource
     private SisCourseMapper sisCourseMapper;
     @Resource
+    private SisJoinCourseMapper sisJoinCourseMapper;
+    @Resource
+    private SisUserMapper sisUserMapper;
+    @Resource
     private AsyncJoinService asyncJoinService;
-    @PersistenceContext
-    private EntityManager entityManager;
 
     public CourseService() {
     }
@@ -93,11 +91,11 @@ public class CourseService {
 
         //join monitor & schedules & joinCourses
         Future<List<team.a9043.sign_in_system.pojo.SisUser>> monitorListFuture =
-            asyncJoinService.joinSisUser(suIdList);
+            asyncJoinService.joinSisUserById(suIdList);
         Future<List<SisSchedule>> sisScheduleListFuture =
-            asyncJoinService.joinSisSchedule(scIdList);
+            asyncJoinService.joinSisScheduleByForeignKey(scIdList);
         Future<List<SisJoinCourse>> sisJoinCourseListFuture =
-            asyncJoinService.joinSisJoinCourse(scIdList);
+            asyncJoinService.joinSisJoinCourseByForeignKey(scIdList);
 
         List<team.a9043.sign_in_system.pojo.SisUser> sisUserList =
             monitorListFuture.get();
@@ -112,11 +110,11 @@ public class CourseService {
             .map(SisSchedule::getSsId)
             .collect(Collectors.toList());
         Future<List<SisSupervision>> sisSupervisionListFuture =
-            asyncJoinService.joinSisSupervision(ssIdList);
+            asyncJoinService.joinSisSupervisionByForeignKey(ssIdList);
         List<String> joinCoursesSuIdList =
             sisJoinCourseList.parallelStream().map(SisJoinCourse::getSuId).collect(Collectors.toList());
         Future<List<team.a9043.sign_in_system.pojo.SisUser>> joinCoursesSisUserListFuture =
-            asyncJoinService.joinSisUser(joinCoursesSuIdList);
+            asyncJoinService.joinSisUserById(joinCoursesSuIdList);
 
         List<SisSupervision> sisSupervisionList =
             sisSupervisionListFuture.get();
@@ -128,6 +126,7 @@ public class CourseService {
         pageJson.getJSONArray("list")
             .forEach(sisCourseObj -> {
                 JSONObject sisCourseJson = (JSONObject) sisCourseObj;
+                //merge monitor
                 sisCourseJson.put("monitor", sisUserList.stream()
                     .filter(sisUser -> sisUser.getSuId().equals(sisCourseJson.getString("suId")))
                     .findAny()
@@ -138,6 +137,7 @@ public class CourseService {
                     .map(JSONObject::new)
                     .orElse(null));
 
+                //merge schedule
                 JSONArray sisScheduleJsonArray =
                     new JSONArray(sisScheduleList.stream()
                         .filter(sisSchedule -> sisSchedule.getScId().equals(sisCourseJson.getString("scId")))
@@ -154,25 +154,13 @@ public class CourseService {
                 });
                 sisCourseJson.put("sisScheduleList", sisScheduleJsonArray);
 
+                //merge joinCourse
                 JSONArray sisJoinCourseJsonArray = new JSONArray(
                     sisJoinCourseList.parallelStream()
                         .filter(sisJoinCourse -> sisJoinCourse.getScId().equals(sisCourseJson.getString("scId")))
                         .collect(Collectors.toList()));
-                sisJoinCourseJsonArray.forEach(sisJoinCourseObj -> {
-                    JSONObject sisJoinCourseJson =
-                        (JSONObject) sisJoinCourseObj;
-                    team.a9043.sign_in_system.pojo.SisUser tSisUser =
-                        joinCoursesSisUserList.parallelStream()
-                            .filter(sisUser -> sisUser.getSuId().equals(sisJoinCourseJson.getString("suId")))
-                            .findAny()
-                            .map(sisUser -> {
-                                sisUser.setSuPassword(null);
-                                return sisUser;
-                            })
-                            .orElse(null);
-                    sisJoinCourseJson.put("sisUser",
-                        null == tSisUser ? null : new JSONObject(tSisUser));
-                });
+                mergeSisJoinCourseEtSisUser(joinCoursesSisUserList,
+                    sisJoinCourseJsonArray);
 
                 sisCourseJson.put("sisJoinCourseList", sisJoinCourseJsonArray);
             });
@@ -184,70 +172,82 @@ public class CourseService {
         return jsonObject;
     }
 
-    @SuppressWarnings({"ResultOfMethodCallIgnored", "ConstantConditions",
-        "Duplicates"})
-    @Transactional
-    public JSONObject getCourses(@TokenUser SisUser sisUser) {
-        team.a9043.sign_in_system.entity.SisJoinCourse tempJoinCourse =
-            new team.a9043.sign_in_system.entity.SisJoinCourse();
-        tempJoinCourse.setSisUser(sisUser);
+    public JSONObject getCourses(@TokenUser SisUser sisUser) throws ExecutionException, InterruptedException {
+        SisJoinCourseExample sisJoinCourseExample = new SisJoinCourseExample();
+        sisJoinCourseExample.createCriteria().andSuIdEqualTo(sisUser.getSuId());
+        List<SisJoinCourse> sisJoinCourseList =
+            sisJoinCourseMapper.selectByExample(sisJoinCourseExample);
 
-        Collection<team.a9043.sign_in_system.entity.SisJoinCourse> sisJoinCourses = sisJoinCourseRepository
-            .findAll(Example.of(tempJoinCourse));
-
-        JSONObject jsonObject = new JSONObject();
-        if (sisJoinCourses.size() <= 0) {
+        if (sisJoinCourseList.size() <= 0) {
+            JSONObject jsonObject = new JSONObject();
             jsonObject.put("success", false);
             jsonObject.put("message", "No courses");
             return jsonObject;
         }
 
-        sisJoinCourses
-            .parallelStream()
-            .forEach(sisJoinCourse -> {
-                sisJoinCourse.setSisUser(null);
-                team.a9043.sign_in_system.entity.SisCourse sisCourse =
-                    sisJoinCourse.getSisCourse();
-                sisCourse.setMonitor(null);
+        List<String> scIdList = sisJoinCourseList.stream()
+            .map(SisJoinCourse::getScId)
+            .collect(Collectors.toList());
 
-                sisCourse
-                    .getSisSchedules()
-                    .forEach(sisSchedule -> {
-                        sisSchedule.setSisCourse(null);
-                        sisSchedule.setSisSignIns(null);
-                        sisSchedule.setSisSupervisions(null);
-                    });
+        Future<List<SisCourse>> sisCourseListFuture =
+            asyncJoinService.joinSisCourseById(scIdList);
+        Future<List<SisSchedule>> sisScheduleListFuture =
+            asyncJoinService.joinSisScheduleByForeignKey(scIdList);
+        Future<List<SisJoinCourse>> sisJoinCourseListFuture =
+            asyncJoinService.joinSisJoinCourseByForeignKey(scIdList);
 
-                sisCourse.setSisJoinCourseList(sisCourse
-                    .getSisJoinCourseList()
-                    .stream()
-                    .filter(tSisJoinCourse -> tSisJoinCourse.getJoinCourseType().equals(team.a9043.sign_in_system.entity.SisJoinCourse.JoinCourseType.TEACHING))
-                    .peek(tSisJoinCourse -> {
-                        Optional.ofNullable(tSisJoinCourse.getSisUser())
-                            .ifPresent(sisUser1 -> {
-                                sisUser1.setSisJoinCourses(null);
-                                sisUser1.setSisCourses(null);
-                                sisUser1.setSisSignInDetails(null);
-                                sisUser1.setSisMonitorTrans(null);
-                                sisUser1.setSuPassword(null);
-                            });
+        List<SisCourse> sisCourseList = sisCourseListFuture.get();
+        List<SisSchedule> sisScheduleList = sisScheduleListFuture.get();
+        List<SisJoinCourse> sisJoinCourseList1 = sisJoinCourseListFuture.get();
 
-                        tSisJoinCourse.setSisCourse(null);
-                    })
-                    .collect(Collectors.toList()));
+        List<String> suIdList = sisJoinCourseList1.parallelStream()
+            .map(SisJoinCourse::getSuId)
+            .collect(Collectors.toList());
+        SisUserExample sisUserExample = new SisUserExample();
+        sisUserExample.createCriteria().andSuIdIn(suIdList);
+        List<team.a9043.sign_in_system.pojo.SisUser> sisUserList =
+            sisUserMapper.selectByExample(sisUserExample);
 
-                Optional.ofNullable(sisCourse.getMonitor()).ifPresent(monitor -> {
-                    monitor.setSisMonitorTrans(null);
-                    monitor.setSisSignInDetails(null);
-                    monitor.setSisCourses(null);
-                    monitor.setSisJoinCourses(null);
-                    monitor.setSuPassword(null);
-                });
-            });
+        JSONArray jsonArray = new JSONArray(sisJoinCourseList);
+        jsonArray.forEach(sisJoinCourseObj -> {
+            JSONObject sisJoinCourseJson = (JSONObject) sisJoinCourseObj;
 
-        entityManager.clear();
+            String scId = sisJoinCourseJson.getString("scId");
+            SisCourse sisCourse =
+                sisCourseList.stream()
+                    .filter(tSisCourse -> tSisCourse.getScId().equals(scId))
+                    .findAny()
+                    .orElse(null);
+            if (null == sisCourse)
+                return;
+
+            //join course
+            JSONObject sisCourseJson = new JSONObject(sisCourse);
+
+            //join course -> schedule
+            List<SisSchedule> tSisScheduleList =
+                sisScheduleList.parallelStream()
+                    .filter(sisSchedule -> sisSchedule.getScId().equals(scId))
+                    .collect(Collectors.toList());
+            sisCourseJson.put("sisScheduleList",
+                new JSONArray(tSisScheduleList));
+
+            //join course -> joinCourse
+            List<SisJoinCourse> tSisJoinCourseList =
+                sisJoinCourseList1.parallelStream()
+                    .filter(sisJoinCourse -> sisJoinCourse.getScId().equals(scId))
+                    .collect(Collectors.toList());
+            JSONArray sisJoinCourseJsonArray =
+                new JSONArray(tSisJoinCourseList);
+            mergeSisJoinCourseEtSisUser(sisUserList, sisJoinCourseJsonArray);
+            sisCourseJson.put("sisJoinCourseList", sisJoinCourseJsonArray);
+
+            sisJoinCourseJson.put("sisCourse", sisCourseJson);
+        });
+
+        JSONObject jsonObject = new JSONObject();
         jsonObject.put("success", true);
-        jsonObject.put("array", sisJoinCourses);
+        jsonObject.put("array", jsonArray);
         return jsonObject;
     }
 
@@ -279,5 +279,26 @@ public class CourseService {
         jsonObject.put("success",
             sisCourseRepository.save(stdSisCourse));
         return jsonObject;
+    }
+
+
+    //----------------------------util------------------------------//
+
+    private void mergeSisJoinCourseEtSisUser(List<team.a9043.sign_in_system.pojo.SisUser> sisUserList,
+                                             JSONArray sisJoinCourseJsonArray) {
+        sisJoinCourseJsonArray.forEach(sisJoinCourseObj2 -> {
+            JSONObject sisJoinCourseJson2 = (JSONObject) sisJoinCourseObj2;
+            team.a9043.sign_in_system.pojo.SisUser tSisUser =
+                sisUserList.parallelStream()
+                    .filter(tSisUser1 -> tSisUser1.getSuId().equals(sisJoinCourseJson2.getString("suId")))
+                    .findAny()
+                    .map(tSisUser1 -> {
+                        tSisUser1.setSuPassword(null);
+                        return tSisUser1;
+                    })
+                    .orElse(null);
+            sisJoinCourseJson2.put("sisUser", null == tSisUser ? null :
+                new JSONObject(tSisUser));
+        });
     }
 }
