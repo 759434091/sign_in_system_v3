@@ -77,7 +77,8 @@ public class CourseController {
                                      allowableValues = "student,monitor," +
                                          "administrator")
                                      String getType) throws
-        IncorrectParameterException, InvalidPermissionException, ExecutionException, InterruptedException {
+        IncorrectParameterException, InvalidPermissionException,
+        ExecutionException, InterruptedException {
 
         switch (getType) {
             case "administrator": {
@@ -90,12 +91,18 @@ public class CourseController {
             case "monitor": {
                 if (!sisUser.getSuAuthoritiesStr().contains("MONITOR")) {
                     throw new InvalidPermissionException(
+                        "Invalid permission:" + needMonitor + "," + hasMonitor);
+                }
+                if (null != needMonitor && null != hasMonitor) {
+                    if (needMonitor && !hasMonitor)
+                        return courseService.getCourses(true, false, page);
+                    throw new InvalidPermissionException(
                         "Invalid permission:" + getType);
-                }
-                if (needMonitor && !hasMonitor) {
-                    return courseService.getCourses(true, false, page);
-                }
-                return monitorService.getCourses(sisUser);
+                } else if (null == needMonitor && null == hasMonitor)
+                    return monitorService.getCourses(sisUser);
+                else
+                    throw new InvalidPermissionException(
+                        "Invalid permission:" + needMonitor + "," + hasMonitor);
             }
             case "student": {
                 if (!sisUser.getSuAuthoritiesStr().contains("STUDENT")) {
