@@ -14,6 +14,7 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author a9043
@@ -26,9 +27,14 @@ public class CourseServiceTest {
     private CourseService courseService;
 
     @Test
-    public void getCourses() throws IncorrectParameterException {
+    public void getCourses() throws IncorrectParameterException,
+        ExecutionException, InterruptedException {
+        LocalDateTime localDateTime = LocalDateTime.now();
         JSONObject jsonObject = courseService.getCourses(true, null, 1);
+        LocalDateTime localDateTime2 = LocalDateTime.now();
         log.info(jsonObject.toString(2));
+        log.info("until: " + localDateTime.until(localDateTime2,
+            ChronoUnit.MILLIS));
     }
 
     @Test

@@ -1,6 +1,5 @@
 package team.a9043.sign_in_system.service;
 
-import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import org.json.JSONArray;
@@ -10,6 +9,7 @@ import org.springframework.data.domain.Example;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import team.a9043.sign_in_system.async.AsyncJoinService;
 import team.a9043.sign_in_system.entity.SisUser;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.mapper.*;
@@ -23,6 +23,8 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 /**
@@ -46,13 +48,15 @@ public class CourseService {
     private SisJoinCourseMapper sisJoinCourseMapper;
     @Resource
     private SisSupervisionMapper sisSupervisionMapper;
+    @Resource
+    private AsyncJoinService asyncJoinService;
     @PersistenceContext
     private EntityManager entityManager;
 
     @SuppressWarnings("Duplicates")
     public JSONObject getCourses(@Nullable Boolean needMonitor,
                                  @Nullable Boolean hasMonitor,
-                                 @NonNull Integer page) throws IncorrectParameterException {
+                                 @NonNull Integer page) throws IncorrectParameterException, ExecutionException, InterruptedException {
         if (page < 1)
             throw new IncorrectParameterException("Incorrect page: " + page +
                 " (must equal or bigger than 1)");
@@ -89,68 +93,37 @@ public class CourseService {
                 scIdList.add(sisCourse.getScId());
             });
 
-        //join monitor
-        List<team.a9043.sign_in_system.pojo.SisUser> sisUserList;
-        if (suIdList.isEmpty()) {
-            sisUserList = new ArrayList<>();
-        } else {
-            SisUserExample sisUserExample = new SisUserExample();
-            sisUserExample.createCriteria().andSuIdIn(suIdList);
-            sisUserList = sisUserMapper.selectByExample(sisUserExample);
-        }
+        //join monitor & schedules & joinCourses
+        Future<List<team.a9043.sign_in_system.pojo.SisUser>> monitorListFuture =
+            asyncJoinService.joinSisUser(suIdList);
+        Future<List<SisSchedule>> sisScheduleListFuture =
+            asyncJoinService.joinSisSchedule(scIdList);
+        Future<List<SisJoinCourse>> sisJoinCourseListFuture =
+            asyncJoinService.joinSisJoinCourse(scIdList);
 
-        //join schedules
-        List<SisSchedule> sisScheduleList;
-        if (scIdList.isEmpty()) {
-            sisScheduleList = new ArrayList<>();
-        } else {
-            SisScheduleExample sisScheduleExample = new SisScheduleExample();
-            sisScheduleExample.createCriteria().andScIdIn(scIdList);
-            sisScheduleList =
-                sisScheduleMapper.selectByExample(sisScheduleExample);
-        }
+        List<team.a9043.sign_in_system.pojo.SisUser> sisUserList =
+            monitorListFuture.get();
+        List<SisSchedule> sisScheduleList =
+            sisScheduleListFuture.get();
+        List<SisJoinCourse> sisJoinCourseList =
+            sisJoinCourseListFuture.get();
 
-        //join schedules -> supervisions
+        //join schedule -> supervision
+        //join joinCourse -> user
         List<Integer> ssIdList = sisScheduleList.stream()
             .map(SisSchedule::getSsId)
             .collect(Collectors.toList());
-
-        List<SisSupervision> sisSupervisionList;
-        if (ssIdList.isEmpty()) {
-            sisSupervisionList = new ArrayList<>();
-        } else {
-            SisSupervisionExample sisSupervisionExample =
-                new SisSupervisionExample();
-            sisSupervisionExample.createCriteria().andSsIdIn(ssIdList);
-            sisSupervisionList =
-                sisSupervisionMapper.selectByExample(sisSupervisionExample);
-        }
-
-        //join join courses
-        List<SisJoinCourse> sisJoinCourseList;
-        if (scIdList.isEmpty()) {
-            sisJoinCourseList = new ArrayList<>();
-        } else {
-            SisJoinCourseExample sisJoinCourseExample =
-                new SisJoinCourseExample();
-            sisJoinCourseExample.createCriteria().andScIdIn(scIdList);
-            sisJoinCourseList =
-                sisJoinCourseMapper.selectByExample(sisJoinCourseExample);
-        }
-
-        //join join courses -> user
+        Future<List<SisSupervision>> sisSupervisionListFuture =
+            asyncJoinService.joinSisSupervision(ssIdList);
         List<String> joinCoursesSuIdList =
-            sisJoinCourseList.stream().map(SisJoinCourse::getSuId).collect(Collectors.toList());
+            sisJoinCourseList.parallelStream().map(SisJoinCourse::getSuId).collect(Collectors.toList());
+        Future<List<team.a9043.sign_in_system.pojo.SisUser>> joinCoursesSisUserListFuture =
+            asyncJoinService.joinSisUser(joinCoursesSuIdList);
 
-        List<team.a9043.sign_in_system.pojo.SisUser> joinCoursesSisUserList;
-        if (joinCoursesSuIdList.isEmpty()) {
-            joinCoursesSisUserList = new ArrayList<>();
-        } else {
-            SisUserExample joinCoursesSisUserExample = new SisUserExample();
-            joinCoursesSisUserExample.createCriteria().andSuIdIn(joinCoursesSuIdList);
-            joinCoursesSisUserList =
-                sisUserMapper.selectByExample(joinCoursesSisUserExample);
-        }
+        List<SisSupervision> sisSupervisionList =
+            sisSupervisionListFuture.get();
+        List<team.a9043.sign_in_system.pojo.SisUser> joinCoursesSisUserList
+            = joinCoursesSisUserListFuture.get();
 
         //merge to json
         JSONObject pageJson = new JSONObject(pageInfo);
@@ -184,14 +157,14 @@ public class CourseService {
                 sisCourseJson.put("sisScheduleList", sisScheduleJsonArray);
 
                 JSONArray sisJoinCourseJsonArray = new JSONArray(
-                    sisJoinCourseList.stream()
+                    sisJoinCourseList.parallelStream()
                         .filter(sisJoinCourse -> sisJoinCourse.getScId().equals(sisCourseJson.getString("scId")))
                         .collect(Collectors.toList()));
                 sisJoinCourseJsonArray.forEach(sisJoinCourseObj -> {
                     JSONObject sisJoinCourseJson =
                         (JSONObject) sisJoinCourseObj;
                     team.a9043.sign_in_system.pojo.SisUser tSisUser =
-                        joinCoursesSisUserList.stream()
+                        joinCoursesSisUserList.parallelStream()
                             .filter(sisUser -> sisUser.getSuId().equals(sisJoinCourseJson.getString("suId")))
                             .findAny()
                             .map(sisUser -> {

@@ -3,9 +3,11 @@ package team.a9043.sign_in_system.async;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.stereotype.Component;
+import team.a9043.sign_in_system.mapper.SisJoinCourseMapper;
+import team.a9043.sign_in_system.mapper.SisScheduleMapper;
+import team.a9043.sign_in_system.mapper.SisSupervisionMapper;
 import team.a9043.sign_in_system.mapper.SisUserMapper;
-import team.a9043.sign_in_system.pojo.SisUser;
-import team.a9043.sign_in_system.pojo.SisUserExample;
+import team.a9043.sign_in_system.pojo.*;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -19,6 +21,12 @@ import java.util.concurrent.Future;
 public class AsyncJoinService {
     @Resource
     private SisUserMapper sisUserMapper;
+    @Resource
+    private SisScheduleMapper sisScheduleMapper;
+    @Resource
+    private SisJoinCourseMapper sisJoinCourseMapper;
+    @Resource
+    private SisSupervisionMapper sisSupervisionMapper;
 
     @Async
     public Future<List<SisUser>> joinSisUser(List<String> suIdList) {
@@ -31,5 +39,38 @@ public class AsyncJoinService {
         }
     }
 
+    @Async
+    public Future<List<SisSchedule>> joinSisSchedule(List<String> scIdList) {
+        if (scIdList.isEmpty()) {
+            return new AsyncResult<>(new ArrayList<>());
+        } else {
+            SisScheduleExample sisScheduleExample = new SisScheduleExample();
+            sisScheduleExample.createCriteria().andScIdIn(scIdList);
+            return new AsyncResult<>(sisScheduleMapper.selectByExample(sisScheduleExample));
+        }
+    }
 
+    @Async
+    public Future<List<SisJoinCourse>> joinSisJoinCourse(List<String> scIdList) {
+        if (scIdList.isEmpty()) {
+            return new AsyncResult<>(new ArrayList<>());
+        } else {
+            SisJoinCourseExample sisJoinCourseExample =
+                new SisJoinCourseExample();
+            sisJoinCourseExample.createCriteria().andScIdIn(scIdList);
+            return new AsyncResult<>(sisJoinCourseMapper.selectByExample(sisJoinCourseExample));
+        }
+    }
+
+    @Async
+    public Future<List<SisSupervision>> joinSisSupervision(List<Integer> ssIdList) {
+        if (ssIdList.isEmpty()) {
+            return new AsyncResult<>(new ArrayList<>());
+        } else {
+            SisSupervisionExample sisSupervisionExample =
+                new SisSupervisionExample();
+            sisSupervisionExample.createCriteria().andSsIdIn(ssIdList);
+            return new AsyncResult<>(sisSupervisionMapper.selectByExample(sisSupervisionExample));
+        }
+    }
 }

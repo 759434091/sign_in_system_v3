@@ -24,6 +24,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.time.LocalDateTime;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author a9043
@@ -75,7 +76,7 @@ public class CourseController {
                                      allowableValues = "student,monitor," +
                                          "administrator")
                                      String getType) throws
-        IncorrectParameterException, InvalidPermissionException {
+        IncorrectParameterException, InvalidPermissionException, ExecutionException, InterruptedException {
 
         switch (getType) {
             case "administrator": {
