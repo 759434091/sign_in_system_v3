@@ -27,7 +27,7 @@ public class CourseServiceTest {
 
     @Test
     public void getCourses() throws IncorrectParameterException {
-        JSONObject jsonObject = courseService.getCourses(true, null, 1);
+        JSONObject jsonObject = courseService.getCourses(true, null, 2);
         log.info(jsonObject.toString(2));
     }
 

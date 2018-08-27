@@ -22,10 +22,7 @@ import javax.annotation.Resource;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -65,13 +62,11 @@ public class CourseService {
         SisCourseExample.Criteria criteria = sisCourseExample.createCriteria();
         if (null != needMonitor) {
             if (null == hasMonitor)
-                criteria.andScNeedMonitorEqualTo(true);
+                criteria.andScNeedMonitorEqualTo(needMonitor);
             else if (hasMonitor)
-                criteria.andScNeedMonitorEqualTo(true).andSuIdIsNotNull();
+                criteria.andScNeedMonitorEqualTo(needMonitor).andSuIdIsNotNull();
             else
-                criteria.andScNeedMonitorEqualTo(true).andSuIdIsNull();
-        } else {
-            criteria.andScNeedMonitorEqualTo(false);
+                criteria.andScNeedMonitorEqualTo(needMonitor).andSuIdIsNull();
         }
 
         List<SisCourse> sisCourseList =
@@ -86,12 +81,15 @@ public class CourseService {
             return jsonObject;
         }
 
-        //join monitor
-        List<String> suIdList = pageInfo.getList()
-            .stream()
-            .map(SisCourse::getSuId)
-            .collect(Collectors.toList());
+        List<String> suIdList = new ArrayList<>();
+        List<String> scIdList = new ArrayList<>();
+        pageInfo.getList()
+            .forEach(sisCourse -> {
+                suIdList.add(sisCourse.getSuId());
+                scIdList.add(sisCourse.getScId());
+            });
 
+        //join monitor
         List<team.a9043.sign_in_system.pojo.SisUser> sisUserList;
         if (suIdList.isEmpty()) {
             sisUserList = new ArrayList<>();
@@ -102,11 +100,6 @@ public class CourseService {
         }
 
         //join schedules
-        List<String> scIdList = pageInfo.getList()
-            .stream()
-            .map(SisCourse::getScId)
-            .collect(Collectors.toList());
-
         List<SisSchedule> sisScheduleList;
         if (scIdList.isEmpty()) {
             sisScheduleList = new ArrayList<>();
