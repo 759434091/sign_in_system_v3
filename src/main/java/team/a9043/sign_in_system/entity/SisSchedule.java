@@ -78,34 +78,6 @@ public class SisSchedule {
     private Collection<SisSignIn> sisSignIns = new ArrayList<>();
 
     public enum SsFortnight {
-        FULL(), ODD(), EVEN();
-
-        public static SsFortnight valueOf(int ordinal) {
-            if (ordinal < 0 || ordinal >= values().length) {
-                throw new IndexOutOfBoundsException("Invalid ordinal");
-            }
-            return values()[ordinal];
-        }
-    }
-
-    public enum SsTerm {
-        FIRST(), SECOND();
-
-        /**
-         * 学校系统转换
-         *
-         * @param value 学校系统值
-         * @return enum
-         */
-        public static SsTerm toEnum(int value) {
-            switch (value) {
-                case 1:
-                    return FIRST;
-                case 2:
-                    return SECOND;
-                default:
-                    return null;
-            }
-        }
+        FULL(), ODD(), EVEN()
     }
 }

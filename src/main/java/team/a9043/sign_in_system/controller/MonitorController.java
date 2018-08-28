@@ -107,6 +107,6 @@ public class MonitorController {
                                               "disagree")
                                           String smtStatus) throws String2EnumException {
         return monitorService.getTransCourses(sisUser,
-            team.a9043.sign_in_system.entity.SisMonitorTrans.SmtStatus.lowercase2Enum(smtStatus).ordinal());
+            SisMonitorTrans.SmtStatus.lowercase2Enum(smtStatus).ordinal());
     }
 }

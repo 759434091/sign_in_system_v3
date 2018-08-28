@@ -186,6 +186,7 @@ public class MonitorService {
                                         @NotNull Integer ssId,
                                         @NotNull SisSupervision sisSupervision,
                                         @NotNull LocalDateTime localDateTime) throws IncorrectParameterException, ScheduleParserException, InvalidPermissionException, InvalidTimeParameterException {
+        //check exist
         SisSupervisionKey sisSupervisionKey = new SisSupervisionKey();
         sisSupervisionKey.setSsId(ssId);
         sisSupervisionKey.setSsvWeek(sisSupervision.getSsvWeek());
@@ -194,10 +195,12 @@ public class MonitorService {
             throw new InvalidPermissionException("Supervision exist: " + ssId + ", " + sisSupervision.getSsvWeek());
         }
 
+        //valid sisSchedule
         SisSchedule sisSchedule = Optional
             .ofNullable(sisScheduleMapper.selectByPrimaryKey(ssId))
             .orElseThrow(() -> new IncorrectParameterException("No ssId: " + ssId));
 
+        //valid permission
         SisCourse sisCourse =
             sisCourseMapper.selectByPrimaryKey(sisSchedule.getScId());
         if (!sisUser.getSuId().equals(sisCourse.getSuId())) {
@@ -214,6 +217,7 @@ public class MonitorService {
                     new InvalidPermissionException("No permission: " + sisSchedule.getSsId()));
         }
 
+        //judge time
         if (!JudgeTimeUtil.isCourseTime(sisSchedule,
             sisSupervision.getSsvWeek(),
             localDateTime)) {

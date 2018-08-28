@@ -44,20 +44,7 @@ public class SisMonitorTrans {
 
 
     public enum SmtStatus {
-        UNTREATED(), AGREE(), DISAGREE();
-
-        public static SmtStatus lowercase2Enum(String value) throws String2EnumException {
-            switch (value) {
-                case "untreated":
-                    return UNTREATED;
-                case "agree":
-                    return AGREE;
-                case "disagree":
-                    return DISAGREE;
-                default:
-                    throw new String2EnumException("No enum: " + value);
-            }
-        }
+        UNTREATED(), AGREE(), DISAGREE()
     }
 
     @Embeddable

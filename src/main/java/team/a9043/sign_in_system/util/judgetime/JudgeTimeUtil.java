@@ -63,7 +63,7 @@ public class JudgeTimeUtil {
             actionWeek,
             sisSchedule.getSsStartWeek(),
             sisSchedule.getSsEndWeek(),
-            team.a9043.sign_in_system.entity.SisSchedule.SsFortnight.valueOf(sisSchedule.getSsFortnight()));
+            SisSchedule.SsFortnight.valueOf(sisSchedule.getSsFortnight()));
 
         boolean res3 = judgeDayOfWeek(localDateTime,
             DayOfWeek.of(sisSchedule.getSsDayOfWeek()));
@@ -80,19 +80,19 @@ public class JudgeTimeUtil {
         int termYear =
             localDateTime.getMonth().getValue() >= splitMonth.getValue() ?
                 localDateTime.getYear() : localDateTime.getYear() - 1;
-        team.a9043.sign_in_system.entity.SisSchedule.SsTerm term =
+        SisSchedule.SsTerm term =
             localDateTime.getMonth().getValue() >= splitMonth.getValue() ?
-                team.a9043.sign_in_system.entity.SisSchedule.SsTerm.FIRST :
-                team.a9043.sign_in_system.entity.SisSchedule.SsTerm.SECOND;
+                SisSchedule.SsTerm.FIRST :
+                SisSchedule.SsTerm.SECOND;
         int stdStartYear;
         int stdEndYear;
-        team.a9043.sign_in_system.entity.SisSchedule.SsTerm stdTerm;
+        SisSchedule.SsTerm stdTerm;
         try {
             String[] yearTerms = ssYearEtTerm.split("-");
             stdStartYear = Integer.valueOf(yearTerms[0]);
             stdEndYear = Integer.valueOf(yearTerms[1]);
             stdTerm =
-                team.a9043.sign_in_system.entity.SisSchedule.SsTerm.toEnum(Integer.valueOf(yearTerms[2]));
+                SisSchedule.SsTerm.toEnum(Integer.valueOf(yearTerms[2]));
 
             if (stdStartYear <= 2000 ||
                 stdStartYear >= 3000 ||
@@ -114,18 +114,18 @@ public class JudgeTimeUtil {
                                                int actionWeek,
                                                int stdSsStartWeek,
                                                int stdSsEndWeek,
-                                               team.a9043.sign_in_system.entity.SisSchedule.SsFortnight stdSsFortnight) {
+                                               SisSchedule.SsFortnight stdSsFortnight) {
         int nowWeek =
             (Math.toIntExact(localDateTime
                 .toLocalDate().until(startDate, ChronoUnit.DAYS)) - 1) / 7 + 1;
         if (nowWeek != actionWeek || nowWeek < stdSsStartWeek || nowWeek > stdSsEndWeek)
             return false;
 
-        team.a9043.sign_in_system.entity.SisSchedule.SsFortnight ssFortnight
+        SisSchedule.SsFortnight ssFortnight
             = (nowWeek % 2) == 0 ?
-            team.a9043.sign_in_system.entity.SisSchedule.SsFortnight.EVEN :
-            team.a9043.sign_in_system.entity.SisSchedule.SsFortnight.ODD;
-        return stdSsFortnight.equals(team.a9043.sign_in_system.entity.SisSchedule.SsFortnight.FULL) ||
+            SisSchedule.SsFortnight.EVEN :
+            SisSchedule.SsFortnight.ODD;
+        return stdSsFortnight.equals(SisSchedule.SsFortnight.FULL) ||
             stdSsFortnight.equals(ssFortnight);
     }
 
