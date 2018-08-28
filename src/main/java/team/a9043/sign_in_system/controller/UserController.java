@@ -2,13 +2,12 @@ package team.a9043.sign_in_system.controller;
 
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import io.swagger.models.HttpMethod;
 import org.json.JSONObject;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
-import team.a9043.sign_in_system.entity.SisUser;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.WxServerException;
+import team.a9043.sign_in_system.pojo.SisUser;
 import team.a9043.sign_in_system.security.tokenuser.TokenUser;
 import team.a9043.sign_in_system.service.UserService;
 

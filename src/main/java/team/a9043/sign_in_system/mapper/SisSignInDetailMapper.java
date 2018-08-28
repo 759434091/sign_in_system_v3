@@ -93,4 +93,6 @@ public interface SisSignInDetailMapper {
      * @mbg.generated Mon Aug 27 13:08:41 CST 2018
      */
     int updateByPrimaryKey(SisSignInDetail record);
+
+    int insertList(List<SisSignInDetail> sisSignInDetailList);
 }

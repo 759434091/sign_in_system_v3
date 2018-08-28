@@ -39,12 +39,6 @@ public class SisJoinCourse {
 
 
     public enum JoinCourseType {
-        ATTENDANCE(0), TEACHING(1);
-
-        private final int value;
-
-        JoinCourseType(int value) {
-            this.value = value;
-        }
+        ATTENDANCE(), TEACHING()
     }
 }
