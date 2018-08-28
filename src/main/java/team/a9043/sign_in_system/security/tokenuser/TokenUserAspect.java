@@ -7,7 +7,7 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
-import team.a9043.sign_in_system.entity.SisUser;
+import team.a9043.sign_in_system.pojo.SisUser;
 import team.a9043.sign_in_system.security.entity.SisAuthenticationToken;
 
 import java.lang.annotation.Annotation;
