@@ -1,6 +1,9 @@
 package team.a9043.sign_in_system.controller;
 
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.json.JSONObject;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
@@ -22,15 +25,31 @@ public class SignInController {
     private SignInService signInService;
 
     @GetMapping("/courses/{scId}/signIns")
+    @PreAuthorize("hasAnyAuthority('ADMINISTRATOR','STUDENT','TEACHER')")
+    @ApiOperation("获得签到以及历史")
     public JSONObject getSignIns(@TokenUser @ApiIgnore SisUser sisUser,
-                                 @PathVariable String scId,
-                                 @RequestParam String queryType) throws IncorrectParameterException {
+                                 @PathVariable @ApiParam("课程") String scId,
+                                 @RequestParam @ApiParam(value = "查询类型",
+                                     allowableValues = "student, teacher," +
+                                         " administrator") String queryType) throws IncorrectParameterException, InvalidPermissionException {
         switch (queryType) {
             case "teacher":
+                if (!sisUser.getSuAuthoritiesStr().contains("TEACHER")) {
+                    throw new InvalidPermissionException(
+                        "Invalid permission:" + queryType);
+                }
                 return signInService.getSignIns(scId);
             case "administrator":
+                if (!sisUser.getSuAuthoritiesStr().contains("ADMINISTRATOR")) {
+                    throw new InvalidPermissionException(
+                        "Invalid permission:" + queryType);
+                }
                 return signInService.getSignIns(scId);
             case "student":
+                if (!sisUser.getSuAuthoritiesStr().contains("STUDENT")) {
+                    throw new InvalidPermissionException(
+                        "Invalid permission:" + queryType);
+                }
                 return signInService.getSignIns(sisUser, scId);
             default:
                 throw new IncorrectParameterException(
@@ -39,8 +58,10 @@ public class SignInController {
     }
 
     @PostMapping("/schedules/{ssId}/signIns")
+    @PreAuthorize("hasAnyAuthority('ADMINISTRATOR','TEACHER')")
+    @ApiOperation("发起签到")
     public JSONObject createSignIn(@TokenUser @ApiIgnore SisUser sisUser,
-                                   @PathVariable Integer ssId) throws InvalidTimeParameterException, InvalidPermissionException {
+                                   @PathVariable @ApiParam("排课") Integer ssId) throws InvalidTimeParameterException, InvalidPermissionException {
         LocalDateTime localDateTime = LocalDateTime.now();
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("success",
@@ -49,14 +70,18 @@ public class SignInController {
     }
 
     @GetMapping("/schedules/{ssId}/signIns/week/{week}")
-    public JSONObject getSignIn(@PathVariable Integer ssId,
-                                @PathVariable Integer week) {
+    @PreAuthorize("hasAnyAuthority('ADMINISTRATOR','TEACHER')")
+    @ApiOperation("获得签到")
+    public JSONObject getSignIn(@PathVariable @ApiParam("排课") Integer ssId,
+                                @PathVariable @ApiParam("签到周") Integer week) {
         return signInService.getSignIn(ssId, week);
     }
 
     @PostMapping("/schedules/{ssId}/signIns/doSignIn")
+    @PreAuthorize("hasAnyAuthority('STUDENT')")
+    @ApiOperation("学生签到")
     public JSONObject signIn(@TokenUser @ApiIgnore SisUser sisUser,
-                             @PathVariable Integer ssId) throws IncorrectParameterException, InvalidTimeParameterException {
+                             @PathVariable @ApiParam("排课") Integer ssId) throws IncorrectParameterException, InvalidTimeParameterException {
         LocalDateTime localDateTime = LocalDateTime.now();
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("success",

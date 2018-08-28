@@ -60,11 +60,13 @@ public class SignInService {
             .ofNullable(sisScheduleMapper.selectByPrimaryKey(ssId))
             .orElseThrow(() -> new InvalidParameterException("Invalid ssId: " + ssId));
 
+        //get joinCourse
         SisJoinCourseExample sisJoinCourseExample = new SisJoinCourseExample();
         sisJoinCourseExample.createCriteria().andScIdEqualTo(sisSchedule.getScId());
         List<SisJoinCourse> sisJoinCourseList =
             sisJoinCourseMapper.selectByExample(sisJoinCourseExample);
 
+        //check permission
         sisJoinCourseList.parallelStream()
             .filter(sisJoinCourse -> sisJoinCourse.getJoinCourseType()
                 .equals(team.a9043.sign_in_system.entity.SisJoinCourse.JoinCourseType.TEACHING.ordinal()) &&
@@ -73,6 +75,7 @@ public class SignInService {
             .orElseThrow(() -> new InvalidPermissionException(
                 "Invalid Permission in: " + ssId));
 
+        //get suIdList
         List<String> suIdList = sisJoinCourseList
             .parallelStream()
             .filter(sisJoinCourse -> sisJoinCourse.getJoinCourseType()
