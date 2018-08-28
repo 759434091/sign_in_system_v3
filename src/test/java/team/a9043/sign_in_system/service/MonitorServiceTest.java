@@ -6,12 +6,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
-import team.a9043.sign_in_system.entity.SisMonitorTrans;
-import team.a9043.sign_in_system.entity.SisSchedule;
-import team.a9043.sign_in_system.entity.SisSupervision;
-import team.a9043.sign_in_system.entity.SisUser;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
+import team.a9043.sign_in_system.pojo.SisMonitorTrans;
+import team.a9043.sign_in_system.pojo.SisSchedule;
+import team.a9043.sign_in_system.pojo.SisSupervision;
+import team.a9043.sign_in_system.pojo.SisUser;
 import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
 import team.a9043.sign_in_system.util.judgetime.JudgeTimeUtil;
 import team.a9043.sign_in_system.util.judgetime.ScheduleParserException;
@@ -22,6 +22,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author a9043
@@ -34,7 +35,7 @@ public class MonitorServiceTest {
     private MonitorService monitorService;
 
     @Test
-    public void getCourses() {
+    public void getCourses() throws ExecutionException, InterruptedException {
         SisUser sisUser = new SisUser();
         sisUser.setSuId("2016220401001");
         JSONObject jsonObject = monitorService.getCourses(sisUser);
@@ -53,15 +54,12 @@ public class MonitorServiceTest {
 
         SisSchedule sisSchedule = new SisSchedule();
         sisSchedule.setSsId(ssId);
-        sisSchedule.setSsDayOfWeek(DayOfWeek.TUESDAY);
+        sisSchedule.setSsDayOfWeek(DayOfWeek.TUESDAY.getValue());
         sisSchedule.setSsStartTime(1);
 
-        SisSupervision.IdClass idClass = new SisSupervision.IdClass();
-        idClass.setSisSchedule(sisSchedule);
-        idClass.setSsvWeek(1);
-
         SisSupervision sisSupervision = new SisSupervision();
-        sisSupervision.setSsvId(idClass);
+        sisSupervision.setSsId(ssId);
+        sisSupervision.setSsvWeek(1);
         sisSupervision.setSsvActualNum(1);
         sisSupervision.setSsvMobileNum(1);
         sisSupervision.setSsvSleepNum(1);
@@ -96,16 +94,10 @@ public class MonitorServiceTest {
         SisUser tSisUser = new SisUser();
         tSisUser.setSuId("Z");
 
-        SisSchedule sisSchedule = new SisSchedule();
-        sisSchedule.setSsId(2);
-
-        SisMonitorTrans.IdClass idClass = new SisMonitorTrans.IdClass();
-        idClass.setSmtWeek(2);
-        idClass.setSisSchedule(sisSchedule);
-
         SisMonitorTrans sisMonitorTrans = new SisMonitorTrans();
-        sisMonitorTrans.setSmtId(idClass);
-        sisMonitorTrans.setSisUser(tSisUser);
+        sisMonitorTrans.setSuId("2016220401001");
+        sisMonitorTrans.setSsId(2);
+        sisMonitorTrans.setSmtWeek(2);
 
         monitorService.applyForTransfer(sisUser, 2, sisMonitorTrans);
     }

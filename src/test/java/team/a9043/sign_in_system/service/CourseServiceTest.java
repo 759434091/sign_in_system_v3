@@ -7,8 +7,8 @@ import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import team.a9043.sign_in_system.entity.SisCourse;
-import team.a9043.sign_in_system.entity.SisUser;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
+import team.a9043.sign_in_system.pojo.SisUser;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;

@@ -8,19 +8,18 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import team.a9043.sign_in_system.async.AsyncJoinService;
-import team.a9043.sign_in_system.entity.SisUser;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
-import team.a9043.sign_in_system.mapper.*;
+import team.a9043.sign_in_system.mapper.SisCourseMapper;
+import team.a9043.sign_in_system.mapper.SisJoinCourseMapper;
+import team.a9043.sign_in_system.mapper.SisUserMapper;
 import team.a9043.sign_in_system.pojo.*;
 import team.a9043.sign_in_system.repository.SisCourseRepository;
-import team.a9043.sign_in_system.repository.SisJoinCourseRepository;
 import team.a9043.sign_in_system.security.tokenuser.TokenUser;
 
 import javax.annotation.Resource;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
@@ -159,7 +158,7 @@ public class CourseService {
                     sisJoinCourseList.parallelStream()
                         .filter(sisJoinCourse -> sisJoinCourse.getScId().equals(sisCourseJson.getString("scId")))
                         .collect(Collectors.toList()));
-                mergeSisJoinCourseEtSisUser(joinCoursesSisUserList,
+                mergeWithSuIdJsonArrayEtSisUser(joinCoursesSisUserList,
                     sisJoinCourseJsonArray);
 
                 sisCourseJson.put("sisJoinCourseList", sisJoinCourseJsonArray);
@@ -241,7 +240,8 @@ public class CourseService {
                     .collect(Collectors.toList());
             JSONArray sisJoinCourseJsonArray =
                 new JSONArray(tSisJoinCourseList);
-            mergeSisJoinCourseEtSisUser(sisUserList, sisJoinCourseJsonArray);
+            mergeWithSuIdJsonArrayEtSisUser(sisUserList,
+                sisJoinCourseJsonArray);
             sisCourseJson.put("sisJoinCourseList", sisJoinCourseJsonArray);
 
             sisJoinCourseJson.put("sisCourse", sisCourseJson);
@@ -267,7 +267,7 @@ public class CourseService {
                         return tSisCourse;
                     }
 
-                    SisUser sisUser = sisCourse.getMonitor();
+                    team.a9043.sign_in_system.entity.SisUser sisUser = sisCourse.getMonitor();
                     if (null != sisUser) {
                         tSisCourse.setMonitor(sisUser);
                     }
@@ -286,21 +286,36 @@ public class CourseService {
 
     //----------------------------util------------------------------//
 
-    private void mergeSisJoinCourseEtSisUser(List<team.a9043.sign_in_system.pojo.SisUser> sisUserList,
-                                             JSONArray sisJoinCourseJsonArray) {
-        sisJoinCourseJsonArray.forEach(sisJoinCourseObj2 -> {
-            JSONObject sisJoinCourseJson2 = (JSONObject) sisJoinCourseObj2;
-            team.a9043.sign_in_system.pojo.SisUser tSisUser =
+    static void mergeWithSuIdJsonArrayEtSisUser(List<SisUser> sisUserList,
+                                                JSONArray withSuIdJsonArray) {
+        withSuIdJsonArray.forEach(withSuIdObj -> {
+            JSONObject withSuIdJson = (JSONObject) withSuIdObj;
+
+            String suId = withSuIdJson.getString("suId");
+            SisUser tSisUser =
                 sisUserList.parallelStream()
-                    .filter(tSisUser1 -> tSisUser1.getSuId().equals(sisJoinCourseJson2.getString("suId")))
+                    .filter(tSisUser1 -> tSisUser1.getSuId().equals(suId))
                     .findAny()
                     .map(tSisUser1 -> {
                         tSisUser1.setSuPassword(null);
                         return tSisUser1;
                     })
                     .orElse(null);
-            sisJoinCourseJson2.put("sisUser", null == tSisUser ? null :
+
+            withSuIdJson.put("sisUser", null == tSisUser ? null :
                 new JSONObject(tSisUser));
         });
+    }
+
+    static List<SisUser> getSisUserBySuIdList(List<String> suIdList,
+                                              SisUserMapper sisUserMapper) {
+        if (suIdList.isEmpty()) {
+            return new ArrayList<>();
+        } else {
+            SisUserExample sisUserExample =
+                new SisUserExample();
+            sisUserExample.createCriteria().andSuIdIn(suIdList);
+            return sisUserMapper.selectByExample(sisUserExample);
+        }
     }
 }

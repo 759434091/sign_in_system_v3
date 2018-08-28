@@ -3,7 +3,7 @@ package team.a9043.sign_in_system.security.handler;
 import org.json.JSONObject;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import team.a9043.sign_in_system.entity.SisUser;
+import team.a9043.sign_in_system.pojo.SisUser;
 import team.a9043.sign_in_system.security.entity.SecurityUserDetails;
 import team.a9043.sign_in_system.util.JwtUtil;
 
@@ -30,11 +30,6 @@ public class SisAuthenticationSuccessHandler implements AuthenticationSuccessHan
 
         String token = JwtUtil.createJWT(claimsMap);
 
-
-        sisUser.setSisMonitorTrans(null);
-        sisUser.setSisSignInDetails(null);
-        sisUser.setSisCourses(null);
-        sisUser.setSisJoinCourses(null);
         sisUser.setSuPassword(null);
 
         response.setHeader("Content-type", "application/json;charset=utf-8");

@@ -9,7 +9,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import team.a9043.sign_in_system.entity.SisUser;
+import team.a9043.sign_in_system.pojo.SisUser;
 import team.a9043.sign_in_system.security.entity.SisAuthenticationToken;
 import team.a9043.sign_in_system.util.JwtUtil;
 

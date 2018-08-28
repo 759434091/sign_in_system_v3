@@ -159,7 +159,7 @@ public class SignInService {
 
                 JSONArray sisSignInDetailJsonArray =
                     new JSONArray(sisSignInDetailList);
-                mergeSisSignInDetailEtSisUser(sisUserList,
+                CourseService.mergeWithSuIdJsonArrayEtSisUser(sisUserList,
                     sisSignInDetailJsonArray);
 
                 JSONObject sisSignInJson = new JSONObject(sisSignIn);
@@ -235,20 +235,13 @@ public class SignInService {
         List<String> suIdList = sisSignInDetailList.parallelStream()
             .map(SisSignInDetail::getSuId)
             .collect(Collectors.toList());
-        List<SisUser> sisUserList;
-        if (suIdList.isEmpty()) {
-            sisUserList = new ArrayList<>();
-        } else {
-            SisUserExample sisUserExample =
-                new SisUserExample();
-            sisUserExample.createCriteria().andSuIdIn(suIdList);
-            sisUserList =
-                sisUserMapper.selectByExample(sisUserExample);
-        }
+        List<SisUser> sisUserList =
+            CourseService.getSisUserBySuIdList(suIdList, sisUserMapper);
 
         //merge student
         JSONArray sisSignInDetailJsonArray = new JSONArray(sisSignInDetailList);
-        mergeSisSignInDetailEtSisUser(sisUserList, sisSignInDetailJsonArray);
+        CourseService.mergeWithSuIdJsonArrayEtSisUser(sisUserList,
+            sisSignInDetailJsonArray);
 
         //merge signInDetail
         JSONArray sisSignInJsonArray = new JSONArray(sisSignInList);
@@ -376,24 +369,5 @@ public class SignInService {
             }
             redisTemplate.opsForHash().delete(key);
         }
-    }
-
-    //-------------------------------//
-
-
-    private void mergeSisSignInDetailEtSisUser(List<SisUser> sisUserList,
-                                               JSONArray sisSignInDetailJsonArray) {
-        sisSignInDetailJsonArray.forEach(sisSignInDetailObj -> {
-            JSONObject sisSignInDetailJson =
-                (JSONObject) sisSignInDetailObj;
-
-            String suId = sisSignInDetailJson.getString("suId");
-            SisUser sisUser = sisUserList.parallelStream()
-                .filter(tSisUser -> tSisUser.getSuId().equals(suId))
-                .findAny()
-                .orElse(null);
-            sisSignInDetailJson.put("sisUser",
-                null == sisUser ? null : new JSONObject(sisUser));
-        });
     }
 }

@@ -79,6 +79,13 @@ public class SisSchedule {
 
     public enum SsFortnight {
         FULL(), ODD(), EVEN();
+
+        public static SsFortnight valueOf(int ordinal) {
+            if (ordinal < 0 || ordinal >= values().length) {
+                throw new IndexOutOfBoundsException("Invalid ordinal");
+            }
+            return values()[ordinal];
+        }
     }
 
     public enum SsTerm {

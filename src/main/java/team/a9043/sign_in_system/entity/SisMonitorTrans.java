@@ -44,13 +44,7 @@ public class SisMonitorTrans {
 
 
     public enum SmtStatus {
-        UNTREATED(0), AGREE(1), DISAGREE(2);
-
-        private final int value;
-
-        SmtStatus(int value) {
-            this.value = value;
-        }
+        UNTREATED(), AGREE(), DISAGREE();
 
         public static SmtStatus lowercase2Enum(String value) throws String2EnumException {
             switch (value) {

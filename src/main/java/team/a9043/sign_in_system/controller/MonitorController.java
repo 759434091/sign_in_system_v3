@@ -8,12 +8,12 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
-import team.a9043.sign_in_system.entity.SisMonitorTrans;
-import team.a9043.sign_in_system.entity.SisSupervision;
-import team.a9043.sign_in_system.entity.SisUser;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
 import team.a9043.sign_in_system.exception.String2EnumException;
+import team.a9043.sign_in_system.pojo.SisMonitorTrans;
+import team.a9043.sign_in_system.pojo.SisSupervision;
+import team.a9043.sign_in_system.pojo.SisUser;
 import team.a9043.sign_in_system.security.tokenuser.TokenUser;
 import team.a9043.sign_in_system.service.MonitorService;
 import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
@@ -103,9 +103,10 @@ public class MonitorController {
     public JSONObject getTransCourses(@TokenUser @ApiIgnore SisUser sisUser,
                                       @RequestParam
                                       @ApiParam(value = "获得方式",
-                                          allowableValues = "untreated,agree,disagree")
+                                          allowableValues = "untreated,agree," +
+                                              "disagree")
                                           String smtStatus) throws String2EnumException {
         return monitorService.getTransCourses(sisUser,
-            SisMonitorTrans.SmtStatus.lowercase2Enum(smtStatus));
+            team.a9043.sign_in_system.entity.SisMonitorTrans.SmtStatus.lowercase2Enum(smtStatus).ordinal());
     }
 }
