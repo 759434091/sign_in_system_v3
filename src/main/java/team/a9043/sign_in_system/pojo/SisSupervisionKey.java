@@ -13,7 +13,6 @@ public class SisSupervisionKey {
      * @mbg.generated Mon Aug 27 13:08:41 CST 2018
      */
     @ApiModelProperty("督导课程排课")
-    @NotNull
     private Integer ssId;
 
     /**

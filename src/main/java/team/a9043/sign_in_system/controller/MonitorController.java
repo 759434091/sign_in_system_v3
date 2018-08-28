@@ -33,10 +33,10 @@ public class MonitorController {
 
     @PostMapping("/courses/{scId}/monitor")
     @ApiOperation(value = "领取督导池", notes = "只可领取, 不可取消")
-    public JSONObject modifyMonitor(@TokenUser @ApiIgnore SisUser sisUser,
-                                    @PathVariable @ApiParam(value = "课程序号") String scId) throws InvalidPermissionException, IncorrectParameterException {
+    public JSONObject drawMonitor(@TokenUser @ApiIgnore SisUser sisUser,
+                                  @PathVariable @ApiParam(value = "课程序号") String scId) throws InvalidPermissionException, IncorrectParameterException {
 
-        return monitorService.modifyMonitor(sisUser, scId);
+        return monitorService.drawMonitor(sisUser, scId);
     }
 
     @GetMapping("/courses/{scId}/supervisions")
@@ -49,8 +49,10 @@ public class MonitorController {
 
     @PostMapping("/schedules/{ssId}/supervisions")
     @PreAuthorize("hasAuthority('MONITOR')")
-    @ApiOperation(value = "插入督导记录", notes = "根据排课号插入督导记录"
-        , produces = "application/json")
+    @ApiOperation(value = "插入督导记录",
+        notes = "SisSupervision{ssvWeek, ssvActualNum, ssvMobileNum, " +
+            "ssvSleepNum, ssvRecInfo}",
+        produces = "application/json")
     public JSONObject insertSupervision(@TokenUser @ApiIgnore SisUser sisUser,
                                         @PathVariable
                                         @ApiParam(value = "排课号") Integer ssId,
@@ -72,7 +74,8 @@ public class MonitorController {
 
     @PostMapping("/schedules/{ssId}/monitor-trans")
     @PreAuthorize("hasAuthority('MONITOR')")
-    @ApiOperation(value = "申请转接", notes = "根据SisMonitorTrans和ssId",
+    @ApiOperation(value = "申请转接",
+        notes = "SisMonitorTrans{smtWeek, suId}",
         produces = "application/json")
     private JSONObject applyForTransfer(@TokenUser @ApiIgnore SisUser sisUser,
                                         @PathVariable @ApiParam("排课") Integer ssId,
@@ -86,7 +89,8 @@ public class MonitorController {
 
     @PutMapping("/schedules/{ssId}/monitor-trans")
     @PreAuthorize("hasAuthority('MONITOR')")
-    @ApiOperation(value = "接受或拒绝转接", notes = "根据SisMonitorTrans和ssId",
+    @ApiOperation(value = "接受或拒绝转接",
+        notes = "SisMonitorTrans{smtStatus, smtWeek}",
         produces = "application/json")
     public JSONObject modifyTransfer(@TokenUser @ApiIgnore SisUser sisUser,
                                      @PathVariable @ApiParam("排课") Integer ssId,

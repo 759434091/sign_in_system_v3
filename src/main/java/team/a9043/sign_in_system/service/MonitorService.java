@@ -117,6 +117,7 @@ public class MonitorService {
                 "Invalid permission: " + scId);
         }
 
+        //join schedule
         SisScheduleExample sisScheduleExample = new SisScheduleExample();
         sisScheduleExample.createCriteria().andScIdEqualTo(scId);
         List<SisSchedule> sisScheduleList =
@@ -126,6 +127,7 @@ public class MonitorService {
             .map(SisSchedule::getSsId)
             .collect(Collectors.toList());
 
+        //join supervision
         List<SisSupervision> sisSupervisionList;
         if (ssIdList.isEmpty()) {
             sisSupervisionList = new ArrayList<>();
@@ -161,8 +163,8 @@ public class MonitorService {
     }
 
     @Transactional
-    public JSONObject modifyMonitor(@NotNull SisUser sisUser,
-                                    @NotNull String scId) throws IncorrectParameterException, InvalidPermissionException {
+    public JSONObject drawMonitor(@NotNull SisUser sisUser,
+                                  @NotNull String scId) throws IncorrectParameterException, InvalidPermissionException {
         SisCourse sisCourse = Optional
             .ofNullable(sisCourseMapper.selectByPrimaryKey(scId))
             .orElseThrow(() -> new IncorrectParameterException("No course: " + scId));
@@ -211,7 +213,7 @@ public class MonitorService {
             Optional
                 .ofNullable(sisMonitorTransMapper.selectByPrimaryKey(sisMonitorTransKey))
                 .filter(sisMonitorTrans ->
-                    sisMonitorTrans.getSmtStatus().equals(team.a9043.sign_in_system.entity.SisMonitorTrans.SmtStatus.AGREE.ordinal()) &&
+                    sisMonitorTrans.getSmtStatus().equals(SisMonitorTrans.SmtStatus.AGREE.ordinal()) &&
                         sisUser.getSuId().equals(sisMonitorTrans.getSuId()))
                 .orElseThrow(() ->
                     new InvalidPermissionException("No permission: " + sisSchedule.getSsId()));
@@ -289,6 +291,7 @@ public class MonitorService {
             .orElseThrow(() ->
                 new IncorrectParameterException("Incorrect ssId" + ssId));
 
+        //check exist
         SisMonitorTransKey sisMonitorTransKey = new SisMonitorTransKey();
         sisMonitorTransKey.setSsId(ssId);
         sisMonitorTransKey.setSmtWeek(sisMonitorTrans.getSmtWeek());
@@ -298,13 +301,14 @@ public class MonitorService {
             throw new InvalidPermissionException("MonitorTrans exist: " + new JSONObject(sisMonitorTransKey).toString());
         }
 
+        //check permission
         SisCourse sisCourse =
             sisCourseMapper.selectByPrimaryKey(sisSchedule.getScId());
         if (null == sisCourse || null == sisCourse.getSuId() || !sisCourse.getSuId().equals(sisUser.getSuId())) {
             throw new InvalidPermissionException("Invalid Permission: ssId " + sisSchedule.getSsId());
         }
 
-        sisMonitorTrans.setSmtStatus(team.a9043.sign_in_system.entity.SisMonitorTrans.SmtStatus.UNTREATED.ordinal());
+        sisMonitorTrans.setSmtStatus(SisMonitorTrans.SmtStatus.UNTREATED.ordinal());
         sisMonitorTrans.setSuId(sisUser.getSuId());
         sisMonitorTrans.setSsId(ssId);
         JSONObject jsonObject = new JSONObject();
@@ -317,6 +321,10 @@ public class MonitorService {
     public JSONObject modifyTransfer(@NotNull SisUser sisUser,
                                      @NotNull Integer ssId,
                                      @NotNull SisMonitorTrans sisMonitorTrans) throws IncorrectParameterException, InvalidPermissionException {
+        if (null == sisMonitorTrans.getSmtWeek())
+            throw new IncorrectParameterException("Incorrect smtWeek: " + sisMonitorTrans.getSmtWeek());
+        if (null == sisMonitorTrans.getSmtStatus())
+            throw new IncorrectParameterException("Incorrect smtStatus: " + sisMonitorTrans.getSmtStatus());
         SisMonitorTransKey sisMonitorTransKey = new SisMonitorTransKey();
         sisMonitorTransKey.setSsId(ssId);
         sisMonitorTransKey.setSmtWeek(sisMonitorTrans.getSmtWeek());

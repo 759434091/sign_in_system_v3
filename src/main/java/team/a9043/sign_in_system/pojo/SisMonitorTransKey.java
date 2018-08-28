@@ -13,7 +13,6 @@ public class SisMonitorTransKey {
      * @mbg.generated Tue Aug 28 21:51:04 CST 2018
      */
     @ApiModelProperty("排课")
-    @NotNull
     private Integer ssId;
 
     /**
