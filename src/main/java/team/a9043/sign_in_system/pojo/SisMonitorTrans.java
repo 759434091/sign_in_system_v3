@@ -1,22 +1,24 @@
 package team.a9043.sign_in_system.pojo;
 
 import io.swagger.annotations.ApiModelProperty;
-import team.a9043.sign_in_system.exception.String2EnumException;
+import team.a9043.sign_in_system.exception.String2ValueException;
+
+import javax.validation.constraints.NotNull;
 
 public class SisMonitorTrans extends SisMonitorTransKey {
     public enum SmtStatus {
         UNTREATED(), AGREE(), DISAGREE();
 
-        public static SisMonitorTrans.SmtStatus lowercase2Enum(String value) throws String2EnumException {
+        public static Integer lowercase2Value(String value) throws String2ValueException {
             switch (value) {
                 case "untreated":
-                    return UNTREATED;
+                    return UNTREATED.ordinal();
                 case "agree":
-                    return AGREE;
+                    return AGREE.ordinal();
                 case "disagree":
-                    return DISAGREE;
+                    return DISAGREE.ordinal();
                 default:
-                    throw new String2EnumException("No enum: " + value);
+                    throw new String2ValueException("No enum: " + value);
             }
         }
     }
@@ -28,6 +30,7 @@ public class SisMonitorTrans extends SisMonitorTransKey {
      * @mbg.generated Tue Aug 28 21:51:04 CST 2018
      */
     @ApiModelProperty("转接人")
+    @NotNull
     private String suId;
 
     /**

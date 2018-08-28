@@ -6,7 +6,6 @@ import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
-import team.a9043.sign_in_system.exception.String2EnumException;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;

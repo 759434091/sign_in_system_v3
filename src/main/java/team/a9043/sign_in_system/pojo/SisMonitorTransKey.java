@@ -1,5 +1,9 @@
 package team.a9043.sign_in_system.pojo;
 
+import io.swagger.annotations.ApiModelProperty;
+
+import javax.validation.constraints.NotNull;
+
 public class SisMonitorTransKey {
     /**
      *
@@ -8,6 +12,8 @@ public class SisMonitorTransKey {
      *
      * @mbg.generated Tue Aug 28 21:51:04 CST 2018
      */
+    @ApiModelProperty("排课")
+    @NotNull
     private Integer ssId;
 
     /**
@@ -17,6 +23,8 @@ public class SisMonitorTransKey {
      *
      * @mbg.generated Tue Aug 28 21:51:04 CST 2018
      */
+    @ApiModelProperty("转接周")
+    @NotNull
     private Integer smtWeek;
 
     /**

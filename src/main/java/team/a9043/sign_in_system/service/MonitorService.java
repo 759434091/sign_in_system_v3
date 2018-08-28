@@ -245,12 +245,15 @@ public class MonitorService {
             .selectByExample(sisMonitorTransExample)
             .stream()
             .map(sisMonitorTrans -> {
+                //join schedule
                 SisSchedule sisSchedule =
                     sisScheduleMapper.selectByPrimaryKey(sisMonitorTrans.getSsId());
 
+                //join course
                 SisCourse sisCourse =
                     sisCourseMapper.selectByPrimaryKey(sisSchedule.getScId());
 
+                //join monitor
                 JSONObject sisCourseJson = new JSONObject(sisCourse);
                 if (null != sisCourse.getSuId()) {
                     SisUser monitor =
@@ -258,6 +261,7 @@ public class MonitorService {
                     sisCourseJson.put("sisUser", new JSONObject(monitor));
                 }
 
+                //merge all
                 JSONObject sisScheduleJson = new JSONObject(sisSchedule);
                 sisScheduleJson.put("sisCourse", sisCourseJson);
 

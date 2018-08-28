@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
-import team.a9043.sign_in_system.exception.String2EnumException;
+import team.a9043.sign_in_system.exception.String2ValueException;
 import team.a9043.sign_in_system.exception.WxServerException;
 import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
 
@@ -50,7 +50,7 @@ public class GlobalExceptionHandler {
         MissingPathVariableException.class,
         IncorrectParameterException.class,
         InvalidTimeParameterException.class,
-        String2EnumException.class})
+        String2ValueException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public void handleBadRequest(Exception e,
                                  HttpServletResponse response) throws IOException {

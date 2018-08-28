@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
-import team.a9043.sign_in_system.exception.String2EnumException;
+import team.a9043.sign_in_system.exception.String2ValueException;
 import team.a9043.sign_in_system.pojo.SisMonitorTrans;
 import team.a9043.sign_in_system.pojo.SisSupervision;
 import team.a9043.sign_in_system.pojo.SisUser;
@@ -73,10 +73,9 @@ public class MonitorController {
     @PostMapping("/schedules/{ssId}/monitor-trans")
     @PreAuthorize("hasAuthority('MONITOR')")
     @ApiOperation(value = "申请转接", notes = "根据SisMonitorTrans和ssId",
-        produces
-            = "application/json")
+        produces = "application/json")
     private JSONObject applyForTransfer(@TokenUser @ApiIgnore SisUser sisUser,
-                                        @PathVariable @ApiParam("排课号") Integer ssId,
+                                        @PathVariable @ApiParam("排课") Integer ssId,
                                         @RequestBody SisMonitorTrans sisMonitorTrans,
                                         @ApiIgnore BindingResult bindingResult) throws IncorrectParameterException, InvalidPermissionException {
         if (bindingResult.hasErrors()) {
@@ -90,7 +89,7 @@ public class MonitorController {
     @ApiOperation(value = "接受或拒绝转接", notes = "根据SisMonitorTrans和ssId",
         produces = "application/json")
     public JSONObject modifyTransfer(@TokenUser @ApiIgnore SisUser sisUser,
-                                     @PathVariable Integer ssId,
+                                     @PathVariable @ApiParam("排课") Integer ssId,
                                      @RequestBody SisMonitorTrans sisMonitorTrans) throws IncorrectParameterException, InvalidPermissionException {
         return monitorService.modifyTransfer(sisUser, ssId, sisMonitorTrans);
     }
@@ -105,8 +104,8 @@ public class MonitorController {
                                       @ApiParam(value = "获得方式",
                                           allowableValues = "untreated,agree," +
                                               "disagree")
-                                          String smtStatus) throws String2EnumException {
+                                          String smtStatus) throws String2ValueException {
         return monitorService.getTransCourses(sisUser,
-            SisMonitorTrans.SmtStatus.lowercase2Enum(smtStatus).ordinal());
+            SisMonitorTrans.SmtStatus.lowercase2Value(smtStatus));
     }
 }
