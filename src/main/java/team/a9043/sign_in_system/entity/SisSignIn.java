@@ -8,6 +8,7 @@ import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -34,6 +35,10 @@ public class SisSignIn {
     @ApiModelProperty("签到周")
     @Column
     private Integer ssiWeek;
+
+    @ApiModelProperty("发起时间")
+    @Column
+    private LocalDateTime ssiCreateTime;
 
     @OneToMany(cascade = {CascadeType.ALL})
     @JoinColumn(name = "ssiId", referencedColumnName = "ssiId")

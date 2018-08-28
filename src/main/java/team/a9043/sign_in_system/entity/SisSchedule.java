@@ -78,24 +78,18 @@ public class SisSchedule {
     private Collection<SisSignIn> sisSignIns = new ArrayList<>();
 
     public enum SsFortnight {
-        FULL(0), ODD(1), EVEN(2);
-
-        private final int value;
-
-        SsFortnight(int value) {
-            this.value = value;
-        }
+        FULL(), ODD(), EVEN();
     }
 
     public enum SsTerm {
-        FIRST(1), SECOND(2);
+        FIRST(), SECOND();
 
-        private final int value;
-
-        SsTerm(int value) {
-            this.value = value;
-        }
-
+        /**
+         * 学校系统转换
+         *
+         * @param value 学校系统值
+         * @return enum
+         */
         public static SsTerm toEnum(int value) {
             switch (value) {
                 case 1:
