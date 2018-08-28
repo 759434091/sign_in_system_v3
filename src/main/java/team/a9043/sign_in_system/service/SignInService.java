@@ -337,9 +337,12 @@ public class SignInService {
         @Override
         @Transactional
         public void run() {
+            Map<Object, Object> map =
+                redisTemplate.opsForHash().entries(key);
             SisSignIn sisSignIn = new SisSignIn();
             sisSignIn.setSsId(ssId);
             sisSignIn.setSsiWeek(week);
+            sisSignIn.setSsiCreateTime((LocalDateTime) map.get("create_time"));
             boolean resSisSignIn = sisSignInMapper.insert(sisSignIn) > 0;
             if (!resSisSignIn || null == sisSignIn.getSsiId()) {
                 logger.error(String.format(
@@ -347,10 +350,7 @@ public class SignInService {
                 return;
             }
 
-            Map<Object, Object> map =
-                redisTemplate.opsForHash().entries(key);
             map.remove("create_time");
-
             List<SisSignInDetail> sisSignInDetailList = map
                 .entrySet()
                 .parallelStream()
