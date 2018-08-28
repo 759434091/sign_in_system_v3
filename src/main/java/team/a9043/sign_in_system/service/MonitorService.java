@@ -181,7 +181,6 @@ public class MonitorService {
         return jsonObject;
     }
 
-    // TODO async
     @Transactional
     public JSONObject insertSupervision(@NotNull SisUser sisUser,
                                         @NotNull Integer ssId,
@@ -273,7 +272,6 @@ public class MonitorService {
         return jsonObject;
     }
 
-    // TODO async
     @Transactional
     public JSONObject applyForTransfer(@NotNull SisUser sisUser,
                                        @NotNull Integer ssId,

@@ -1,5 +1,9 @@
 package team.a9043.sign_in_system.pojo;
 
+import io.swagger.annotations.ApiModelProperty;
+
+import javax.validation.constraints.NotNull;
+
 public class SisSupervisionKey {
     /**
      *
@@ -8,6 +12,8 @@ public class SisSupervisionKey {
      *
      * @mbg.generated Mon Aug 27 13:08:41 CST 2018
      */
+    @ApiModelProperty("督导课程排课")
+    @NotNull
     private Integer ssId;
 
     /**
@@ -17,6 +23,8 @@ public class SisSupervisionKey {
      *
      * @mbg.generated Mon Aug 27 13:08:41 CST 2018
      */
+    @NotNull
+    @ApiModelProperty("督导周")
     private Integer ssvWeek;
 
     /**

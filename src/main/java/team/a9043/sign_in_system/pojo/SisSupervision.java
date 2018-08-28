@@ -1,5 +1,11 @@
 package team.a9043.sign_in_system.pojo;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+
+import javax.validation.constraints.NotNull;
+
+@ApiModel("督导记录")
 public class SisSupervision extends SisSupervisionKey {
     /**
      *
@@ -8,6 +14,9 @@ public class SisSupervision extends SisSupervisionKey {
      *
      * @mbg.generated Mon Aug 27 13:08:41 CST 2018
      */
+
+    @NotNull
+    @ApiModelProperty("实际上课人数")
     private Integer ssvActualNum;
 
     /**
@@ -17,6 +26,8 @@ public class SisSupervision extends SisSupervisionKey {
      *
      * @mbg.generated Mon Aug 27 13:08:41 CST 2018
      */
+    @NotNull
+    @ApiModelProperty("玩手机人数")
     private Integer ssvMobileNum;
 
     /**
@@ -26,6 +37,8 @@ public class SisSupervision extends SisSupervisionKey {
      *
      * @mbg.generated Mon Aug 27 13:08:41 CST 2018
      */
+    @NotNull
+    @ApiModelProperty(value = "督导详情记录", notes = "长度不超过150字")
     private String ssvRecInfo;
 
     /**
@@ -35,6 +48,8 @@ public class SisSupervision extends SisSupervisionKey {
      *
      * @mbg.generated Mon Aug 27 13:08:41 CST 2018
      */
+    @NotNull
+    @ApiModelProperty("睡觉人数")
     private Integer ssvSleepNum;
 
     /**
