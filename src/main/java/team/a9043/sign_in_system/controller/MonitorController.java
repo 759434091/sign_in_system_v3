@@ -64,7 +64,6 @@ public class MonitorController {
             throw new IncorrectParameterException(new JSONArray(bindingResult.getAllErrors()).toString());
         }
 
-
         LocalDateTime localDateTime = LocalDateTime.now();
         return monitorService.insertSupervision(
             sisUser,
@@ -78,7 +77,7 @@ public class MonitorController {
     @ApiOperation(value = "申请转接",
         notes = "SisMonitorTrans{smtWeek, suId}",
         produces = "application/json")
-    private JSONObject applyForTransfer(@TokenUser @ApiIgnore SisUser sisUser,
+    public JSONObject applyForTransfer(@TokenUser @ApiIgnore SisUser sisUser,
                                         @PathVariable @ApiParam("排课") Integer ssId,
                                         @RequestBody @Validated SisMonitorTrans sisMonitorTrans,
                                         @ApiIgnore BindingResult bindingResult) throws IncorrectParameterException, InvalidPermissionException {
