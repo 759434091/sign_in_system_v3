@@ -2,6 +2,7 @@ package team.a9043.sign_in_system.service;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.stereotype.Service;
 import team.a9043.sign_in_system.async.AsyncJoinService;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
@@ -17,8 +18,10 @@ import javax.transaction.Transactional;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
@@ -39,6 +42,8 @@ public class MonitorService {
     private SisSupervisionMapper sisSupervisionMapper;
     @Resource
     private SisMonitorTransMapper sisMonitorTransMapper;
+    @Resource
+    private SisJoinCourseMapper sisJoinCourseMapper;
     @Resource
     private AsyncJoinService asyncJoinService;
 

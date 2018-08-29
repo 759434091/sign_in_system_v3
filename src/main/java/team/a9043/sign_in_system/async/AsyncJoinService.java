@@ -1,7 +1,10 @@
 package team.a9043.sign_in_system.async;
 
+import org.springframework.context.annotation.Bean;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.AsyncResult;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import team.a9043.sign_in_system.mapper.*;
 import team.a9043.sign_in_system.pojo.*;
@@ -26,6 +29,11 @@ public class AsyncJoinService {
     private SisSupervisionMapper sisSupervisionMapper;
     @Resource
     private SisCourseMapper sisCourseMapper;
+
+    @Bean
+    public TaskExecutor taskExecutor() {
+        return new ThreadPoolTaskExecutor();
+    }
 
     @Async
     public Future<List<SisUser>> joinSisUserById(List<String> suIdList) {
