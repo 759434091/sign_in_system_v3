@@ -43,8 +43,6 @@ public class MonitorService {
     @Resource
     private SisMonitorTransMapper sisMonitorTransMapper;
     @Resource
-    private SisJoinCourseMapper sisJoinCourseMapper;
-    @Resource
     private AsyncJoinService asyncJoinService;
 
     public JSONObject getCourses(@NotNull SisUser sisUser) throws ExecutionException, InterruptedException {

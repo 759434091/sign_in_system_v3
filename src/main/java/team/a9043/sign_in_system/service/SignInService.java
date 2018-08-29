@@ -7,6 +7,8 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.scheduling.Trigger;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
@@ -20,10 +22,7 @@ import javax.transaction.Transactional;
 import java.security.InvalidParameterException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -36,7 +35,7 @@ import java.util.stream.StreamSupport;
 public class SignInService {
     private String signInKeyFormat = "sis_ssId_%d_week_%d";
     @Resource
-    private ScheduledThreadPoolExecutor scheduledThreadPoolExecutor;
+    private ThreadPoolTaskScheduler threadPoolTaskScheduler;
     @Resource
     private RedisTemplate<String, Object> redisTemplate;
     @Resource
@@ -97,8 +96,10 @@ public class SignInService {
             .forEach(suId -> redisTemplate.opsForHash()
                 .put(key, suId, false));
 
-        scheduledThreadPoolExecutor.schedule(new EndSignInTask(key, ssId,
-            week), 10L, TimeUnit.MINUTES);
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.MINUTE, 10);
+        threadPoolTaskScheduler.schedule(new EndSignInTask(key, ssId,
+            week), calendar.toInstant());
         return true;
     }
 
