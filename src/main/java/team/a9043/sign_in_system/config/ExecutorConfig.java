@@ -24,8 +24,9 @@ public class ExecutorConfig {
     @Bean
     public TaskExecutor taskExecutor(ThreadPoolExecutor.CallerRunsPolicy callerRunsPolicy) {
         ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
-        taskExecutor.setCorePoolSize(3);
+        taskExecutor.setCorePoolSize(20);
         taskExecutor.setRejectedExecutionHandler(callerRunsPolicy);
+        taskExecutor.setQueueCapacity(50);
         taskExecutor.initialize();
         return taskExecutor;
     }
