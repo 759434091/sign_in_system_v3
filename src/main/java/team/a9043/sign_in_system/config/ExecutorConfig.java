@@ -25,8 +25,9 @@ public class ExecutorConfig {
     public TaskExecutor taskExecutor(ThreadPoolExecutor.CallerRunsPolicy callerRunsPolicy) {
         ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
         taskExecutor.setCorePoolSize(20);
+        taskExecutor.setMaxPoolSize(60);
         taskExecutor.setRejectedExecutionHandler(callerRunsPolicy);
-        taskExecutor.setQueueCapacity(50);
+        taskExecutor.setQueueCapacity(10);
         taskExecutor.initialize();
         return taskExecutor;
     }
