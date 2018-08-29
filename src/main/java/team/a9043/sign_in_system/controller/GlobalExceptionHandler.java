@@ -3,6 +3,7 @@ package team.a9043.sign_in_system.controller;
 import org.json.JSONObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MissingPathVariableException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
+import team.a9043.sign_in_system.exception.InvalidPermissionException;
 import team.a9043.sign_in_system.exception.String2ValueException;
 import team.a9043.sign_in_system.exception.WxServerException;
 import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
@@ -35,7 +37,10 @@ public class GlobalExceptionHandler {
             formatErr(HttpStatus.UNSUPPORTED_MEDIA_TYPE, e.getMessage()));
     }
 
-    @ExceptionHandler({AccessDeniedException.class})
+    @ExceptionHandler({
+        AccessDeniedException.class,
+        InvalidPermissionException.class
+    })
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public void handleForbidden(Exception e,
                                 HttpServletResponse response) throws IOException {
@@ -58,6 +63,19 @@ public class GlobalExceptionHandler {
             "application/json;charset=utf-8");
         response.getWriter().write(
             formatErr(HttpStatus.BAD_REQUEST, e.getMessage()));
+    }
+
+    @ExceptionHandler({
+        HttpMediaTypeNotSupportedException.class
+    })
+    @ResponseStatus(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+    private JSONObject handleUnsupportedMediaType(Exception e,
+                                                  HttpServletResponse response) {
+        response.setHeader("Access-Control-Allow-Origin", "*");
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("errMsg", e.getMessage());
+        jsonObject.put("err", HttpStatus.UNSUPPORTED_MEDIA_TYPE);
+        return jsonObject;
     }
 
     @ExceptionHandler(WxServerException.class)

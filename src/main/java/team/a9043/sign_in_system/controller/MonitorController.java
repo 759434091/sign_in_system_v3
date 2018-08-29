@@ -6,6 +6,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
@@ -47,7 +48,7 @@ public class MonitorController {
         return monitorService.getSupervisions(sisUser, scId);
     }
 
-    @PostMapping("/schedules/{ssId}/supervisions")
+    @PostMapping(value = "/schedules/{ssId}/supervisions")
     @PreAuthorize("hasAuthority('MONITOR')")
     @ApiOperation(value = "插入督导记录",
         notes = "SisSupervision{ssvWeek, ssvActualNum, ssvMobileNum, " +
@@ -56,7 +57,7 @@ public class MonitorController {
     public JSONObject insertSupervision(@TokenUser @ApiIgnore SisUser sisUser,
                                         @PathVariable
                                         @ApiParam(value = "排课号") Integer ssId,
-                                        @RequestBody @Valid SisSupervision sisSupervision,
+                                        @RequestBody @Validated SisSupervision sisSupervision,
                                         @ApiIgnore BindingResult bindingResult) throws IncorrectParameterException, ScheduleParserException, InvalidPermissionException, InvalidTimeParameterException {
 
         if (bindingResult.hasErrors()) {
@@ -72,14 +73,14 @@ public class MonitorController {
             localDateTime);
     }
 
-    @PostMapping("/schedules/{ssId}/monitor-trans")
+    @PostMapping(value = "/schedules/{ssId}/monitor-trans")
     @PreAuthorize("hasAuthority('MONITOR')")
     @ApiOperation(value = "申请转接",
         notes = "SisMonitorTrans{smtWeek, suId}",
         produces = "application/json")
     private JSONObject applyForTransfer(@TokenUser @ApiIgnore SisUser sisUser,
                                         @PathVariable @ApiParam("排课") Integer ssId,
-                                        @RequestBody SisMonitorTrans sisMonitorTrans,
+                                        @RequestBody @Validated SisMonitorTrans sisMonitorTrans,
                                         @ApiIgnore BindingResult bindingResult) throws IncorrectParameterException, InvalidPermissionException {
         if (bindingResult.hasErrors()) {
             throw new IncorrectParameterException(new JSONArray(bindingResult.getAllErrors()).toString());
