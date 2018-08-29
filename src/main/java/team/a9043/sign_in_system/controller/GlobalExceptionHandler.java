@@ -69,7 +69,7 @@ public class GlobalExceptionHandler {
         HttpMediaTypeNotSupportedException.class
     })
     @ResponseStatus(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
-    private JSONObject handleUnsupportedMediaType(Exception e,
+    public JSONObject handleUnsupportedMediaType(Exception e,
                                                   HttpServletResponse response) {
         response.setHeader("Access-Control-Allow-Origin", "*");
         JSONObject jsonObject = new JSONObject();

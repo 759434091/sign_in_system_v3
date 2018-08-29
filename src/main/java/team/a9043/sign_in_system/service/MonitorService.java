@@ -309,7 +309,7 @@ public class MonitorService {
         }
 
         sisMonitorTrans.setSmtStatus(SisMonitorTrans.SmtStatus.UNTREATED.ordinal());
-        sisMonitorTrans.setSuId(sisUser.getSuId());
+        sisMonitorTrans.setSuId(sisMonitorTrans.getSuId());
         sisMonitorTrans.setSsId(ssId);
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("success",
