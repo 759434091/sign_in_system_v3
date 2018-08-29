@@ -33,10 +33,11 @@ public class ExecutorConfig {
     }
 
     @Bean
-    public ThreadPoolTaskScheduler threadPoolTaskScheduler() {
+    public ThreadPoolTaskScheduler threadPoolTaskScheduler(ThreadPoolExecutor.CallerRunsPolicy callerRunsPolicy) {
         ThreadPoolTaskScheduler threadPoolTaskScheduler =
             new ThreadPoolTaskScheduler();
-        threadPoolTaskScheduler.setPoolSize(50);
+        threadPoolTaskScheduler.setPoolSize(20);
+        threadPoolTaskScheduler.setRejectedExecutionHandler(callerRunsPolicy);
         threadPoolTaskScheduler.setErrorHandler(TaskUtils.LOG_AND_PROPAGATE_ERROR_HANDLER);
         threadPoolTaskScheduler.initialize();
         return threadPoolTaskScheduler;
