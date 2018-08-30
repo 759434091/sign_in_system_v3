@@ -78,7 +78,7 @@ public class SignInController {
     }
 
     @PostMapping("/schedules/{ssId}/signIns/doSignIn")
-    @PreAuthorize("hasAnyAuthority('STUDENT')")
+    @PreAuthorize("hasAnyAuthority('STUDENT') AND sisUser.type.equals('code')")
     @ApiOperation("学生签到")
     public JSONObject signIn(@TokenUser @ApiIgnore SisUser sisUser,
                              @PathVariable @ApiParam("排课") Integer ssId) throws IncorrectParameterException, InvalidTimeParameterException {

@@ -49,7 +49,7 @@ public class MonitorController {
     }
 
     @PostMapping(value = "/schedules/{ssId}/supervisions")
-    @PreAuthorize("hasAuthority('MONITOR')")
+    @PreAuthorize("hasAuthority('MONITOR') AND sisUser.type.equals('code')")
     @ApiOperation(value = "插入督导记录",
         notes = "SisSupervision{ssvWeek, ssvActualNum, ssvMobileNum, " +
             "ssvSleepNum, ssvRecInfo}",
@@ -78,9 +78,9 @@ public class MonitorController {
         notes = "SisMonitorTrans{smtWeek, suId}",
         produces = "application/json")
     public JSONObject applyForTransfer(@TokenUser @ApiIgnore SisUser sisUser,
-                                        @PathVariable @ApiParam("排课") Integer ssId,
-                                        @RequestBody @Validated SisMonitorTrans sisMonitorTrans,
-                                        @ApiIgnore BindingResult bindingResult) throws IncorrectParameterException, InvalidPermissionException {
+                                       @PathVariable @ApiParam("排课") Integer ssId,
+                                       @RequestBody @Validated SisMonitorTrans sisMonitorTrans,
+                                       @ApiIgnore BindingResult bindingResult) throws IncorrectParameterException, InvalidPermissionException {
         if (bindingResult.hasErrors()) {
             throw new IncorrectParameterException(new JSONArray(bindingResult.getAllErrors()).toString());
         }

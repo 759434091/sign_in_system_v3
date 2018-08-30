@@ -27,6 +27,7 @@ public class SisAuthenticationSuccessHandler implements AuthenticationSuccessHan
         claimsMap.put("suId", sisUser.getSuId());
         claimsMap.put("suName", sisUser.getSuName());
         claimsMap.put("suAuthoritiesStr", sisUser.getSuAuthoritiesStr());
+        claimsMap.put("type", "password");
 
         String token = JwtUtil.createJWT(claimsMap);
 

@@ -46,6 +46,7 @@ public class SisAuthenticationFilter extends OncePerRequestFilter {
             sisUser = new SisUser();
             sisUser.setSuId(claims.get("suId", String.class));
             sisUser.setSuName(claims.get("suName", String.class));
+            sisUser.setType(claims.get("type", String.class));
             sisUser.setSuAuthoritiesStr(claims.get("suAuthoritiesStr",
                 String.class));
 

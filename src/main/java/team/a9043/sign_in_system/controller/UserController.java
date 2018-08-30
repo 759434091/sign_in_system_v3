@@ -30,7 +30,7 @@ public class UserController {
     }
 
 
-    @ApiOperation(value = "修改微信绑定", notes = "根据code修改微信绑定")
+    @ApiOperation(value = "初次修改微信绑定", notes = "根据code修改微信绑定")
     @PutMapping(value = "/users/{suId}")
     public JSONObject modifyBindUser(@TokenUser @ApiIgnore SisUser sisUser,
                                      @PathVariable @ApiParam("用户名") String suId,

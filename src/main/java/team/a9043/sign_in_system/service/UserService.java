@@ -78,8 +78,24 @@ public class UserService {
     }
 
     @SuppressWarnings("Duplicates")
-    public JSONObject modifyBindUser(SisUser sisUser, String code) throws WxServerException {
-        JSONObject jsonObject = new JSONObject();
+    public JSONObject modifyBindUser(SisUser sisUser, String code) throws InvalidParameterException, WxServerException {
+        SisUser stdSisUser =
+            sisUserMapper.selectByPrimaryKey(sisUser.getSuId());
+        if (null == stdSisUser) {
+            throw new InvalidParameterException(
+                "Token user not found: " + sisUser.getSuId());
+        }
+
+        if (null != stdSisUser.getSuOpenid()) {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("success", false);
+            jsonObject.put("error", true);
+            jsonObject.put("message", "User has bind");
+            jsonObject.put("errCode", 1);
+            jsonObject.put("token_user", new JSONObject(sisUser));
+            return jsonObject;
+        }
+
         JSONObject wxUserInfo = restTemplate.getForObject(String.format(
             apiurl, appid, secret, code
         ), JSONObject.class);
@@ -88,39 +104,33 @@ public class UserService {
             throw new WxServerException("WX Server error");
         }
         if (!wxUserInfo.has("openid")) {
+            JSONObject jsonObject = new JSONObject();
             jsonObject.put("success", false);
             jsonObject.put("error", true);
+            jsonObject.put("errCode", 2);
             jsonObject.put("message", wxUserInfo.toString());
             return jsonObject;
         }
 
         String openid = wxUserInfo.getString("openid");
-        return Optional
-            .ofNullable(sisUserMapper.selectByPrimaryKey(sisUser.getSuId()))
-            .map(stdSisUser -> {
-                SisUser updatedSisUser = new SisUser();
-                updatedSisUser.setSuId(sisUser.getSuId());
-                updatedSisUser.setSuOpenid(openid);
-                sisUserMapper.updateByPrimaryKeySelective(updatedSisUser);
+        SisUser updatedSisUser = new SisUser();
+        updatedSisUser.setSuId(sisUser.getSuId());
+        updatedSisUser.setSuOpenid(openid);
+        sisUserMapper.updateByPrimaryKeySelective(updatedSisUser);
 
-                Map<String, Object> claimsMap = new HashMap<>();
-                claimsMap.put("suId", sisUser.getSuId());
-                claimsMap.put("suName", sisUser.getSuId());
-                claimsMap.put("suAuthoritiesStr",
-                    sisUser.getSuAuthoritiesStr());
+        Map<String, Object> claimsMap = new HashMap<>();
+        claimsMap.put("suId", sisUser.getSuId());
+        claimsMap.put("suName", sisUser.getSuId());
+        claimsMap.put("type", "code");
+        claimsMap.put("suAuthoritiesStr",
+            sisUser.getSuAuthoritiesStr());
 
-                jsonObject.put("success", true);
-                jsonObject.put("error", false);
-                jsonObject.put("access_token", JwtUtil.createJWT(claimsMap));
-                return jsonObject;
-            })
-            .orElseGet(() -> {
-                jsonObject.put("success", false);
-                jsonObject.put("error", true);
-                jsonObject.put("message", "Token user not found ");
-                jsonObject.put("token_user", new JSONObject(sisUser));
-                return jsonObject;
-            });
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success", true);
+        jsonObject.put("error", false);
+        jsonObject.put("errCode", 0);
+        jsonObject.put("access_token", JwtUtil.createJWT(claimsMap));
+        return jsonObject;
     }
 
     /**
@@ -160,6 +170,7 @@ public class UserService {
                 Map<String, Object> claimsMap = new HashMap<>();
                 claimsMap.put("suId", sisUser.getSuId());
                 claimsMap.put("suName", sisUser.getSuName());
+                claimsMap.put("type", "code");
                 claimsMap.put("suAuthoritiesStr",
                     sisUser.getSuAuthoritiesStr());
 
