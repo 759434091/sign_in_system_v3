@@ -59,6 +59,16 @@ public class SignInService {
             .ofNullable(sisScheduleMapper.selectByPrimaryKey(ssId))
             .orElseThrow(() -> new InvalidParameterException("Invalid ssId: " + ssId));
 
+        Integer week = JudgeTimeUtil.getWeek(localDateTime.toLocalDate());
+
+        boolean isSuspend = sisSchedule.getSsSuspensionList()
+            .stream()
+            .anyMatch(tWeek -> tWeek.equals(week));
+        if (isSuspend)
+            throw new InvalidPermissionException(String.format(
+                "Schedule %d week %d is in the suspension list",
+                ssId, week));
+
         //get joinCourse
         SisJoinCourseExample sisJoinCourseExample = new SisJoinCourseExample();
         sisJoinCourseExample.createCriteria().andScIdEqualTo(sisSchedule.getScId());
@@ -82,7 +92,6 @@ public class SignInService {
             .map(SisJoinCourse::getSuId)
             .collect(Collectors.toList());
 
-        Integer week = JudgeTimeUtil.getWeek(localDateTime.toLocalDate());
         String key =
             String.format(signInKeyFormat, ssId,
                 week);

@@ -1,5 +1,10 @@
 package team.a9043.sign_in_system.pojo;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
 public class SisSchedule {
     public enum SsFortnight {
         FULL(), ODD(), EVEN();
@@ -31,6 +36,29 @@ public class SisSchedule {
                     return null;
             }
         }
+    }
+
+    public List<Integer> getSsSuspensionList() {
+        return Arrays.stream(ssSuspension.split(","))
+            .map(String::trim)
+            .map(s -> {
+                try {
+                    return Integer.valueOf(s);
+                } catch (NumberFormatException e) {
+                    return null;
+                }
+            })
+            .filter(Objects::nonNull)
+            .filter(integer -> integer > 0)
+            .collect(Collectors.toList());
+    }
+
+    public void setSsSuspensionList(List<Integer> ssSuspensionList) {
+        this.ssSuspension = String.join(",",
+            (String[]) ssSuspensionList
+                .stream()
+                .map(Object::toString)
+                .toArray());
     }
 
     /**

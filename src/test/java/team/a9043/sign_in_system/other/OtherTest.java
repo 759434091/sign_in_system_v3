@@ -1,6 +1,7 @@
 package team.a9043.sign_in_system.other;
 
 import lombok.extern.java.Log;
+import org.json.JSONArray;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -15,11 +16,10 @@ import team.a9043.sign_in_system.pojo.SisSchedule;
 import team.a9043.sign_in_system.pojo.SisScheduleExample;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 /**
  * @author a9043
@@ -75,5 +75,23 @@ public class OtherTest {
 
         }
         log.info("end: " + isEnd);
+    }
+
+    @Test
+    public void test3() {
+        String ssSuspension = "1,a,2,c.,-1";
+        List<Integer> integers = Arrays.stream(ssSuspension.split(","))
+            .map(String::trim)
+            .map(s -> {
+                try {
+                    return Integer.valueOf(s);
+                } catch (NumberFormatException e) {
+                    return null;
+                }
+            })
+            .filter(Objects::nonNull)
+            .filter(integer -> integer > 0)
+            .collect(Collectors.toList());
+        log.info(new JSONArray(integers).toString(2));
     }
 }

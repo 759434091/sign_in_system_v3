@@ -34,6 +34,7 @@ public class CourseController {
     private MonitorService monitorService;
 
     @GetMapping("/week")
+    @ApiOperation(value = "获得当前周和服务器时间")
     public JSONObject getWeek() throws InvalidTimeParameterException {
         LocalDateTime localDateTime = LocalDateTime.now();
         JSONObject jsonObject = new JSONObject();

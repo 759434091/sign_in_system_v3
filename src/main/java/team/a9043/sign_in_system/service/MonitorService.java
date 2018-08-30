@@ -205,6 +205,16 @@ public class MonitorService {
             .ofNullable(sisScheduleMapper.selectByPrimaryKey(ssId))
             .orElseThrow(() -> new IncorrectParameterException("No ssId: " + ssId));
 
+        //valid suspension
+        Integer ssvWeek = sisSupervision.getSsvWeek();
+        boolean isSuspend = sisSchedule.getSsSuspensionList()
+            .stream()
+            .anyMatch(week -> week.equals(ssvWeek));
+        if (isSuspend)
+            throw new InvalidPermissionException(String.format(
+                "Schedule %d week %d is in the suspension list",
+                ssId, ssvWeek));
+
         //valid permission
         SisCourse sisCourse =
             sisCourseMapper.selectByPrimaryKey(sisSchedule.getScId());
@@ -293,6 +303,14 @@ public class MonitorService {
             .ofNullable(sisScheduleMapper.selectByPrimaryKey(ssId))
             .orElseThrow(() ->
                 new IncorrectParameterException("Incorrect ssId" + ssId));
+        Integer smtWeek = sisMonitorTrans.getSmtWeek();
+        boolean isSuspend = sisSchedule.getSsSuspensionList()
+            .stream()
+            .anyMatch(week -> week.equals(smtWeek));
+        if (isSuspend)
+            throw new InvalidPermissionException(String.format(
+                "Schedule %d week %d is in the suspension list",
+                ssId, smtWeek));
 
         //check exist
         SisMonitorTransKey sisMonitorTransKey = new SisMonitorTransKey();
