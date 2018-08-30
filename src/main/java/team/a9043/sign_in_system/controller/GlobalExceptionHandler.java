@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.NoHandlerFoundException;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
 import team.a9043.sign_in_system.exception.String2ValueException;
@@ -26,6 +27,16 @@ public class GlobalExceptionHandler {
     private static final String errResStr =
         "{\"success\":false,\"error\":true,\"errType\":\"%s\"," +
             "\"message\":%s}";
+
+    @ExceptionHandler({NoHandlerFoundException.class})
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public void handleNotFound(Exception e,
+                               HttpServletResponse response) throws IOException {
+        response.setHeader("Content-type",
+            "application/json;charset=utf-8");
+        response.getWriter().write(
+            formatErr(HttpStatus.NOT_FOUND, e.getMessage()));
+    }
 
     @ExceptionHandler({HttpRequestMethodNotSupportedException.class})
     @ResponseStatus(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
