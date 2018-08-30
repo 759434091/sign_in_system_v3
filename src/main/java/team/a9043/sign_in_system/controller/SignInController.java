@@ -29,9 +29,10 @@ public class SignInController {
     @ApiOperation("获得签到以及历史")
     public JSONObject getSignIns(@TokenUser @ApiIgnore SisUser sisUser,
                                  @PathVariable @ApiParam("课程") String scId,
-                                 @RequestParam @ApiParam(value = "查询类型",
-                                     allowableValues = "student, teacher," +
-                                         " administrator") String queryType) throws IncorrectParameterException, InvalidPermissionException {
+                                 @RequestParam
+                                 @ApiParam(value = "查询类型", allowableValues =
+                                     "student, teacher, administrator")
+                                     String queryType) throws IncorrectParameterException, InvalidPermissionException {
         switch (queryType) {
             case "teacher":
                 if (!sisUser.getSuAuthoritiesStr().contains("TEACHER")) {

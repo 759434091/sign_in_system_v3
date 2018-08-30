@@ -127,7 +127,7 @@ public class CourseService {
                 JSONObject sisCourseJson = (JSONObject) sisCourseObj;
                 //merge monitor
                 sisCourseJson.put("monitor", sisUserList.stream()
-                    .filter(sisUser -> sisUser.getSuId().equals(sisCourseJson.getString("suId")))
+                    .filter(sisUser -> sisUser.getSuId().equals(sisCourseJson.optString("suId", null)))
                     .findAny()
                     .map(sisUser -> {
                         sisUser.setSuPassword(null);
@@ -267,7 +267,8 @@ public class CourseService {
                         return tSisCourse;
                     }
 
-                    team.a9043.sign_in_system.entity.SisUser sisUser = sisCourse.getMonitor();
+                    team.a9043.sign_in_system.entity.SisUser sisUser =
+                        sisCourse.getMonitor();
                     if (null != sisUser) {
                         tSisCourse.setMonitor(sisUser);
                     }
@@ -291,7 +292,7 @@ public class CourseService {
         withSuIdJsonArray.forEach(withSuIdObj -> {
             JSONObject withSuIdJson = (JSONObject) withSuIdObj;
 
-            String suId = withSuIdJson.getString("suId");
+            String suId = withSuIdJson.optString("suId", null);
             SisUser tSisUser =
                 sisUserList.parallelStream()
                     .filter(tSisUser1 -> tSisUser1.getSuId().equals(suId))
