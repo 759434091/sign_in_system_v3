@@ -236,7 +236,7 @@ public class SignInService {
                 new SisSignInDetailExample();
             SisSignInDetailExample.Criteria criteria =
                 sisSignInDetailExample.createCriteria();
-            criteria.andSsidIdIn(ssiIdList);
+            criteria.andSsiIdIn(ssiIdList);
             if (null != sisUser) {
                 criteria.andSuIdEqualTo(sisUser.getSuId());
             }

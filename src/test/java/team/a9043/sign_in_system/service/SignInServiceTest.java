@@ -6,20 +6,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
-import team.a9043.sign_in_system.entity.SisSchedule;
-import team.a9043.sign_in_system.entity.SisSignIn;
-import team.a9043.sign_in_system.entity.SisSignInDetail;
-import team.a9043.sign_in_system.entity.SisUser;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
+import team.a9043.sign_in_system.pojo.SisUser;
 import team.a9043.sign_in_system.repository.SisSignInDetailRepository;
 import team.a9043.sign_in_system.repository.SisSignInRepository;
 
 import javax.annotation.Resource;
-import javax.transaction.Transactional;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Timer;
-import java.util.TimerTask;
 
 /**
  * @author a9043
@@ -36,26 +28,11 @@ public class SignInServiceTest {
     private SignInService signInService;
 
     @Test
-    public void test() {
-        SisSchedule sisSchedule = new SisSchedule();
-        sisSchedule.setSsId(2);
-        SisSignIn sisSignIn = new SisSignIn();
-        sisSignIn.setSisSchedule(sisSchedule);
-        sisSignIn.setSsiWeek(1);
-
-        ArrayList<SisSignInDetail> sisSignInDetails = new ArrayList<>();
+    public void getSignInsUser() throws IncorrectParameterException {
         SisUser sisUser = new SisUser();
         sisUser.setSuId("2016220401001");
-        SisSignInDetail sisSignInDetail = new SisSignInDetail();
-        sisSignInDetail.setSisUser(sisUser);
-        sisSignInDetail.setSisSignIn(sisSignIn);
-        sisSignInDetail.setSsidStatus(true);
-        sisSignInDetails.add(sisSignInDetail);
-
-        sisSignIn.setSisSignInDetails(sisSignInDetails);
-
-        sisSignInRepository.save(sisSignIn);
-        sisSignInDetailRepository.saveAll(sisSignInDetails);
+        JSONObject jsonObject = signInService.getSignIns(sisUser, "A");
+        log.info(jsonObject.toString(2));
     }
 
     @Test
