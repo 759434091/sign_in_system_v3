@@ -6,7 +6,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import team.a9043.sign_in_system.mapper.SisLocationMapper;
 import team.a9043.sign_in_system.mapper.SisUserMapper;
+import team.a9043.sign_in_system.pojo.SisLocation;
+import team.a9043.sign_in_system.pojo.SisLocationExample;
 import team.a9043.sign_in_system.pojo.SisUser;
 import team.a9043.sign_in_system.pojo.SisUserExample;
 
@@ -30,6 +33,8 @@ public class ImportService {
     private BCryptPasswordEncoder bCryptPasswordEncoder;
     @Resource
     private SisUserMapper sisUserMapper;
+    @Resource
+    private SisLocationMapper sisLocationMapper;
 
     @Transactional
     public void readCozInfo(File file) throws IOException,
@@ -46,6 +51,7 @@ public class ImportService {
 
         //base
         addTeacher(sheetList, cozMap);
+        addLocation(sheetList, cozMap);
     }
 
     private Map<String, Integer> getMap(@Nonnull List<List<?>> sheetList,
@@ -125,16 +131,42 @@ public class ImportService {
         }
     }
 
+    @Transactional
     boolean addLocation(List<List<?>> sheetList,
                         Map<String, Integer> cozMap) {
-        Set<String> firstLocStrSet = sheetList.stream().skip(1)
-            .parallel()
+        Set<String> firstLocStrSet = sheetList.stream().skip(1).parallel()
             .map(row -> row.get(cozMap.get("上课地点")).toString().split(","))
             .flatMap(Arrays::stream)
-            .map(locStr -> locStr.trim().replaceAll("[a-zA-z0-9\\-、\\s]", ""))
+            .map(locStr -> locStr.trim().replaceAll("[a-zA-z0-9\\-、\\s]",
+                ""))
+            .map(locStr -> locStr.replaceAll("[樓]", "楼"))
             .filter(locStr -> !locStr.equals("") && locStr.length() > 1)
             .collect(Collectors.toSet());
-        return true;
+
+        SisLocationExample sisLocationExample = new SisLocationExample();
+        sisLocationExample.createCriteria().andSlNameIn(new ArrayList<>(firstLocStrSet));
+        List<String> locOldList =
+            sisLocationMapper.selectByExample(sisLocationExample)
+                .stream()
+                .map(SisLocation::getSlName)
+                .collect(Collectors.toList());
+
+        List<SisLocation> sisLocationList = firstLocStrSet.parallelStream()
+            .filter(s -> !locOldList.contains(s))
+            .map(s -> {
+                SisLocation sisLocation = new SisLocation();
+                sisLocation.setSlName(s);
+                return sisLocation;
+            })
+            .collect(Collectors.toList());
+        int res = sisLocationMapper.insertList(sisLocationList);
+        if (res <= 0) {
+            logger.error("error insert locations");
+            return false;
+        } else {
+            logger.info("success insert locations: " + res);
+            return true;
+        }
     }
 
     List<List<?>> readExcel(File file) throws IOException,
