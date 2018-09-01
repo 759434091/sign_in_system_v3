@@ -6,12 +6,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import team.a9043.sign_in_system.mapper.SisCourseMapper;
+import team.a9043.sign_in_system.mapper.SisDepartmentMapper;
 import team.a9043.sign_in_system.mapper.SisLocationMapper;
 import team.a9043.sign_in_system.mapper.SisUserMapper;
-import team.a9043.sign_in_system.pojo.SisLocation;
-import team.a9043.sign_in_system.pojo.SisLocationExample;
-import team.a9043.sign_in_system.pojo.SisUser;
-import team.a9043.sign_in_system.pojo.SisUserExample;
+import team.a9043.sign_in_system.pojo.*;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Resource;
@@ -35,6 +34,10 @@ public class ImportService {
     private SisUserMapper sisUserMapper;
     @Resource
     private SisLocationMapper sisLocationMapper;
+    @Resource
+    private SisDepartmentMapper sisDepartmentMapper;
+    @Resource
+    private SisCourseMapper sisCourseMapper;
 
     @Transactional
     public void readCozInfo(File file) throws IOException,
@@ -49,9 +52,16 @@ public class ImportService {
             return;
         }
 
-        //base
+        //first
         addTeacher(sheetList, cozMap);
         addLocation(sheetList, cozMap);
+        addDepartment(sheetList, cozMap);
+
+        //second depend on first
+        List<List<?>> newCozSheetList = addCourse(sheetList, cozMap);
+
+        //third depend on second
+        addJoinCourseTeaching(newCozSheetList, cozMap);
     }
 
     private Map<String, Integer> getMap(@Nonnull List<List<?>> sheetList,
@@ -145,14 +155,14 @@ public class ImportService {
 
         SisLocationExample sisLocationExample = new SisLocationExample();
         sisLocationExample.createCriteria().andSlNameIn(new ArrayList<>(firstLocStrSet));
-        List<String> locOldList =
+        List<String> oldSlNameList =
             sisLocationMapper.selectByExample(sisLocationExample)
                 .stream()
                 .map(SisLocation::getSlName)
                 .collect(Collectors.toList());
 
         List<SisLocation> sisLocationList = firstLocStrSet.parallelStream()
-            .filter(s -> !locOldList.contains(s))
+            .filter(s -> !oldSlNameList.contains(s))
             .map(s -> {
                 SisLocation sisLocation = new SisLocation();
                 sisLocation.setSlName(s);
@@ -167,6 +177,105 @@ public class ImportService {
             logger.info("success insert locations: " + res);
             return true;
         }
+    }
+
+    @Transactional
+    boolean addDepartment(List<List<?>> sheetList,
+                          Map<String, Integer> cozMap) {
+        Set<String> firstDepStrSet = sheetList.stream().skip(1)
+            .map(row -> row.get(cozMap.get("上课院系")).toString().split(" "))
+            .flatMap(Arrays::stream)
+            .map(String::trim)
+            .filter(depStr -> !depStr.startsWith("（") && !depStr.startsWith(
+                "("))
+            .filter(depStr -> !depStr.equals("") && depStr.length() > 1)
+            .collect(Collectors.toSet());
+
+        SisDepartmentExample sisDepartmentExample = new SisDepartmentExample();
+        sisDepartmentExample.createCriteria().andSdNameIn(new ArrayList<>(firstDepStrSet));
+        List<String> oldSdNameList =
+            sisDepartmentMapper.selectByExample(sisDepartmentExample)
+                .stream()
+                .map(SisDepartment::getSdName)
+                .collect(Collectors.toList());
+        List<SisDepartment> sisDepartments = firstDepStrSet.parallelStream()
+            .filter(s -> !oldSdNameList.contains(s))
+            .map(s -> {
+                SisDepartment sisDepartment = new SisDepartment();
+                sisDepartment.setSdName(s);
+                return sisDepartment;
+            })
+            .collect(Collectors.toList());
+        int res = sisDepartmentMapper.insertList(sisDepartments);
+        if (res <= 0) {
+            logger.error("error insert departments");
+            return false;
+        } else {
+            logger.info("success insert departments: " + res);
+            return true;
+        }
+    }
+
+    @Transactional
+    List<List<?>> addCourse(List<List<?>> sheetList,
+                            Map<String, Integer> cozMap) {
+        List<SisCourse> sisCourseList = sheetList.stream().skip(1).parallel()
+            .map(row -> {
+                String scId = row.get(cozMap.get("课程序号")).toString().trim();
+                if ("".equals(scId))
+                    return null;
+                String scName = row.get(cozMap.get("课程名称")).toString().trim();
+                Integer scMaxSize = Double.valueOf(
+                    row.get(cozMap.get("容量")).toString()).intValue();
+                Integer scActSize = Double.valueOf(
+                    row.get(cozMap.get("实际人数")).toString()).intValue();
+                Integer scGrade = Optional
+                    .of(row.get(cozMap.get("年级")).toString().trim())
+                    .filter(gradeStr -> !gradeStr.equals(""))
+                    .map(Integer::valueOf)
+                    .orElse(null);
+                SisCourse sisCourse = new SisCourse();
+                sisCourse.setScId(scId);
+                sisCourse.setScName(scName);
+                sisCourse.setScMaxSize(scMaxSize);
+                sisCourse.setScActSize(scActSize);
+                sisCourse.setScGrade(scGrade);
+                return sisCourse;
+            })
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
+        List<String> suIdList =
+            sisCourseList.parallelStream().map(SisCourse::getScId).collect(Collectors.toList());
+        SisCourseExample sisCourseExample = new SisCourseExample();
+        sisCourseExample.createCriteria().andScIdIn(suIdList);
+        List<String> scIdList =
+            sisCourseMapper.selectByExample(sisCourseExample).stream().map(SisCourse::getScId).collect(Collectors.toList());
+        List<SisCourse> insertSisCourseList = sisCourseList.parallelStream()
+            .filter(sisCourse -> !scIdList.contains(sisCourse.getScId()))
+            .collect(Collectors.toList());
+        int res = sisCourseMapper.insertList(insertSisCourseList);
+        if (res <= 0) {
+            logger.error("error insert courses");
+            return null;
+        } else {
+            logger.info("success insert courses: " + res);
+            List<String> insertScIdList =
+                insertSisCourseList.parallelStream().map(SisCourse::getScId).collect(Collectors.toList());
+            return sheetList.stream().skip(1).parallel()
+                .filter(row -> {
+                    String scId = row.get(cozMap.get("课程序号")).toString().trim();
+                    if ("".equals(scId))
+                        return false;
+                    return insertScIdList.contains(scId);
+                })
+                .collect(Collectors.toList());
+        }
+    }
+
+    @Transactional
+    boolean addJoinCourseTeaching(List<List<?>> sheetList,
+                                  Map<String, Integer> cozMap) {
+        return false;
     }
 
     List<List<?>> readExcel(File file) throws IOException,

@@ -20,7 +20,6 @@ public class SisJoinDepart {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer sjdId;
 
-
     @ManyToOne
     @JoinColumn(name = "scId", referencedColumnName = "scId")
     private SisCourse sisCourse;
