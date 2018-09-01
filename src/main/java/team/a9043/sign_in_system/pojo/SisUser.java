@@ -185,6 +185,20 @@ public class SisUser {
 
     public void setSuAuthorities(List<String> suAuthorityList) {
         this.suAuthoritiesStr = String.join(",",
-            (String[]) suAuthorityList.toArray());
+            suAuthorityList.toArray(new String[0]));
+    }
+
+    @Override
+    public int hashCode() {
+        return ("SisUser_" + suId).hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (!(obj instanceof SisUser))
+            return false;
+        return this.suId.equals(((SisUser) obj).getSuId());
     }
 }

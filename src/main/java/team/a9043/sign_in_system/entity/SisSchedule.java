@@ -77,6 +77,11 @@ public class SisSchedule {
     @JoinColumn(name = "ssId", referencedColumnName = "ssId")
     private Collection<SisSignIn> sisSignIns = new ArrayList<>();
 
+
+    @ManyToOne
+    @JoinColumn(name = "slId", referencedColumnName = "slId")
+    private SisLocation sisLocation;
+
     public enum SsFortnight {
         FULL(), ODD(), EVEN()
     }

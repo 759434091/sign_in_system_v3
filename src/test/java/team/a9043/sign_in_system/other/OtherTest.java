@@ -16,6 +16,7 @@ import team.a9043.sign_in_system.pojo.SisSchedule;
 import team.a9043.sign_in_system.pojo.SisScheduleExample;
 
 import javax.annotation.Resource;
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -93,5 +94,9 @@ public class OtherTest {
             .filter(integer -> integer > 0)
             .collect(Collectors.toList());
         log.info(new JSONArray(integers).toString(2));
+    }
+
+    @Test
+    public void teat4() {
     }
 }
