@@ -6,10 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import team.a9043.sign_in_system.mapper.SisCourseMapper;
-import team.a9043.sign_in_system.mapper.SisDepartmentMapper;
-import team.a9043.sign_in_system.mapper.SisLocationMapper;
-import team.a9043.sign_in_system.mapper.SisUserMapper;
+import team.a9043.sign_in_system.mapper.*;
 import team.a9043.sign_in_system.pojo.*;
 
 import javax.annotation.Nonnull;
@@ -18,8 +15,11 @@ import javax.transaction.Transactional;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
@@ -38,6 +38,10 @@ public class ImportService {
     private SisDepartmentMapper sisDepartmentMapper;
     @Resource
     private SisCourseMapper sisCourseMapper;
+    @Resource
+    private SisJoinCourseMapper sisJoinCourseMapper;
+    @Resource
+    private SisJoinDepartMapper sisJoinDepartMapper;
 
     @Transactional
     public void readCozInfo(File file) throws IOException,
@@ -62,6 +66,8 @@ public class ImportService {
 
         //third depend on second
         addJoinCourseTeaching(newCozSheetList, cozMap);
+        addCourseDepart(newCozSheetList, cozMap);
+        addCourseSchedule();
     }
 
     private Map<String, Integer> getMap(@Nonnull List<List<?>> sheetList,
@@ -113,7 +119,7 @@ public class ImportService {
                     })
                     .collect(Collectors.toList());
             })
-            .flatMap(Collection::stream)
+            .flatMap(Collection::parallelStream)
             .collect(Collectors.toSet());
 
         List<String> suIdList =
@@ -198,15 +204,16 @@ public class ImportService {
                 .stream()
                 .map(SisDepartment::getSdName)
                 .collect(Collectors.toList());
-        List<SisDepartment> sisDepartments = firstDepStrSet.parallelStream()
-            .filter(s -> !oldSdNameList.contains(s))
-            .map(s -> {
-                SisDepartment sisDepartment = new SisDepartment();
-                sisDepartment.setSdName(s);
-                return sisDepartment;
-            })
-            .collect(Collectors.toList());
-        int res = sisDepartmentMapper.insertList(sisDepartments);
+        List<SisDepartment> insertSisDepartmentList =
+            firstDepStrSet.parallelStream()
+                .filter(s -> !oldSdNameList.contains(s))
+                .map(s -> {
+                    SisDepartment sisDepartment = new SisDepartment();
+                    sisDepartment.setSdName(s);
+                    return sisDepartment;
+                })
+                .collect(Collectors.toList());
+        int res = sisDepartmentMapper.insertList(insertSisDepartmentList);
         if (res <= 0) {
             logger.error("error insert departments");
             return false;
@@ -275,7 +282,204 @@ public class ImportService {
     @Transactional
     boolean addJoinCourseTeaching(List<List<?>> sheetList,
                                   Map<String, Integer> cozMap) {
-        return false;
+        List<SisJoinCourse> sisJoinCourseList = sheetList.parallelStream()
+            .map(row -> {
+                String scId = row.get(cozMap.get("课程序号")).toString().trim();
+                if ("".equals(scId))
+                    return null;
+                return Arrays.stream(row.get(cozMap.get("教师工号")).toString().split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.equals("") && s.length() > 1)
+                    .map(s -> {
+                        SisJoinCourse sisJoinCourse = new SisJoinCourse();
+                        sisJoinCourse.setJoinCourseType(SisJoinCourse.JoinCourseType.TEACHING.ordinal());
+                        sisJoinCourse.setSuId(s);
+                        sisJoinCourse.setScId(scId);
+                        return sisJoinCourse;
+                    })
+                    .collect(Collectors.toList());
+            })
+            .filter(Objects::nonNull)
+            .flatMap(Collection::parallelStream)
+            .collect(Collectors.toList());
+        int res = sisJoinCourseMapper.insertList(sisJoinCourseList);
+        if (res <= 0) {
+            logger.error("error insert sisJoinCourses");
+            return false;
+        } else {
+            logger.info("success insert sisJoinCourses: " + res);
+            return true;
+        }
+    }
+
+    @Transactional
+    boolean addCourseDepart(List<List<?>> sheetList,
+                            Map<String, Integer> cozMap) {
+        List<String> sdNameList = sheetList.parallelStream()
+            .map(row -> Arrays.stream(row.get(cozMap.get(
+                "上课院系")).toString().split(
+                " "))
+                .map(String::trim)
+                .filter(depStr -> !depStr.startsWith("（") && !depStr.startsWith("("))
+                .filter(gradeStr -> !gradeStr.equals("") && gradeStr.length() > 1))
+            .flatMap(Stream::distinct)
+            .collect(Collectors.toList());
+        SisDepartmentExample sisDepartmentExample = new SisDepartmentExample();
+        sisDepartmentExample.createCriteria().andSdNameIn(sdNameList);
+        List<SisDepartment> sisDepartmentList =
+            sisDepartmentMapper.selectByExample(sisDepartmentExample);
+
+        List<SisJoinDepart> sisJoinDepartList = sheetList.parallelStream()
+            .map(row -> {
+                String scId = row.get(cozMap.get("课程序号")).toString().trim();
+                if ("".equals(scId))
+                    return null;
+                return Arrays
+                    .stream(
+                        row.get(cozMap.get("上课院系")).toString().split(" "))
+                    .map(String::trim)
+                    .filter(depStr -> !depStr.startsWith("（") && !depStr.startsWith("("))
+                    .filter(gradeStr -> !gradeStr.equals("") && gradeStr.length() > 1)
+                    .map(s -> {
+                        Integer sdId =
+                            sisDepartmentList.parallelStream()
+                                .filter(sisDepartment -> sisDepartment.getSdName().equals(s))
+                                .findAny()
+                                .map(SisDepartment::getSdId)
+                                .orElse(null);
+                        if (null == sdId)
+                            return null;
+                        SisJoinDepart sisJoinDepart = new SisJoinDepart();
+                        sisJoinDepart.setScId(scId);
+                        sisJoinDepart.setSdId(sdId);
+                        return sisJoinDepart;
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+            })
+            .filter(Objects::nonNull)
+            .flatMap(Collection::parallelStream)
+            .collect(Collectors.toList());
+
+        int res = sisJoinDepartMapper.insertList(sisJoinDepartList);
+        if (res <= 0) {
+            logger.error("error insert sisJoinDeparts");
+            return false;
+        } else {
+            logger.info("success insert sisJoinDeparts: " + res);
+            return true;
+        }
+    }
+
+    boolean addCourseSchedule(List<List<?>> sheetList,
+                              Map<String, Integer> cozMap) {
+        final HashMap<String, Integer> dayMap = new HashMap<String, Integer>() {
+            private static final long serialVersionUID = 331651763287947723L;
+
+            {
+                put("星期一", 1);
+                put("星期二", 2);
+                put("星期三", 3);
+                put("星期四", 4);
+                put("星期五", 5);
+                put("星期六", 6);
+                put("星期日", 7);
+            }
+        };
+        final Pattern pattern = Pattern
+            .compile("\\s*\\[(1[0-2]|[1-9])-(1[0-9]|[1-9])([单双])" +
+                "?]\\s*星期[一二三四五六日]\\s*(1[0-2]|[1-9])-" +
+                "(1[0-2]|[1-9])\\s*"); //上课时间匹配
+        final Pattern patternSon1 = Pattern
+            .compile("\\s*星期[一二三四五六日]\\s*"); //星期
+        final Pattern patternSon2 = Pattern
+            .compile("\\s*\\[(1[0-9]|[1-9])-(1[0-9]|[1-9])([单双])?]\\s*"); //周数
+        final Pattern patternSon3 = Pattern
+            .compile("\\s*(?<!\\[)(1[0-2]|[1-9])-(1[0-2]|[1-9])(?!])\\s*"); //节数
+        List<String> sdNameList = sheetList.parallelStream()
+            .map(row -> {
+                String scId = row.get(cozMap.get("课程序号")).toString().trim();
+                if ("".equals(scId))
+                    return null;
+
+                String[] matchStrList =
+                    row.get(cozMap.get("上课时间")).toString().split("\\s*,\\s*");
+                String[] locmatchStrList =
+                    row.get(cozMap.get("上课地点")).toString().split("\\s*,\\s*");
+                String yearAndTerm =
+                    row.get(cozMap.get("学年度学期")).toString().trim();
+                if (matchStrList.length != locmatchStrList.length) {
+                    logger.error("row err: 上课时间,上课地点" + scId);
+                    return null;
+                }
+
+                IntStream.range(0, matchStrList.length)
+                    .mapToObj(i -> {
+                        //开始匹配
+                        Matcher matcher = pattern.matcher(matchStrList[i]);
+                        String locStr = locmatchStrList[i].trim()
+                            .replaceAll("[a-zA-z0-9\\s]", "");
+                        if (matcher.find()) {
+                            int day = 0;
+                            int startWeek = 0;
+                            int endWeek = 0;
+                            SisSchedule.SsFortnight fortnight =
+                                SisSchedule.SsFortnight.FULL;
+                            String eStr = matcher.group();
+                            //获得星期
+                            matcher = patternSon1.matcher(eStr);
+                            if (matcher.find()) {
+                                day = dayMap.get(matcher.group().trim());
+                            }
+                            //获得周数
+                            matcher = patternSon2.matcher(eStr);
+                            if (matcher.find()) {
+                                String[] strings =
+                                    matcher.group().trim().split("-");//获得周数头尾
+                                String weekStartStr =
+                                    strings[0].substring(1);//获得开始周数
+                                String weekEndStr =
+                                    strings[strings.length - 1];//获得结束周数
+                                if (weekEndStr.contains("单")) {
+                                    weekEndStr = weekEndStr.substring(0,
+                                        weekEndStr.length() - 2);//取出 "]" 和
+                                    // "周" 字符;
+                                    fortnight = SisSchedule.SsFortnight.ODD;
+                                } else if (weekEndStr.contains("双")) {
+                                    weekEndStr = weekEndStr.substring(0,
+                                        weekEndStr.length() - 2);//取出 "]" 和
+                                    // "周" 字符;
+                                    fortnight = SisSchedule.SsFortnight.EVEN;
+                                } else {
+                                    weekEndStr = weekEndStr.substring(0,
+                                        weekEndStr.length() - 1);//取出"]"字符;
+                                    fortnight = SisSchedule.SsFortnight.FULL;
+                                }
+                                startWeek = Integer.valueOf(weekStartStr);
+                                endWeek = Integer.valueOf(weekEndStr);
+                            }
+                            //获得节数
+                            matcher = patternSon3.matcher(eStr);
+                            if (matcher.find()) {
+                                String[] strings =
+                                    matcher.group().trim().split("-");//获得节数头尾
+                                int startInt = Integer.valueOf(strings[0]);
+                                int endInt = Integer.valueOf(strings[1]);
+                                //插入排课
+                                SisSchedule schedule = new SisSchedule();
+                                schedule.setSsStartTime(startInt);
+                                schedule.setSsStartWeek(startWeek);
+                                schedule.setSsDayOfWeek(day);
+                                schedule.setSsFortnight(fortnight.ordinal());
+                                schedule.setSsEndTime(endInt);
+                                schedule.setSsEndWeek(endWeek);
+                                schedule.setSsYearEtTerm(yearAndTerm);
+                                schedule.setScId(scId);
+                                schedule.setSlId(locStr);
+                            }
+                        }
+                    })
+            })
     }
 
     List<List<?>> readExcel(File file) throws IOException,
