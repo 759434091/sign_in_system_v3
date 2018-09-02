@@ -126,6 +126,10 @@
         </if>
         <include refid="Base_Column_List"/>
         from sis_course
+
+        join sis_join_depart on
+        sis_join_depart.sd_id = #{sdId}
+        and sis_join_depart.sc_id = sis_course.sc_id
         <if test="_parameter != null">
             <include refid="Example_Where_Clause"/>
         </if>

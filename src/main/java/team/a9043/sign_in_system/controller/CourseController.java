@@ -20,7 +20,6 @@ import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
 import team.a9043.sign_in_system.util.judgetime.JudgeTimeUtil;
 
 import javax.annotation.Resource;
-import javax.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.concurrent.ExecutionException;
 
@@ -69,8 +68,10 @@ public class CourseController {
     public JSONObject getCourses(@TokenUser @ApiIgnore SisUser sisUser,
                                  @RequestParam(required = false) @ApiParam(value = "是否需要督导filter,若该参数为null则忽略hasMonitor") Boolean needMonitor,
                                  @RequestParam(required = false) @ApiParam(value = "是否已有督导员filter") Boolean hasMonitor,
-                                 @RequestParam(required = false) @ApiParam(value =
-                                     "分页filter") Integer page,
+                                 @RequestParam(required = false) @ApiParam(value = "分页filter") Integer page,
+                                 @RequestParam(required = false) @ApiParam(value = "学院Id") Integer sdId,
+                                 @RequestParam(required = false) @ApiParam(value = "开课年级") Integer scGrade,
+                                 @RequestParam(required = false) @ApiParam(value = "课程名字模糊") String scName,
                                  @RequestParam
                                  @ApiParam(value = "获得方式",
                                      allowableValues = "student,monitor," +
@@ -85,7 +86,8 @@ public class CourseController {
                     throw new InvalidPermissionException(
                         "Invalid permission:" + getType);
                 }
-                return courseService.getCourses(needMonitor, hasMonitor, page);
+                return courseService.getCourses(page, needMonitor, hasMonitor,
+                    sdId, scGrade, scName);
             }
             case "monitor": {
                 if (!sisUser.getSuAuthoritiesStr().contains("MONITOR")) {
@@ -94,7 +96,8 @@ public class CourseController {
                 }
                 if (null != needMonitor && null != hasMonitor) {
                     if (needMonitor && !hasMonitor)
-                        return courseService.getCourses(true, false, page);
+                        return courseService.getCourses(page, true, false,
+                            null, null, null);
                     throw new InvalidPermissionException(
                         "Invalid permission:" + getType);
                 } else if (null == needMonitor && null == hasMonitor)
@@ -132,15 +135,13 @@ public class CourseController {
             "monitor: SisUser - {suId: String}\n}",
         produces = "application/json")
     public JSONObject modifyScNeedMonitor(@RequestBody @Validated SisCourse sisCourse,
+                                          @ApiIgnore BindingResult bindingResult,
                                           @PathVariable
-                                          @ApiParam(value = "课程序号") String scId,
-                                          @ApiIgnore BindingResult bindingResult) throws IncorrectParameterException {
+                                          @ApiParam(value = "课程序号") String scId) throws IncorrectParameterException {
         if (bindingResult.hasErrors()) {
             throw new IncorrectParameterException(new JSONArray(bindingResult.getAllErrors()).toString());
         }
-        if (!scId.equals(sisCourse.getScId())) {
-            throw new IncorrectParameterException("Incorrect scId");
-        }
+        sisCourse.setScId(scId);
         return courseService.modifyScNeedMonitor(sisCourse);
     }
 }

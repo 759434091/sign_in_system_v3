@@ -44,9 +44,12 @@ public class CourseService {
     }
 
     @SuppressWarnings("Duplicates")
-    public JSONObject getCourses(@Nullable Boolean needMonitor,
+    public JSONObject getCourses(@Nullable Integer page,
+                                 @Nullable Boolean needMonitor,
                                  @Nullable Boolean hasMonitor,
-                                 @Nullable Integer page) throws IncorrectParameterException, ExecutionException, InterruptedException {
+                                 @Nullable Integer sdId,
+                                 @Nullable Integer scGrade,
+                                 @Nullable String scName) throws IncorrectParameterException, ExecutionException, InterruptedException {
         if (null == page) {
             throw new IncorrectParameterException("Incorrect page: " + page);
         }
@@ -64,6 +67,13 @@ public class CourseService {
                 criteria.andScNeedMonitorEqualTo(needMonitor).andSuIdIsNotNull();
             else
                 criteria.andScNeedMonitorEqualTo(needMonitor).andSuIdIsNull();
+        }
+        if (null != scGrade)
+            criteria.andScGradeEqualTo(scGrade);
+        if (null != scName)
+            criteria.andScNameLike(scName);
+        if (null != sdId) {
+            sisCourseExample.setSdId(sdId);
         }
 
         List<SisCourse> sisCourseList =
