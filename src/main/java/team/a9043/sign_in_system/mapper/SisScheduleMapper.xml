@@ -437,8 +437,7 @@
         insert into
         sis_schedule
         (ss_day_of_week, ss_end_time, ss_end_week, ss_fortnight,
-        ss_start_time, ss_start_week, ss_year_et_term ,sc_id, ss_suspension,
-        su_id, sl_id)
+        ss_start_time, ss_start_week, ss_year_et_term ,sc_id, ss_suspension, sl_id)
         values
         <foreach collection="sisScheduleList" item="sisSchedule"
                  separator="," close="" open="">
@@ -451,8 +450,7 @@
             #{sisSchedule.ssStartWeek},
             #{sisSchedule.ssYearEtTerm},
             #{sisSchedule.scId},
-            null,
-            #{sisSchedule.suId},
+            '',
             #{sisSchedule.slId}
             )
         </foreach>
