@@ -404,7 +404,7 @@ public class ImportService {
         Set<String> slNameList = sheetList.parallelStream()
             .map(row -> row.get(cozMap.get("上课地点")).toString().split(","))
             .flatMap(Arrays::stream)
-            .map(locStr -> locStr.trim().replaceAll("[a-zA-z0-9\\-、\\s]",
+            .map(locStr -> locStr.trim().replaceAll("[a-zA-Z0-9\\-、\\s]",
                 ""))
             .map(locStr -> locStr.replaceAll("[樓]", "楼"))
             .filter(locStr -> !locStr.equals("") && locStr.length() > 1)
@@ -425,27 +425,35 @@ public class ImportService {
 
                 String[] matchStrList =
                     row.get(cozMap.get("上课时间")).toString().split("\\s*,\\s*");
-                String[] locmatchStrList =
+                String[] locMatchStrList =
                     row.get(cozMap.get("上课地点")).toString().split("\\s*,\\s*");
                 String yearAndTerm =
                     row.get(cozMap.get("学年度学期")).toString().trim();
-                if (matchStrList.length != locmatchStrList.length) {
-                    logger.error("row err: 上课时间,上课地点" + scId);
+                if (matchStrList.length != locMatchStrList.length) {
+                    logger.error("row err: 上课时间,上课地点 in " + scId);
                     return null;
                 }
 
                 return IntStream.range(0, matchStrList.length)
+                    .parallel()
                     .mapToObj(i -> {
                         //获得地点
-                        String slName = locmatchStrList[i].trim()
-                            .replaceAll("[a-zA-z0-9\\s]", "");
+                        String slName = locMatchStrList[i]
+                            .replaceAll("[a-zA-Z0-9\\-、\\s]", "")
+                            .replaceAll("[樓]", "楼")
+                            .trim();
+                        if ("".equals(slName)) {
+                            return null;
+                        }
                         Integer slId = locationList.parallelStream()
                             .filter(sisLocation -> sisLocation.getSlName().equals(slName))
                             .findAny()
                             .map(SisLocation::getSlId)
                             .orElse(null);
                         if (null == slId) {
-                            logger.error("row err: slId" + i);
+                            logger.error(String.format(
+                                "row err: slId in %s, %d slId = %s",
+                                scId, i, null));
                             return null;
                         }
 
