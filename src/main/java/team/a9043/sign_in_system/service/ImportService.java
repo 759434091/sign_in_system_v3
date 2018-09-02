@@ -91,6 +91,25 @@ public class ImportService {
     }
 
     @Transactional
+    public void readStuInfo(File file) throws IOException,
+        InvalidFormatException {
+        final String[] rowNameList = {"学号", "姓名", "课程序号"};
+
+        List<List<?>> sheetList = readExcel(file);
+        Map<String, Integer> stuMap = getMap(sheetList, rowNameList);
+        if (null == stuMap) {
+            logger.error("文件不合法");
+            return;
+        }
+
+        //base
+        addStudent(sheetList, stuMap);
+
+        //depend on base
+        addAttendance(sheetList, stuMap);
+    }
+
+    @Transactional
     boolean addTeacher(List<List<?>> sheetList,
                        Map<String, Integer> cozMap) {
         String encryptPwd = bCryptPasswordEncoder.encode("123456");
@@ -542,6 +561,93 @@ public class ImportService {
             return false;
         } else {
             logger.info("success insert sisSchedules: " + res);
+            return true;
+        }
+    }
+
+    @Transactional
+    boolean addStudent(List<List<?>> sheetList,
+                       Map<String, Integer> stuMap) {
+        String encryptPwd = bCryptPasswordEncoder.encode("123456");
+        // new student
+        Set<SisUser> firstSisUserList = sheetList.stream().skip(1).parallel()
+            .map(row -> {
+                String suId = row.get(stuMap.get("学号")).toString().trim();
+                if ("".equals(suId))
+                    return null;
+                List<String> authList = new ArrayList<>();
+                authList.add("STUDENT");
+                SisUser sisUser = new SisUser();
+                sisUser.setSuId(suId);
+                sisUser.setSuName(row.get(stuMap.get("姓名")).toString().trim());
+                sisUser.setSuAuthorities(authList);
+                sisUser.setSuPassword(encryptPwd);
+                return sisUser;
+            })
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+        List<String> suIdList =
+            firstSisUserList.parallelStream().map(SisUser::getSuId).collect(Collectors.toList());
+        SisUserExample sisUserExample = new SisUserExample();
+        sisUserExample.createCriteria().andSuIdIn(suIdList);
+        List<String> oldSuIdList =
+            sisUserMapper.selectByExample(sisUserExample).stream().map(SisUser::getSuId).collect(Collectors.toList());
+
+        List<SisUser> sisUserList = firstSisUserList.parallelStream()
+            .filter(sisUser -> !oldSuIdList.contains(sisUser.getSuId()))
+            .collect(Collectors.toList());
+
+        int res = sisUserMapper.insertList(sisUserList);
+        if (res <= 0) {
+            logger.error("error insert students");
+            return false;
+        } else {
+            logger.info("success insert students: " + res);
+            return true;
+        }
+    }
+
+    @Transactional
+    boolean addAttendance(List<List<?>> sheetList,
+                          Map<String, Integer> stuMap) {
+
+        SisJoinCourseExample sisJoinCourseExample = new SisJoinCourseExample();
+
+        List<SisJoinCourse> sisJoinCourseList =
+            sheetList.stream().skip(1).parallel()
+                .map(row -> {
+                    String scId = row.get(stuMap.get("课程序号")).toString().trim();
+                    if ("".equals(scId))
+                        return null;
+                    String suId = row.get(stuMap.get("学号")).toString().trim();
+                    if ("".equals(suId))
+                        return null;
+                    SisJoinCourse sisJoinCourse = new SisJoinCourse();
+                    sisJoinCourse.setScId(scId);
+                    sisJoinCourse.setSuId(suId);
+                    sisJoinCourse.setJoinCourseType(SisJoinCourse.JoinCourseType.ATTENDANCE.ordinal());
+                    sisJoinCourseExample.or()
+                        .andScIdEqualTo(scId)
+                        .andSuIdEqualTo(suId);
+                    return sisJoinCourse;
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        sisJoinCourseExample.getOredCriteria().removeIf(Objects::isNull);
+        List<SisJoinCourse> oldSisJoinCourseList =
+            sisJoinCourseMapper.selectByExample(sisJoinCourseExample);
+
+        List<SisJoinCourse> insertSisJoinCourse =
+            sisJoinCourseList.parallelStream()
+                .filter(sisJoinCourse -> !oldSisJoinCourseList.contains(sisJoinCourse))
+                .collect(Collectors.toList());
+
+        int res = sisJoinCourseMapper.insertList(insertSisJoinCourse);
+        if (res <= 0) {
+            logger.error("error insert student sisJoinCourses");
+            return false;
+        } else {
+            logger.info("success insert student sisJoinCourses: " + res);
             return true;
         }
     }

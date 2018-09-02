@@ -36,4 +36,10 @@ public class ImportServiceTest {
         File file = new File("/media/a9043/Sixth1/上线测试doc/教学任务列表.xls");
         importService.readCozInfo(file);
     }
+
+    @Test
+    public void readStuInfo() throws IOException, InvalidFormatException {
+        File file = new File("/media/a9043/Sixth1/上线测试doc/上课名单导出-2.xls");
+        importService.readStuInfo(file);
+    }
 }
