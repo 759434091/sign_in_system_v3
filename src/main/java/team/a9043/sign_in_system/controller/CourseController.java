@@ -6,11 +6,12 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
-import team.a9043.sign_in_system.entity.SisCourse;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
+import team.a9043.sign_in_system.pojo.SisCourse;
 import team.a9043.sign_in_system.pojo.SisUser;
 import team.a9043.sign_in_system.security.tokenuser.TokenUser;
 import team.a9043.sign_in_system.service.CourseService;
@@ -130,7 +131,7 @@ public class CourseController {
         notes = "根据scId修改督导,SisCourse -> {\n  scNeedMonitor: boolean,\n  " +
             "monitor: SisUser - {suId: String}\n}",
         produces = "application/json")
-    public JSONObject modifyScNeedMonitor(@RequestBody @Valid SisCourse sisCourse,
+    public JSONObject modifyScNeedMonitor(@RequestBody @Validated SisCourse sisCourse,
                                           @PathVariable
                                           @ApiParam(value = "课程序号") String scId,
                                           @ApiIgnore BindingResult bindingResult) throws IncorrectParameterException {

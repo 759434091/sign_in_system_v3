@@ -254,33 +254,31 @@ public class CourseService {
     }
 
     @Transactional
-    public JSONObject modifyScNeedMonitor(team.a9043.sign_in_system.entity.SisCourse sisCourse) throws IncorrectParameterException {
-        team.a9043.sign_in_system.entity.SisCourse stdSisCourse =
-            sisCourseRepository
-                .findById(sisCourse.getScId())
-                .map(tSisCourse -> {
-                    boolean scNeedMonitor = sisCourse.getScNeedMonitor();
+    public JSONObject modifyScNeedMonitor(SisCourse sisCourse) throws IncorrectParameterException {
+        SisCourse stdSisCourse =
+            sisCourseMapper.selectByPrimaryKey(sisCourse.getScId());
+        if (null == stdSisCourse)
+            throw new IncorrectParameterException(
+                "No course: " + sisCourse.getScId());
 
-                    tSisCourse.setScNeedMonitor(scNeedMonitor);
-                    if (!scNeedMonitor) {
-                        tSisCourse.setMonitor(null);
-                        return tSisCourse;
-                    }
+        boolean scNeedMonitor = sisCourse.getScNeedMonitor();
+        stdSisCourse.setScNeedMonitor(scNeedMonitor);
+        if (!scNeedMonitor)
+            stdSisCourse.setSuId(null);
 
-                    team.a9043.sign_in_system.entity.SisUser sisUser =
-                        sisCourse.getMonitor();
-                    if (null != sisUser) {
-                        tSisCourse.setMonitor(sisUser);
-                    }
+        JSONObject sisCourseJson = new JSONObject(stdSisCourse);
+        if (null != stdSisCourse.getSuId()) {
+            SisUser sisUser =
+                sisUserMapper.selectByPrimaryKey(stdSisCourse.getSuId());
+            if (null != sisUser)
+                sisCourseJson.put("sisUser", new JSONObject(sisUser));
+        }
 
-                    return tSisCourse;
-                })
-                .orElseThrow(() -> new IncorrectParameterException("No course" +
-                    ": " + sisCourse.getScId()));
-
+        boolean success = sisCourseMapper.updateByPrimaryKey(stdSisCourse) > 0;
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success",
-            sisCourseRepository.save(stdSisCourse));
+        jsonObject.put("success", success);
+        if (success)
+            jsonObject.put("sisCourse", sisCourseJson);
         return jsonObject;
     }
 

@@ -1,5 +1,6 @@
 package team.a9043.sign_in_system.pojo;
 
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 public class SisCourse {
@@ -10,6 +11,7 @@ public class SisCourse {
      *
      * @mbg.generated Mon Aug 27 13:08:41 CST 2018
      */
+    @NotNull
     private String scId;
 
     /**
@@ -64,6 +66,7 @@ public class SisCourse {
      *
      * @mbg.generated Mon Aug 27 13:08:41 CST 2018
      */
+    @NotNull
     private Boolean scNeedMonitor;
 
     /**
