@@ -32,7 +32,6 @@ public class ImportServiceTest {
     }
 
     @Test
-    @Transactional
     public void readCozInfo() throws IOException, InvalidFormatException {
         File file = new File("/media/a9043/Sixth1/上线测试doc/教学任务列表.xls");
         importService.readCozInfo(file);

@@ -110,6 +110,8 @@ public class ImportService {
 
                 return IntStream.range(0, usrIds.length)
                     .mapToObj(i -> {
+                        if ("".equals(usrIds[i].trim()))
+                            return null;
                         List<String> authList = new ArrayList<>();
                         authList.add("TEACHER");
                         SisUser sisUser = new SisUser();
@@ -119,6 +121,7 @@ public class ImportService {
                         sisUser.setSuPassword(encryptPwd);
                         return sisUser;
                     })
+                    .filter(Objects::nonNull)
                     .collect(Collectors.toList());
             })
             .flatMap(Collection::parallelStream)
