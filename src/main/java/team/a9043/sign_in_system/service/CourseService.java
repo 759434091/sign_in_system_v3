@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import team.a9043.sign_in_system.async.AsyncJoinService;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.mapper.SisCourseMapper;
+import team.a9043.sign_in_system.mapper.SisDepartmentMapper;
 import team.a9043.sign_in_system.mapper.SisJoinCourseMapper;
 import team.a9043.sign_in_system.mapper.SisUserMapper;
 import team.a9043.sign_in_system.pojo.*;
@@ -19,7 +20,9 @@ import team.a9043.sign_in_system.security.tokenuser.TokenUser;
 import javax.annotation.Resource;
 import javax.transaction.Transactional;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
@@ -38,9 +41,21 @@ public class CourseService {
     @Resource
     private SisUserMapper sisUserMapper;
     @Resource
+    private SisDepartmentMapper sisDepartmentMapper;
+    @Resource
     private AsyncJoinService asyncJoinService;
 
-    public CourseService() {
+    public JSONObject getDepartments(String sdName) {
+
+        SisDepartmentExample sisDepartmentExample = new SisDepartmentExample();
+        sisDepartmentExample.createCriteria().andSdNameLike(getFuzzySearch(sdName));
+        List<SisDepartment> sisDepartmentList =
+            sisDepartmentMapper.selectByExample(sisDepartmentExample);
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success", true);
+        jsonObject.put("sisDepartmentList", new JSONArray(sisDepartmentList));
+        return jsonObject;
     }
 
     @SuppressWarnings("Duplicates")
@@ -71,7 +86,7 @@ public class CourseService {
         if (null != scGrade)
             criteria.andScGradeEqualTo(scGrade);
         if (null != scName)
-            criteria.andScNameLike(scName);
+            criteria.andScNameLike(getFuzzySearch(scName));
         if (null != sdId) {
             sisCourseExample.setSdId(sdId);
         }
@@ -324,5 +339,18 @@ public class CourseService {
             sisUserExample.createCriteria().andSuIdIn(suIdList);
             return sisUserMapper.selectByExample(sisUserExample);
         }
+    }
+
+    private String getFuzzySearch(String fuzzyName) {
+        return Optional
+            .ofNullable(fuzzyName)
+            .filter(name -> !name.equals(""))
+            .map((name) -> {
+                StringBuilder cozSearchBuilder = new StringBuilder();
+                Arrays.stream(name.split("")).forEach(ch -> cozSearchBuilder.append("%").append(ch));
+                cozSearchBuilder.append("%");
+                return cozSearchBuilder.toString();
+            })
+            .orElse("");
     }
 }

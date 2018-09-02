@@ -44,6 +44,13 @@ public class CourseController {
         return jsonObject;
     }
 
+
+    @GetMapping("/departments")
+    @ApiOperation(value = "获得学院", notes = "根据sdName获取课程")
+    public JSONObject getDepartments(@RequestParam @ApiParam(value = "课程名字模糊") String sdName) {
+        return courseService.getDepartments(sdName);
+    }
+
     /**
      * 获得课程
      *
