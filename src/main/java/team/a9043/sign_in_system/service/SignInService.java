@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.Trigger;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
@@ -76,13 +77,15 @@ public class SignInService {
             sisJoinCourseMapper.selectByExample(sisJoinCourseExample);
 
         //check permission
-        sisJoinCourseList.parallelStream()
-            .filter(sisJoinCourse -> sisJoinCourse.getJoinCourseType()
-                .equals(team.a9043.sign_in_system.entity.SisJoinCourse.JoinCourseType.TEACHING.ordinal()) &&
-                sisJoinCourse.getSuId().equals(sisUser.getSuId()))
-            .findAny()
-            .orElseThrow(() -> new InvalidPermissionException(
-                "Invalid Permission in: " + ssId));
+        if (!sisUser.getSuAuthorities()
+            .contains(new SimpleGrantedAuthority("ADMINISTRATOR")))
+            sisJoinCourseList.parallelStream()
+                .filter(sisJoinCourse -> sisJoinCourse.getJoinCourseType()
+                    .equals(team.a9043.sign_in_system.entity.SisJoinCourse.JoinCourseType.TEACHING.ordinal()) &&
+                    sisJoinCourse.getSuId().equals(sisUser.getSuId()))
+                .findAny()
+                .orElseThrow(() -> new InvalidPermissionException(
+                    "Invalid Permission in: " + ssId));
 
         //get suIdList
         List<String> suIdList = sisJoinCourseList

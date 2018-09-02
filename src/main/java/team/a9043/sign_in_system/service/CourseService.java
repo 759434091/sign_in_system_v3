@@ -32,8 +32,6 @@ public class CourseService {
     @Value("${pageSize.coursePageSize}")
     private Integer coursePageSize;
     @Resource
-    private SisCourseRepository sisCourseRepository;
-    @Resource
     private SisCourseMapper sisCourseMapper;
     @Resource
     private SisJoinCourseMapper sisJoinCourseMapper;
