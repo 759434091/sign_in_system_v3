@@ -11,7 +11,6 @@ public class SisCourse {
      *
      * @mbg.generated Mon Aug 27 13:08:41 CST 2018
      */
-    @NotNull
     private String scId;
 
     /**
