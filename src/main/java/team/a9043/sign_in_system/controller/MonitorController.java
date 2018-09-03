@@ -49,7 +49,8 @@ public class MonitorController {
     }
 
     @PostMapping(value = "/schedules/{ssId}/supervisions")
-    @PreAuthorize("hasAuthority('MONITOR') AND sisUser.type.equals('code')")
+    @PreAuthorize("hasAuthority('MONITOR') &&" +
+        "authentication.sisUser.type.equals('code')")
     @ApiOperation(value = "插入督导记录",
         notes = "SisSupervision{ssvWeek, ssvActualNum, ssvMobileNum, " +
             "ssvSleepNum, ssvRecInfo}",

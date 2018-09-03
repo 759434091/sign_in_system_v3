@@ -29,7 +29,8 @@ public class CourseServiceTest {
     public void getCourses() throws
         ExecutionException, InterruptedException, IncorrectParameterException {
         LocalDateTime localDateTime = LocalDateTime.now();
-        JSONObject jsonObject = courseService.getCourses(1, true, null, null, null, null, null);
+        JSONObject jsonObject = courseService.getCourses(1, 10, true, null, null
+            , null, null, null);
         LocalDateTime localDateTime2 = LocalDateTime.now();
         log.info(jsonObject.toString(2));
         log.info("until: " + localDateTime.until(localDateTime2,
