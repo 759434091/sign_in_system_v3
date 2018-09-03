@@ -155,7 +155,9 @@ public class CourseController {
 
     @PutMapping("/courses/sc-need-monitor")
     @PreAuthorize("hasAuthority('ADMINISTRATOR')")
-    public JSONObject batchSupervision(@RequestParam @ApiParam(value = "修改读到状态") Boolean monitorStatus,
+    @ApiOperation(value = "批量修改督导",
+        notes = "批量修改督导根据搜索条件")
+    public JSONObject batchSupervision(@RequestParam @ApiParam(value = "修改督导状态") Boolean monitorStatus,
                                        @RequestParam(required = false) @ApiParam(value = "是否需要督导filter,若该参数为null则忽略hasMonitor") Boolean needMonitor,
                                        @RequestParam(required = false) @ApiParam(value = "是否已有督导员filter") Boolean hasMonitor,
                                        @RequestParam(required = false) @ApiParam(value = "学院Id") Integer sdId,
