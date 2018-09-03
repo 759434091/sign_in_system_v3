@@ -67,7 +67,7 @@ public class CourseService {
                                  @Nullable String scId,
                                  @Nullable String scName) throws IncorrectParameterException, ExecutionException, InterruptedException {
         if (null == page) {
-            throw new IncorrectParameterException("Incorrect page: " + page);
+            throw new IncorrectParameterException("Incorrect page: " + null);
         }
         if (page < 1)
             throw new IncorrectParameterException("Incorrect page: " + page +
@@ -88,11 +88,11 @@ public class CourseService {
             criteria.andScGradeEqualTo(scGrade);
         if (null != scName)
             criteria.andScNameLike(getFuzzySearch(scName));
-        if (null != sdId) {
-            sisCourseExample.setSdId(sdId);
-        }
         if (null != scId) {
             criteria.andScIdLike("%" + scId + "%");
+        }
+        if (null != sdId) {
+            sisCourseExample.setSdId(sdId);
         }
 
         List<SisCourse> sisCourseList =
