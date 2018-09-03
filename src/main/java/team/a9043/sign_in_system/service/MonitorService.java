@@ -2,7 +2,7 @@ package team.a9043.sign_in_system.service;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.springframework.scheduling.annotation.AsyncResult;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 import team.a9043.sign_in_system.async.AsyncJoinService;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
@@ -18,10 +18,8 @@ import javax.transaction.Transactional;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
@@ -115,7 +113,9 @@ public class MonitorService {
             .ofNullable(sisCourseMapper.selectByPrimaryKey(scId))
             .orElseThrow(() -> new IncorrectParameterException("No course: " + scId));
 
-        if (!sisUser.getSuId().equals(sisCourse.getSuId())) {
+        if (!sisUser.getSuAuthorities().contains(new SimpleGrantedAuthority(
+            "ADMINISTRATOR")) &&
+            !sisUser.getSuId().equals(sisCourse.getSuId())) {
             throw new InvalidPermissionException(
                 "Invalid permission: " + scId);
         }

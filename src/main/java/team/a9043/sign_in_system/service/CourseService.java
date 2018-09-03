@@ -351,6 +351,6 @@ public class CourseService {
                 cozSearchBuilder.append("%");
                 return cozSearchBuilder.toString();
             })
-            .orElse("");
+            .orElse("%");
     }
 }
