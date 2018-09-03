@@ -75,7 +75,9 @@ public class SupervisionAspect {
                 }
 
                 halfMan /= 2;
-                return (tSisSupervision.getSsvActualNum() - halfMan) / actNum;
+                double suvActNum = (tSisSupervision.getSsvActualNum() - halfMan);
+                suvActNum = suvActNum < 0 ? 0 : suvActNum;
+                return suvActNum / actNum;
             });
 
         double totalRate = doubleStream.reduce((double) 0, Double::sum) / doubleStream.count();
