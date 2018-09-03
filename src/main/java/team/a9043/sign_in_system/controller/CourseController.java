@@ -78,6 +78,7 @@ public class CourseController {
                                  @RequestParam(required = false) @ApiParam(value = "分页filter") Integer page,
                                  @RequestParam(required = false) @ApiParam(value = "学院Id") Integer sdId,
                                  @RequestParam(required = false) @ApiParam(value = "开课年级") Integer scGrade,
+                                 @RequestParam(required = false) @ApiParam(value = "课程序号模糊") String scId,
                                  @RequestParam(required = false) @ApiParam(value = "课程名字模糊") String scName,
                                  @RequestParam
                                  @ApiParam(value = "获得方式",
@@ -94,7 +95,7 @@ public class CourseController {
                         "Invalid permission:" + getType);
                 }
                 return courseService.getCourses(page, needMonitor, hasMonitor,
-                    sdId, scGrade, scName);
+                    sdId, scGrade, scId, scName);
             }
             case "monitor": {
                 if (!sisUser.getSuAuthoritiesStr().contains("MONITOR")) {
@@ -104,7 +105,7 @@ public class CourseController {
                 if (null != needMonitor && null != hasMonitor) {
                     if (needMonitor && !hasMonitor)
                         return courseService.getCourses(page, true, false,
-                            null, null, null);
+                            null, null, null, null);
                     throw new InvalidPermissionException(
                         "Invalid permission:" + getType);
                 } else if (null == needMonitor && null == hasMonitor)
