@@ -21,6 +21,7 @@ import team.a9043.sign_in_system.util.judgetime.JudgeTimeUtil;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -73,9 +74,10 @@ public class CourseController {
         notes = "根据getType获取课程",
         produces = "application/json")
     public JSONObject getCourses(@TokenUser @ApiIgnore SisUser sisUser,
+                                 @RequestParam(required = false) @ApiParam(value = "分页filter") Integer page,
+                                 @RequestParam(required = false) @ApiParam(value = "分页大小filter") Integer pageSize,
                                  @RequestParam(required = false) @ApiParam(value = "是否需要督导filter,若该参数为null则忽略hasMonitor") Boolean needMonitor,
                                  @RequestParam(required = false) @ApiParam(value = "是否已有督导员filter") Boolean hasMonitor,
-                                 @RequestParam(required = false) @ApiParam(value = "分页filter") Integer page,
                                  @RequestParam(required = false) @ApiParam(value = "学院Id") Integer sdId,
                                  @RequestParam(required = false) @ApiParam(value = "开课年级") Integer scGrade,
                                  @RequestParam(required = false) @ApiParam(value = "课程序号模糊") String scId,
@@ -94,7 +96,7 @@ public class CourseController {
                     throw new InvalidPermissionException(
                         "Invalid permission:" + getType);
                 }
-                return courseService.getCourses(page, needMonitor, hasMonitor,
+                return courseService.getCourses(page, pageSize, needMonitor, hasMonitor,
                     sdId, scGrade, scId, scName);
             }
             case "monitor": {
@@ -104,7 +106,7 @@ public class CourseController {
                 }
                 if (null != needMonitor && null != hasMonitor) {
                     if (needMonitor && !hasMonitor)
-                        return courseService.getCourses(page, true, false,
+                        return courseService.getCourses(page, pageSize, true, false,
                             null, null, null, null);
                     throw new InvalidPermissionException(
                         "Invalid permission:" + getType);
@@ -158,12 +160,16 @@ public class CourseController {
     @ApiOperation(value = "批量修改督导",
         notes = "批量修改督导根据搜索条件")
     public JSONObject batchSupervision(@RequestParam @ApiParam(value = "修改督导状态") Boolean monitorStatus,
+                                       @RequestBody(required = false) List<String> scIdList,
                                        @RequestParam(required = false) @ApiParam(value = "是否需要督导filter,若该参数为null则忽略hasMonitor") Boolean needMonitor,
                                        @RequestParam(required = false) @ApiParam(value = "是否已有督导员filter") Boolean hasMonitor,
                                        @RequestParam(required = false) @ApiParam(value = "学院Id") Integer sdId,
                                        @RequestParam(required = false) @ApiParam(value = "开课年级") Integer scGrade,
                                        @RequestParam(required = false) @ApiParam(value = "课程序号模糊") String scId,
                                        @RequestParam(required = false) @ApiParam(value = "课程名字模糊") String scName) {
+        if (null != scIdList) {
+            return courseService.batchSupervision(monitorStatus, scIdList);
+        }
         return courseService.batchSupervision(monitorStatus, needMonitor, hasMonitor, sdId, scGrade, scId, scName);
     }
 }

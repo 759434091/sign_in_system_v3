@@ -61,6 +61,7 @@ public class CourseService {
 
     @SuppressWarnings("Duplicates")
     public JSONObject getCourses(@Nullable Integer page,
+                                 @Nullable Integer pageSize,
                                  @Nullable Boolean needMonitor,
                                  @Nullable Boolean hasMonitor,
                                  @Nullable Integer sdId,
@@ -73,8 +74,14 @@ public class CourseService {
         if (page < 1)
             throw new IncorrectParameterException("Incorrect page: " + page +
                 " (must equal or bigger than 1)");
+        if (null == pageSize)
+            pageSize = coursePageSize;
+        else if (pageSize <= 0 || pageSize > 500) {
+            throw new IncorrectParameterException("pageSize must between [1,500]");
+        }
 
-        PageHelper.startPage(page, coursePageSize);
+
+        PageHelper.startPage(page, pageSize);
         SisCourseExample sisCourseExample = new SisCourseExample();
         SisCourseExample.Criteria criteria = sisCourseExample.createCriteria();
         if (null != needMonitor) {
@@ -340,6 +347,26 @@ public class CourseService {
             sisCourseExample.setSdId(sdId);
         }
 
+        List<SisCourse> stdSisCourseList =
+            sisCourseMapper.selectByExample(sisCourseExample);
+        stdSisCourseList.parallelStream()
+            .forEach(sisCourse -> {
+                sisCourse.setScNeedMonitor(monitorStatus);
+                if (!monitorStatus) {
+                    sisCourse.setSuId(null);
+                }
+            });
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success", sisCourseMapper.updateNeedMonitorList(stdSisCourseList) > 0);
+        return jsonObject;
+    }
+
+    @Transactional
+    public JSONObject batchSupervision(@NonNull boolean monitorStatus,
+                                       @NonNull List<String> scIdList) {
+        SisCourseExample sisCourseExample = new SisCourseExample();
+        sisCourseExample.createCriteria().andScIdIn(scIdList);
         List<SisCourse> stdSisCourseList =
             sisCourseMapper.selectByExample(sisCourseExample);
         stdSisCourseList.parallelStream()
