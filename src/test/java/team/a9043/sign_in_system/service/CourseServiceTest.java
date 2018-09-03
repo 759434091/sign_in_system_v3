@@ -6,13 +6,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
-import team.a9043.sign_in_system.entity.SisCourse;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
+import team.a9043.sign_in_system.pojo.SisCourse;
 import team.a9043.sign_in_system.pojo.SisUser;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.ExecutionException;
 
@@ -27,10 +26,10 @@ public class CourseServiceTest {
     private CourseService courseService;
 
     @Test
-    public void getCourses() throws IncorrectParameterException,
-        ExecutionException, InterruptedException {
+    public void getCourses() throws
+        ExecutionException, InterruptedException, IncorrectParameterException {
         LocalDateTime localDateTime = LocalDateTime.now();
-        JSONObject jsonObject = courseService.getCourses(true, null, 1);
+        JSONObject jsonObject = courseService.getCourses(1, true, null, null, null, null, null);
         LocalDateTime localDateTime2 = LocalDateTime.now();
         log.info(jsonObject.toString(2));
         log.info("until: " + localDateTime.until(localDateTime2,

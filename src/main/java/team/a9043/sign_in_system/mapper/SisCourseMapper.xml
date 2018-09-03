@@ -386,4 +386,22 @@
             )
         </foreach>
     </insert>
+    <insert id="updateNeedMonitorList">
+        update sis_course
+        set sc_need_monitor =
+        <foreach collection="sisCourseList" item="sisCourse"
+                 separator="" close="end" open="case sc_id">
+            when #{sisCourse.scId} then #{sisCourse.scNeedMonitor}
+        </foreach>
+        ,su_id =
+        <foreach collection="sisCourseList" item="sisCourse"
+                 separator="" close="end" open="case sc_id">
+            when #{sisCourse.scId} then #{sisCourse.suId}
+        </foreach>
+        where sc_id in
+        <foreach collection="sisCourseList" item="sisCourse"
+                 separator="," close=")" open="(">
+            #{sisCourse.scId}
+        </foreach>
+    </insert>
 </mapper>

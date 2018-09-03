@@ -98,4 +98,6 @@ public interface SisCourseMapper {
     int updateByPrimaryKey(SisCourse record);
 
     int insertList(@Param("sisCourseList") List<SisCourse> sisCourseList);
+
+    int updateNeedMonitorList(@Param("sisCourseList") List<SisCourse> sisCourseList);
 }

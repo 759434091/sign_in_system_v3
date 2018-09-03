@@ -152,4 +152,16 @@ public class CourseController {
         sisCourse.setScId(scId);
         return courseService.modifyScNeedMonitor(sisCourse);
     }
+
+    @PutMapping("/courses/sc-need-monitor")
+    @PreAuthorize("hasAuthority('ADMINISTRATOR')")
+    public JSONObject batchSupervision(@RequestParam @ApiParam(value = "修改读到状态") Boolean monitorStatus,
+                                       @RequestParam(required = false) @ApiParam(value = "是否需要督导filter,若该参数为null则忽略hasMonitor") Boolean needMonitor,
+                                       @RequestParam(required = false) @ApiParam(value = "是否已有督导员filter") Boolean hasMonitor,
+                                       @RequestParam(required = false) @ApiParam(value = "学院Id") Integer sdId,
+                                       @RequestParam(required = false) @ApiParam(value = "开课年级") Integer scGrade,
+                                       @RequestParam(required = false) @ApiParam(value = "课程序号模糊") String scId,
+                                       @RequestParam(required = false) @ApiParam(value = "课程名字模糊") String scName) {
+        return courseService.batchSupervision(monitorStatus, needMonitor, hasMonitor, sdId, scGrade, scId, scName);
+    }
 }

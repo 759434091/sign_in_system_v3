@@ -2,9 +2,11 @@ package team.a9043.sign_in_system.service;
 
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import team.a9043.sign_in_system.async.AsyncJoinService;
@@ -18,13 +20,12 @@ import team.a9043.sign_in_system.repository.SisCourseRepository;
 import team.a9043.sign_in_system.security.tokenuser.TokenUser;
 
 import javax.annotation.Resource;
+import javax.swing.table.TableRowSorter;
 import javax.transaction.Transactional;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -306,6 +307,51 @@ public class CourseService {
         jsonObject.put("success", success);
         if (success)
             jsonObject.put("sisCourse", sisCourseJson);
+        return jsonObject;
+    }
+
+    @SuppressWarnings("Duplicates")
+    @Transactional
+    public JSONObject batchSupervision(@NonNull boolean monitorStatus,
+                                       @Nullable Boolean needMonitor,
+                                       @Nullable Boolean hasMonitor,
+                                       @Nullable Integer sdId,
+                                       @Nullable Integer scGrade,
+                                       @Nullable String scId,
+                                       @Nullable String scName) {
+        SisCourseExample sisCourseExample = new SisCourseExample();
+        SisCourseExample.Criteria criteria = sisCourseExample.createCriteria();
+        if (null != needMonitor) {
+            if (null == hasMonitor)
+                criteria.andScNeedMonitorEqualTo(needMonitor);
+            else if (hasMonitor)
+                criteria.andScNeedMonitorEqualTo(needMonitor).andSuIdIsNotNull();
+            else
+                criteria.andScNeedMonitorEqualTo(needMonitor).andSuIdIsNull();
+        }
+        if (null != scGrade)
+            criteria.andScGradeEqualTo(scGrade);
+        if (null != scName)
+            criteria.andScNameLike(getFuzzySearch(scName));
+        if (null != scId) {
+            criteria.andScIdLike("%" + scId + "%");
+        }
+        if (null != sdId) {
+            sisCourseExample.setSdId(sdId);
+        }
+
+        List<SisCourse> stdSisCourseList =
+            sisCourseMapper.selectByExample(sisCourseExample);
+        stdSisCourseList.parallelStream()
+            .forEach(sisCourse -> {
+                sisCourse.setScNeedMonitor(monitorStatus);
+                if (!monitorStatus) {
+                    sisCourse.setSuId(null);
+                }
+            });
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success", sisCourseMapper.updateNeedMonitorList(stdSisCourseList) > 0);
         return jsonObject;
     }
 
