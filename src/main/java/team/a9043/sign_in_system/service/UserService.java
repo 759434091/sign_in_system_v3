@@ -213,7 +213,8 @@ public class UserService {
         if (null == pageSize)
             pageSize = 10;
         else if (pageSize <= 0 || pageSize > 500) {
-            throw new IncorrectParameterException("pageSize must between [1,500]");
+            throw new IncorrectParameterException(
+                "pageSize must between [1, 500]");
         }
 
 
@@ -229,7 +230,8 @@ public class UserService {
             criteria.andSuNameLike(CourseService.getFuzzySearch(suName));
         }
 
-        List<SisUser> sisUserList = sisUserMapper.selectByExample(sisUserExample);
+        List<SisUser> sisUserList =
+            sisUserMapper.selectByExample(sisUserExample);
         PageInfo<SisUser> pageInfo = new PageInfo<>(sisUserList);
 
         List<String> suIdList = sisUserList.parallelStream()
@@ -258,4 +260,30 @@ public class UserService {
         jsonObject.put("data", pageJson);
         return jsonObject;
     }
+
+    @Transactional
+    public JSONObject modifyPassword(String suId,
+                                     String oldPassword,
+                                     String newPassword) throws IncorrectParameterException {
+        SisUser sisUser = sisUserMapper.selectByPrimaryKey(suId);
+        if (null == sisUser)
+            throw new IncorrectParameterException("No user found: " + suId);
+        if (newPassword.length() < 6 || newPassword.length() > 18)
+            throw new IncorrectParameterException("Invalid new password");
+
+        if (!bCryptPasswordEncoder.matches(oldPassword,
+            sisUser.getSuPassword())) {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("success", false);
+            jsonObject.put("message", "Incorrect password");
+            return jsonObject;
+        }
+
+        sisUser.setSuPassword(bCryptPasswordEncoder.encode(newPassword));
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success",
+            sisUserMapper.updateByPrimaryKey(sisUser) > 0);
+        return jsonObject;
+    }
 }
+

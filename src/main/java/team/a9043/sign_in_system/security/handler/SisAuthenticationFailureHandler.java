@@ -12,9 +12,8 @@ public class SisAuthenticationFailureHandler implements AuthenticationFailureHan
     public void onAuthenticationFailure(HttpServletRequest request,
                                         HttpServletResponse response,
                                         AuthenticationException exception) throws IOException {
-        String jsonStr =
-            String.format("{\"success\":false,\"error\":true,\"message\":\"Incorrect username or password: %s, %s\"}",
-                request.getParameter("suId"), request.getParameter("suPassword"));
+        String jsonStr = "{\"success\":false,\"error\":true," +
+            "\"message\":\"Incorrect username or password\"}";
         response.setHeader("Content-type", "application/json;charset=utf-8");
         response.getWriter().write(jsonStr);
     }

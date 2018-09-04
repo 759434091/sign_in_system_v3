@@ -57,4 +57,11 @@ public class UserController {
                                   @RequestParam(required = false) String suName) throws IncorrectParameterException {
         return userService.getStudents(page, pageSize, suId, suName);
     }
+
+    @PostMapping("/users/{suId}")
+    public JSONObject modifyPassword(@PathVariable String suId,
+                                     @RequestParam String oldPassword,
+                                     @RequestParam String newPassword) throws IncorrectParameterException {
+        return userService.modifyPassword(suId, oldPassword, newPassword);
+    }
 }
