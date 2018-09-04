@@ -418,7 +418,7 @@ public class CourseService {
         }
     }
 
-    private String getFuzzySearch(String fuzzyName) {
+    public static String getFuzzySearch(String fuzzyName) {
         return Optional
             .ofNullable(fuzzyName)
             .filter(name -> !name.equals(""))

@@ -37,8 +37,10 @@ public class MonitorController {
     @ApiOperation(value = "获得督导员", notes = "获得督导员")
     public JSONObject getMonitors(@RequestParam @ApiParam("页数") Integer page,
                                   @RequestParam @ApiParam("页数大小") Integer pageSize,
+                                  @RequestParam(required = false) @ApiParam("学号模糊") String suId,
+                                  @RequestParam(required = false) @ApiParam("姓名模糊") String suName,
                                   @RequestParam(required = false) @ApiParam("是否按督导分排序") Boolean ordByLackNum) throws IncorrectParameterException {
-        return monitorService.getMonitors(page, pageSize, ordByLackNum);
+        return monitorService.getMonitors(page, pageSize, suId, suName, ordByLackNum);
     }
 
     @PostMapping("/courses/{scId}/monitor")

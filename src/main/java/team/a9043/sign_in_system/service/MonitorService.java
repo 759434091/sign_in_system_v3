@@ -373,6 +373,8 @@ public class MonitorService {
     @SuppressWarnings("Duplicates")
     public JSONObject getMonitors(@Nullable Integer page,
                                   @Nullable Integer pageSize,
+                                  @Nullable String suId,
+                                  @Nullable String suName,
                                   @Nullable Boolean ordByLackNum) throws IncorrectParameterException {
         if (null == page) {
             throw new IncorrectParameterException("Incorrect page: " + null);
@@ -389,7 +391,15 @@ public class MonitorService {
 
         PageHelper.startPage(page, pageSize);
         SisUserExample sisUserExample = new SisUserExample();
-        sisUserExample.createCriteria().andSuAuthoritiesStrLike("%MONITOR%");
+        SisUserExample.Criteria criteria = sisUserExample.createCriteria();
+        criteria.andSuAuthoritiesStrLike("%MONITOR%");
+
+        if (null != suId) {
+            criteria.andSuIdLike("%" + suId + "%");
+        }
+        if (null != suName) {
+            criteria.andSuNameLike(CourseService.getFuzzySearch(suName));
+        }
         if (null != ordByLackNum && ordByLackNum) {
             sisUserExample.setOrderByClause("lack_num desc");
             sisUserExample.setOrdByLackNum(true);
@@ -419,10 +429,10 @@ public class MonitorService {
         pageJson.getJSONArray("list")
             .forEach(sisUserObj -> {
                 JSONObject sisUserJson = (JSONObject) sisUserObj;
-                String suId = sisUserJson.getString("suId");
+                String tSuId = sisUserJson.getString("suId");
 
                 sisUserJson.put("lackNum", sisUserInfoList.parallelStream()
-                    .filter(sisUserInfo -> sisUserInfo.getSuId().equals(suId))
+                    .filter(sisUserInfo -> sisUserInfo.getSuId().equals(tSuId))
                     .findAny()
                     .map(SisUserInfo::getLackNum)
                     .orElse(0));
