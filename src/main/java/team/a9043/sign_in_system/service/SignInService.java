@@ -34,7 +34,7 @@ import java.util.stream.StreamSupport;
  */
 @Service
 public class SignInService {
-    private String signInKeyFormat = "sis_ssId_%d_week_%d";
+    private String signInKeyFormat = "sis_ssId_%s_week_%s";
     @Resource
     private ThreadPoolTaskScheduler threadPoolTaskScheduler;
     @Resource
