@@ -14,6 +14,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Service
@@ -60,29 +62,39 @@ public class AttRateSchedule {
             sisSupervisionExample.createCriteria().andSsIdIn(ssIdList).andSsvWeekLessThanOrEqualTo(week);
             List<SisSupervision> sisSupervisionList = sisSupervisionMapper.selectByExample(sisSupervisionExample);
 
-            sisCourseList.parallelStream().map(sisCourse -> {
-                String scId = sisCourse.getScId();
+            sisCourseList.parallelStream()
+                .map(sisCourse -> {
+                    String scId = sisCourse.getScId();
+                    String suId = sisCourse.getSuId();
 
-                List<SisSchedule> scheduleList = sisScheduleList.parallelStream()
-                    .filter(sisSchedule -> sisSchedule.getScId().equals(scId))
-                    .collect(Collectors.toList());
+                    List<SisSchedule> scheduleList = sisScheduleList.parallelStream()
+                        .filter(sisSchedule -> sisSchedule.getScId().equals(scId))
+                        .collect(Collectors.toList());
 
-                if (scheduleList.isEmpty())
-                    return null;
-                int toalLackNum = scheduleList.parallelStream()
-                    .map(sisSchedule -> {
-                        Integer ssId = sisSchedule.getSsId();
-                        int countNum = (int) sisSupervisionList.parallelStream()
-                            .filter(sisSupervision -> sisSupervision.getSsId().equals(ssId))
-                            .count();
+                    if (scheduleList.isEmpty())
+                        return null;
+                    int totalLackNum = scheduleList.parallelStream()
+                        .mapToInt(sisSchedule -> {
+                            Integer ssId = sisSchedule.getSsId();
+                            int countNum = (int) sisSupervisionList.parallelStream()
+                                .filter(sisSupervision -> sisSupervision.getSsId().equals(ssId))
+                                .count();
 
-                        int lackNum = week - countNum;
-                        lackNum = lackNum < 0 ? 0 : lackNum;
-                        return lackNum;
-                    })
-                    .reduce(0, Integer::sum);
-                return null;
-            });
+                            int lackNum = week - countNum;
+                            lackNum = lackNum < 0 ? 0 : lackNum;
+                            return lackNum;
+                        })
+                        .sum();
+                    SisUserInfo sisUserInfo = new SisUserInfo();
+                    sisUserInfo.setSuId(suId);
+                    sisUserInfo.setLackNum(totalLackNum);
+                    return sisUserInfo;
+                })
+                .collect(ArrayList::new, (arrayList, sisUserInfo) -> {
+                    arrayList.add(sisUserInfo);
+                }, (arr1, arr2) -> {
+
+                });
         } catch (InvalidTimeParameterException e) {
             e.printStackTrace();
         }

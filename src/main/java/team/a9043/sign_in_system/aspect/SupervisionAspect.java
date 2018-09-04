@@ -16,6 +16,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
 import java.util.stream.Stream;
 
 @Component
@@ -64,8 +65,8 @@ public class SupervisionAspect {
         if (null == actNum)
             return;
 
-        Stream<Double> doubleStream = sisSupervisionList.parallelStream()
-            .map(tSisSupervision -> {
+        DoubleStream doubleStream = sisSupervisionList.parallelStream()
+            .mapToDouble(tSisSupervision -> {
                 double halfMan = 0;
                 if (null != tSisSupervision.getSsvMobileNum()) {
                     halfMan += tSisSupervision.getSsvMobileNum();
@@ -80,7 +81,7 @@ public class SupervisionAspect {
                 return suvActNum / actNum;
             });
 
-        double totalRate = doubleStream.reduce((double) 0, Double::sum) / doubleStream.count();
+        double totalRate = doubleStream.sum() / doubleStream.count();
 
         SisCourse updatedSisCourse = new SisCourse();
         updatedSisCourse.setScId(scId);
