@@ -85,7 +85,7 @@ public class SupervisionSchedule {
                         .sum();
                     SisUserInfo sisUserInfo = new SisUserInfo();
                     sisUserInfo.setSuId(suId);
-                    sisUserInfo.setLackNum(totalLackNum);
+                    sisUserInfo.setSuiLackNum(totalLackNum);
                     return sisUserInfo;
                 })
                 .collect(ArrayList::new,
@@ -97,7 +97,7 @@ public class SupervisionSchedule {
                         }
 
                         SisUserInfo stdSisUserInfo = list.get(idx);
-                        stdSisUserInfo.setLackNum(stdSisUserInfo.getLackNum() + sisUserInfo.getLackNum());
+                        stdSisUserInfo.setSuiLackNum(stdSisUserInfo.getSuiLackNum() + sisUserInfo.getSuiLackNum());
                     },
                     (arr1, arr2) -> arr2.forEach(sisUserInfo -> {
                         int idx = arr1.indexOf(sisUserInfo);
@@ -107,7 +107,7 @@ public class SupervisionSchedule {
                         }
 
                         SisUserInfo stdSisUserInfo = arr1.get(idx);
-                        stdSisUserInfo.setLackNum(stdSisUserInfo.getLackNum() + sisUserInfo.getLackNum());
+                        stdSisUserInfo.setSuiLackNum(stdSisUserInfo.getSuiLackNum() + sisUserInfo.getSuiLackNum());
                     }));
 
             boolean res = sisUserInfoMapper.insertList(sisUserInfoList) > 0;

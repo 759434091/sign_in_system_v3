@@ -50,14 +50,14 @@ public class SisUser {
 
     private String type;
 
-    private String lackNum;
+    private String suiLackNum;
 
-    public String getLackNum() {
-        return lackNum;
+    public String getSuiLackNum() {
+        return suiLackNum;
     }
 
-    public void setLackNum(String lackNum) {
-        this.lackNum = lackNum;
+    public void setSuiLackNum(String suiLackNum) {
+        this.suiLackNum = suiLackNum;
     }
 
     public String getType() {

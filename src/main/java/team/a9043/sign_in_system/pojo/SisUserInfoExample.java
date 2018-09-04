@@ -275,52 +275,52 @@ public class SisUserInfoExample {
         }
 
         public Criteria andLackNumEqualTo(Integer value) {
-            addCriterion("lack_num =", value, "lackNum");
+            addCriterion("lack_num =", value, "suiLackNum");
             return (Criteria) this;
         }
 
         public Criteria andLackNumNotEqualTo(Integer value) {
-            addCriterion("lack_num <>", value, "lackNum");
+            addCriterion("lack_num <>", value, "suiLackNum");
             return (Criteria) this;
         }
 
         public Criteria andLackNumGreaterThan(Integer value) {
-            addCriterion("lack_num >", value, "lackNum");
+            addCriterion("lack_num >", value, "suiLackNum");
             return (Criteria) this;
         }
 
         public Criteria andLackNumGreaterThanOrEqualTo(Integer value) {
-            addCriterion("lack_num >=", value, "lackNum");
+            addCriterion("lack_num >=", value, "suiLackNum");
             return (Criteria) this;
         }
 
         public Criteria andLackNumLessThan(Integer value) {
-            addCriterion("lack_num <", value, "lackNum");
+            addCriterion("lack_num <", value, "suiLackNum");
             return (Criteria) this;
         }
 
         public Criteria andLackNumLessThanOrEqualTo(Integer value) {
-            addCriterion("lack_num <=", value, "lackNum");
+            addCriterion("lack_num <=", value, "suiLackNum");
             return (Criteria) this;
         }
 
         public Criteria andLackNumIn(List<Integer> values) {
-            addCriterion("lack_num in", values, "lackNum");
+            addCriterion("lack_num in", values, "suiLackNum");
             return (Criteria) this;
         }
 
         public Criteria andLackNumNotIn(List<Integer> values) {
-            addCriterion("lack_num not in", values, "lackNum");
+            addCriterion("lack_num not in", values, "suiLackNum");
             return (Criteria) this;
         }
 
         public Criteria andLackNumBetween(Integer value1, Integer value2) {
-            addCriterion("lack_num between", value1, value2, "lackNum");
+            addCriterion("lack_num between", value1, value2, "suiLackNum");
             return (Criteria) this;
         }
 
         public Criteria andLackNumNotBetween(Integer value1, Integer value2) {
-            addCriterion("lack_num not between", value1, value2, "lackNum");
+            addCriterion("lack_num not between", value1, value2, "suiLackNum");
             return (Criteria) this;
         }
     }

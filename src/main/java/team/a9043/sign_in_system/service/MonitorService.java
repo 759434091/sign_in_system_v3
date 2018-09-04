@@ -401,7 +401,7 @@ public class MonitorService {
             criteria.andSuNameLike(CourseService.getFuzzySearch(suName));
         }
         if (null != ordByLackNum && ordByLackNum) {
-            sisUserExample.setOrderByClause("lack_num desc");
+            sisUserExample.setOrderByClause("sui_lack_num desc");
             sisUserExample.setOrdByLackNum(true);
         }
 
@@ -432,10 +432,10 @@ public class MonitorService {
                 String tSuId = sisUserJson.getString("suId");
 
                 sisUserJson.remove("suPassword");
-                sisUserJson.put("lackNum", sisUserInfoList.parallelStream()
+                sisUserJson.put("suiLackNum", sisUserInfoList.parallelStream()
                     .filter(sisUserInfo -> sisUserInfo.getSuId().equals(tSuId))
                     .findAny()
-                    .map(SisUserInfo::getLackNum)
+                    .map(SisUserInfo::getSuiLackNum)
                     .orElse(0));
             });
         JSONObject jsonObject = new JSONObject();

@@ -14,7 +14,7 @@
         <result column="su_name" jdbcType="VARCHAR" property="suName"/>
         <result column="su_openid" jdbcType="VARCHAR" property="suOpenid"/>
         <result column="su_password" jdbcType="VARCHAR" property="suPassword"/>
-        <result column="lack_num" jdbcType="INTEGER" property="lackNum"/>
+        <result column="sui_lack_num" jdbcType="INTEGER" property="suiLackNum"/>
     </resultMap>
     <sql id="Example_Where_Clause">
         <!--
@@ -107,7 +107,7 @@
         -->
         sis_user.su_id, su_authorities_str, su_name, su_openid, su_password
         <if test="ordByLackNum != null">
-            , lack_num
+            , sui_lack_num
         </if>
     </sql>
     <select id="selectByExample"
