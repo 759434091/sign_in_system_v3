@@ -371,7 +371,6 @@ public class MonitorService {
     }
 
     @SuppressWarnings("Duplicates")
-    //todo order by lack num
     public JSONObject getMonitors(@Nullable Integer page,
                                   @Nullable Integer pageSize,
                                   @Nullable Boolean ordByLackNum) throws IncorrectParameterException {
