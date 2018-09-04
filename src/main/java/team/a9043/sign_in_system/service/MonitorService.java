@@ -1,5 +1,7 @@
 package team.a9043.sign_in_system.service;
 
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -13,6 +15,7 @@ import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
 import team.a9043.sign_in_system.util.judgetime.JudgeTimeUtil;
 import team.a9043.sign_in_system.util.judgetime.ScheduleParserException;
 
+import javax.annotation.Nullable;
 import javax.annotation.Resource;
 import javax.transaction.Transactional;
 import javax.validation.constraints.NotNull;
@@ -40,6 +43,8 @@ public class MonitorService {
     private SisSupervisionMapper sisSupervisionMapper;
     @Resource
     private SisMonitorTransMapper sisMonitorTransMapper;
+    @Resource
+    private SisUserInfoMapper sisUserInfoMapper;
     @Resource
     private AsyncJoinService asyncJoinService;
 
@@ -362,6 +367,66 @@ public class MonitorService {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("success",
             sisMonitorTransMapper.updateByPrimaryKey(stdSisMonitorTrans));
+        return jsonObject;
+    }
+
+    @SuppressWarnings("Duplicates")
+    //todo order by lack num
+    public JSONObject getMonitors(@Nullable Integer page,
+                                  @Nullable Integer pageSize) throws IncorrectParameterException {
+        if (null == page) {
+            throw new IncorrectParameterException("Incorrect page: " + null);
+        }
+        if (page < 1)
+            throw new IncorrectParameterException("Incorrect page: " + page +
+                " (must equal or bigger than 1)");
+        if (null == pageSize)
+            pageSize = 10;
+        else if (pageSize <= 0 || pageSize > 500) {
+            throw new IncorrectParameterException("pageSize must between [1,500]");
+        }
+
+
+        PageHelper.startPage(page, pageSize);
+        SisUserExample sisUserExample = new SisUserExample();
+        sisUserExample.createCriteria().andSuAuthoritiesStrLike("%MONITOR%");
+
+        List<SisUser> sisUserList = sisUserMapper.selectByExample(sisUserExample);
+        PageInfo<SisUser> pageInfo = new PageInfo<>(sisUserList);
+
+        List<String> suIdList = sisUserList.parallelStream()
+            .map(SisUser::getSuId)
+            .distinct()
+            .collect(Collectors.toList());
+
+        if (suIdList.isEmpty()) {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("success", false);
+            jsonObject.put("page", page);
+            jsonObject.put("message", "No courses");
+            return jsonObject;
+        }
+
+        SisUserInfoExample sisUserInfoExample = new SisUserInfoExample();
+        sisUserInfoExample.createCriteria().andSuIdIn(suIdList);
+        List<SisUserInfo> sisUserInfoList = sisUserInfoMapper.selectByExample(sisUserInfoExample);
+
+        JSONObject pageJson = new JSONObject(pageInfo);
+        pageJson.getJSONArray("list")
+            .forEach(sisUserObj -> {
+                JSONObject sisUserJson = (JSONObject) sisUserObj;
+                String suId = sisUserJson.getString("suId");
+
+                sisUserJson.put("lackNum", sisUserInfoList.parallelStream()
+                    .filter(sisUserInfo -> sisUserInfo.getSuId().equals(suId))
+                    .findAny()
+                    .map(SisUserInfo::getLackNum)
+                    .orElse(null));
+            });
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success", true);
+        jsonObject.put("page", page);
+        jsonObject.put("data", pageJson);
         return jsonObject;
     }
 }

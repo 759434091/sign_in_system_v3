@@ -107,7 +107,7 @@ public class CourseService {
             sisCourseMapper.selectByExample(sisCourseExample);
         PageInfo<SisCourse> pageInfo = new PageInfo<>(sisCourseList);
 
-        if (sisCourseList.size() <= 0) {
+        if (sisCourseList.isEmpty()) {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("success", false);
             jsonObject.put("page", page);
