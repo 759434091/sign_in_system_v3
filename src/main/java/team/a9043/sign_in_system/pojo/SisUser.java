@@ -50,6 +50,16 @@ public class SisUser {
 
     private String type;
 
+    private String lackNum;
+
+    public String getLackNum() {
+        return lackNum;
+    }
+
+    public void setLackNum(String lackNum) {
+        this.lackNum = lackNum;
+    }
+
     public String getType() {
         return type;
     }

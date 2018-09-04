@@ -373,7 +373,8 @@ public class MonitorService {
     @SuppressWarnings("Duplicates")
     //todo order by lack num
     public JSONObject getMonitors(@Nullable Integer page,
-                                  @Nullable Integer pageSize) throws IncorrectParameterException {
+                                  @Nullable Integer pageSize,
+                                  @Nullable Boolean ordByLackNum) throws IncorrectParameterException {
         if (null == page) {
             throw new IncorrectParameterException("Incorrect page: " + null);
         }
@@ -390,6 +391,10 @@ public class MonitorService {
         PageHelper.startPage(page, pageSize);
         SisUserExample sisUserExample = new SisUserExample();
         sisUserExample.createCriteria().andSuAuthoritiesStrLike("%MONITOR%");
+        if (null != ordByLackNum && ordByLackNum) {
+            sisUserExample.setOrderByClause("lackNum desc");
+            sisUserExample.setOrdByLackNum(true);
+        }
 
         List<SisUser> sisUserList = sisUserMapper.selectByExample(sisUserExample);
         PageInfo<SisUser> pageInfo = new PageInfo<>(sisUserList);
