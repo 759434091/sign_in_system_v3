@@ -1,6 +1,7 @@
 package team.a9043.sign_in_system.mapper;
 
 import java.util.List;
+
 import org.apache.ibatis.annotations.Param;
 import team.a9043.sign_in_system.pojo.SisUserInfo;
 import team.a9043.sign_in_system.pojo.SisUserInfoExample;
@@ -93,4 +94,6 @@ public interface SisUserInfoMapper {
      * @mbg.generated Tue Sep 04 13:25:29 CST 2018
      */
     int updateByPrimaryKey(SisUserInfo record);
+
+    int insertList(@Param("sisUserInfoList") List<SisUserInfo> sisUserInfoList);
 }

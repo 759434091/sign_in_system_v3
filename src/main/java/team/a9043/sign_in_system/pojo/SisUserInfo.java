@@ -72,8 +72,10 @@ public class SisUserInfo {
             return true;
         if (!(obj instanceof SisUserInfo))
             return false;
-        if (suId.equals(((SisUserInfo) obj).suId))
+        if (null == suId && null == (((SisUserInfo) obj).suId))
             return true;
-        return false;
+        if (null == suId)
+            return false;
+        return suId.equals(((SisUserInfo) obj).suId);
     }
 }

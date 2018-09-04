@@ -1,10 +1,13 @@
 package team.a9043.sign_in_system.schedule;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import team.a9043.sign_in_system.mapper.SisCourseMapper;
 import team.a9043.sign_in_system.mapper.SisScheduleMapper;
 import team.a9043.sign_in_system.mapper.SisSupervisionMapper;
+import team.a9043.sign_in_system.mapper.SisUserInfoMapper;
 import team.a9043.sign_in_system.pojo.*;
 import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
 import team.a9043.sign_in_system.util.judgetime.JudgeTimeUtil;
@@ -13,24 +16,19 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Service
-public class AttRateSchedule {
+public class SupervisionSchedule {
+    private Logger logger = LoggerFactory.getLogger(SupervisionSchedule.class);
     @Resource
     private SisCourseMapper sisCourseMapper;
     @Resource
     private SisSupervisionMapper sisSupervisionMapper;
     @Resource
     private SisScheduleMapper sisScheduleMapper;
-
-    @Scheduled(cron = "0 0 0 * * ?")
-    public void attRateSchedule() {
-        //
-    }
+    @Resource
+    private SisUserInfoMapper sisUserInfoMapper;
 
     @Scheduled(cron = "0 0 0 * * ?")
     public void supervisionSchedule() {
@@ -62,7 +60,7 @@ public class AttRateSchedule {
             sisSupervisionExample.createCriteria().andSsIdIn(ssIdList).andSsvWeekLessThanOrEqualTo(week);
             List<SisSupervision> sisSupervisionList = sisSupervisionMapper.selectByExample(sisSupervisionExample);
 
-            sisCourseList.parallelStream()
+            List<SisUserInfo> sisUserInfoList = sisCourseList.parallelStream()
                 .map(sisCourse -> {
                     String scId = sisCourse.getScId();
                     String suId = sisCourse.getSuId();
@@ -90,12 +88,31 @@ public class AttRateSchedule {
                     sisUserInfo.setLackNum(totalLackNum);
                     return sisUserInfo;
                 })
-                .collect(ArrayList::new, (arrayList, sisUserInfo) -> {
-                    if (!arrayList.contains(sisUserInfo))
-                        arrayList.add(sisUserInfo);
-                }, (arr1, arr2) -> {
+                .collect(ArrayList::new,
+                    (list, sisUserInfo) -> {
+                        int idx = list.indexOf(sisUserInfo);
+                        if (-1 == idx) {
+                            list.add(sisUserInfo);
+                            return;
+                        }
 
-                });
+                        SisUserInfo stdSisUserInfo = list.get(idx);
+                        stdSisUserInfo.setLackNum(stdSisUserInfo.getLackNum() + sisUserInfo.getLackNum());
+                    },
+                    (arr1, arr2) -> arr2.forEach(sisUserInfo -> {
+                        int idx = arr1.indexOf(sisUserInfo);
+                        if (-1 == idx) {
+                            arr1.add(sisUserInfo);
+                            return;
+                        }
+
+                        SisUserInfo stdSisUserInfo = arr1.get(idx);
+                        stdSisUserInfo.setLackNum(stdSisUserInfo.getLackNum() + sisUserInfo.getLackNum());
+                    }));
+
+            boolean res = sisUserInfoMapper.insertList(sisUserInfoList) > 0;
+            if (!res)
+                logger.error("insert sisUserInfo error");
         } catch (InvalidTimeParameterException e) {
             e.printStackTrace();
         }
