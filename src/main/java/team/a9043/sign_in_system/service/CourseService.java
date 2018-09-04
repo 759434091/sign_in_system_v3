@@ -215,7 +215,7 @@ public class CourseService {
         if (sisJoinCourseList.size() <= 0) {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("success", false);
-            jsonObject.put("message", "No courses");
+            jsonObject.put("message", "No course");
             return jsonObject;
         }
 

@@ -106,9 +106,6 @@
           This element was generated on Mon Aug 27 13:08:41 CST 2018.
         -->
         sis_user.su_id, su_authorities_str, su_name, su_openid, su_password
-        <if test="ordByLackNum != null">
-            , sui_lack_num
-        </if>
     </sql>
     <select id="selectByExample"
             parameterType="team.a9043.sign_in_system.pojo.SisUserExample"
@@ -123,6 +120,9 @@
             distinct
         </if>
         <include refid="Base_Column_List"/>
+        <if test="ordByLackNum != null">
+            , sui_lack_num
+        </if>
         from sis_user
         <if test="ordByLackNum != null">
             left outer join sis_user_info on sis_user_info.su_id = sis_user.su_id

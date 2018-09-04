@@ -193,9 +193,9 @@ public class SisUser {
             .collect(Collectors.toList());
     }
 
-    public void setSuAuthorities(List<String> suAuthorityList) {
+    public void setSuAuthorities(List<GrantedAuthority> suAuthorityList) {
         this.suAuthoritiesStr = String.join(",",
-            suAuthorityList.toArray(new String[0]));
+            suAuthorityList.stream().map(GrantedAuthority::getAuthority).toArray(String[]::new));
     }
 
     @Override

@@ -4,6 +4,8 @@ import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import team.a9043.sign_in_system.mapper.*;
@@ -131,8 +133,8 @@ public class ImportService {
                     .mapToObj(i -> {
                         if ("".equals(usrIds[i].trim()))
                             return null;
-                        List<String> authList = new ArrayList<>();
-                        authList.add("TEACHER");
+                        List<GrantedAuthority> authList = new ArrayList<>();
+                        authList.add(new SimpleGrantedAuthority("TEACHER"));
                         SisUser sisUser = new SisUser();
                         sisUser.setSuId(usrIds[i].trim());
                         sisUser.setSuName(usrNames[i].trim());
@@ -575,8 +577,8 @@ public class ImportService {
                 String suId = row.get(stuMap.get("学号")).toString().trim();
                 if ("".equals(suId))
                     return null;
-                List<String> authList = new ArrayList<>();
-                authList.add("STUDENT");
+                List<GrantedAuthority> authList = new ArrayList<>();
+                authList.add(new SimpleGrantedAuthority("STUDENT"));
                 SisUser sisUser = new SisUser();
                 sisUser.setSuId(suId);
                 sisUser.setSuName(row.get(stuMap.get("姓名")).toString().trim());

@@ -44,6 +44,7 @@ public class MonitorController {
     }
 
     @PostMapping("/courses/{scId}/monitor")
+    @PreAuthorize("hasAuthority('MONITOR')")
     @ApiOperation(value = "领取督导池", notes = "只可领取, 不可取消")
     public JSONObject drawMonitor(@TokenUser @ApiIgnore SisUser sisUser,
                                   @PathVariable @ApiParam(value = "课程序号") String scId) throws InvalidPermissionException, IncorrectParameterException {
@@ -123,5 +124,17 @@ public class MonitorController {
                                           String smtStatus) throws String2ValueException {
         return monitorService.getTransCourses(sisUser,
             SisMonitorTrans.SmtStatus.lowercase2Value(smtStatus));
+    }
+
+    @PostMapping("/monitors/{suId}")
+    @PreAuthorize("hasAuthority('ADMINISTRATOR')")
+    public JSONObject grantMonitor(@PathVariable String suId) throws IncorrectParameterException {
+        return monitorService.grantMonitor(suId);
+    }
+
+    @DeleteMapping("/monitors/{suId}")
+    @PreAuthorize("hasAuthority('ADMINISTRATOR')")
+    public JSONObject revokeMonitor(@PathVariable String suId) throws IncorrectParameterException {
+        return monitorService.revokeMonitor(suId);
     }
 }

@@ -4,6 +4,7 @@ import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 import team.a9043.sign_in_system.async.AsyncJoinService;
@@ -417,7 +418,7 @@ public class MonitorService {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("success", false);
             jsonObject.put("page", page);
-            jsonObject.put("message", "No courses");
+            jsonObject.put("message", "No monitor");
             return jsonObject;
         }
 
@@ -442,6 +443,43 @@ public class MonitorService {
         jsonObject.put("success", true);
         jsonObject.put("page", page);
         jsonObject.put("data", pageJson);
+        return jsonObject;
+    }
+
+    public JSONObject grantMonitor(String suId) throws IncorrectParameterException {
+        SisUser sisUser = sisUserMapper.selectByPrimaryKey(suId);
+        if (null == sisUser)
+            throw new IncorrectParameterException("Incorrect suId: " + suId);
+
+        GrantedAuthority monitorAuth = new SimpleGrantedAuthority("MONITOR");
+        List<GrantedAuthority> authList = sisUser.getSuAuthorities();
+        if (!authList.contains(monitorAuth))
+            authList.add(monitorAuth);
+
+        SisUser updatedSisUser = new SisUser();
+        updatedSisUser.setSuId(sisUser.getSuId());
+        updatedSisUser.setSuAuthorities(authList);
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success", sisUserMapper.updateByPrimaryKeySelective(updatedSisUser));
+        return jsonObject;
+    }
+
+    public JSONObject revokeMonitor(String suId) throws IncorrectParameterException {
+        SisUser sisUser = sisUserMapper.selectByPrimaryKey(suId);
+        if (null == sisUser)
+            throw new IncorrectParameterException("Incorrect suId: " + suId);
+
+        GrantedAuthority monitorAuth = new SimpleGrantedAuthority("MONITOR");
+        List<GrantedAuthority> authList = sisUser.getSuAuthorities();
+        authList.remove(monitorAuth);
+
+        SisUser updatedSisUser = new SisUser();
+        updatedSisUser.setSuId(sisUser.getSuId());
+        updatedSisUser.setSuAuthorities(authList);
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success", sisUserMapper.updateByPrimaryKeySelective(updatedSisUser));
         return jsonObject;
     }
 }
