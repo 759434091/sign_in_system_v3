@@ -8,6 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.pojo.SisCourse;
+import team.a9043.sign_in_system.pojo.SisJoinCourse;
 import team.a9043.sign_in_system.pojo.SisUser;
 
 import javax.annotation.Resource;
@@ -40,8 +41,8 @@ public class CourseServiceTest {
     @Test
     public void getCourses1() throws ExecutionException, InterruptedException {
         SisUser sisUser = new SisUser();
-        sisUser.setSuId("2016220401001");
-        JSONObject jsonObject = courseService.getCourses(sisUser);
+        sisUser.setSuId("3203604");
+        JSONObject jsonObject = courseService.getCourses(sisUser, SisJoinCourse.JoinCourseType.TEACHING);
         log.info(jsonObject.toString(2));
     }
 

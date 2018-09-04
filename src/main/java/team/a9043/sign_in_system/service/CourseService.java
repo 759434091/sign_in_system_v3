@@ -206,9 +206,10 @@ public class CourseService {
         return jsonObject;
     }
 
-    public JSONObject getCourses(@TokenUser SisUser sisUser) throws ExecutionException, InterruptedException {
+    public JSONObject getCourses(@TokenUser SisUser sisUser, SisJoinCourse.JoinCourseType joinCourseType) throws ExecutionException, InterruptedException {
         SisJoinCourseExample sisJoinCourseExample = new SisJoinCourseExample();
-        sisJoinCourseExample.createCriteria().andSuIdEqualTo(sisUser.getSuId());
+        sisJoinCourseExample.createCriteria().andSuIdEqualTo(sisUser.getSuId())
+            .andJoinCourseTypeEqualTo(joinCourseType.ordinal());
         List<SisJoinCourse> sisJoinCourseList =
             sisJoinCourseMapper.selectByExample(sisJoinCourseExample);
 

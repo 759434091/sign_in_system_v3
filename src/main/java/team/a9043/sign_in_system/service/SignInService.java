@@ -51,6 +51,8 @@ public class SignInService {
     private SisUserMapper sisUserMapper;
     @Resource
     private SisJoinCourseMapper sisJoinCourseMapper;
+    @Resource
+    private SisLocationMapper sisLocationMapper;
 
     @Transactional
     public boolean createSignIn(SisUser sisUser,
@@ -102,6 +104,19 @@ public class SignInService {
         if (Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
             return false;
         }
+
+        if (null != sisSchedule.getSlId()) {
+            SisLocation sisLocation = sisLocationMapper.selectByPrimaryKey(sisSchedule.getSlId());
+            if (null != sisLocation &&
+                null != sisLocation.getSlLat() &&
+                null != sisLocation.getSlLong()) {
+                redisTemplate.opsForHash()
+                    .put(key, "loc_lat", sisLocation.getSlLat());
+                redisTemplate.opsForHash()
+                    .put(key, "loc_long", sisLocation.getSlLong());
+            }
+        }
+
         redisTemplate.opsForHash()
             .put(key, "create_time", localDateTime);
         suIdList
@@ -201,6 +216,7 @@ public class SignInService {
             });
     }
 
+    //todo processing
     public JSONObject getSignIns(SisUser sisUser, String scId) throws IncorrectParameterException {
         //get course
         SisCourse sisCourse = Optional
@@ -308,7 +324,8 @@ public class SignInService {
 
     public boolean signIn(SisUser sisUser,
                           Integer ssId,
-                          LocalDateTime localDateTime) throws InvalidTimeParameterException, IncorrectParameterException {
+                          LocalDateTime localDateTime,
+                          JSONObject locationJson) throws InvalidTimeParameterException, IncorrectParameterException {
         String key =
             String.format(signInKeyFormat, ssId,
                 JudgeTimeUtil.getWeek(localDateTime.toLocalDate()));
@@ -323,6 +340,14 @@ public class SignInService {
         long until = createTime.until(localDateTime, ChronoUnit.MINUTES);
         if (until > 10 || until < 0) {
             return false;
+        }
+
+        //todo judge
+        if (redisTemplate.opsForHash().hasKey(key, "loc_lat") &&
+            redisTemplate.opsForHash().hasKey(key, "loc_long")) {
+            Double locLat = (Double) redisTemplate.opsForHash().get(key, "loc_lat");
+            Double locLong = (Double) redisTemplate.opsForHash().get(key, "loc_long");
+            return true;
         }
 
         redisTemplate.opsForHash().put(key, sisUser.getSuId(), true);
@@ -360,6 +385,8 @@ public class SignInService {
             }
 
             map.remove("create_time");
+            map.remove("loc_lat");
+            map.remove("loc_long");
             List<SisSignInDetail> sisSignInDetailList = map
                 .entrySet()
                 .parallelStream()

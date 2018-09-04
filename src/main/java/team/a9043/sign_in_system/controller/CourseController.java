@@ -12,6 +12,7 @@ import springfox.documentation.annotations.ApiIgnore;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
 import team.a9043.sign_in_system.pojo.SisCourse;
+import team.a9043.sign_in_system.pojo.SisJoinCourse;
 import team.a9043.sign_in_system.pojo.SisUser;
 import team.a9043.sign_in_system.security.tokenuser.TokenUser;
 import team.a9043.sign_in_system.service.CourseService;
@@ -85,7 +86,7 @@ public class CourseController {
                                  @RequestParam
                                  @ApiParam(value = "获得方式",
                                      allowableValues = "student,monitor," +
-                                         "administrator")
+                                         "administrator,teacher")
                                      String getType) throws
         IncorrectParameterException, InvalidPermissionException,
         ExecutionException, InterruptedException {
@@ -116,12 +117,19 @@ public class CourseController {
                     throw new InvalidPermissionException(
                         "Invalid permission:" + needMonitor + "," + hasMonitor);
             }
+            case "teacher": {
+                if (!sisUser.getSuAuthoritiesStr().contains("TEACHER")) {
+                    throw new InvalidPermissionException(
+                        "Invalid permission:" + getType);
+                }
+                return courseService.getCourses(sisUser, SisJoinCourse.JoinCourseType.TEACHING);
+            }
             case "student": {
                 if (!sisUser.getSuAuthoritiesStr().contains("STUDENT")) {
                     throw new InvalidPermissionException(
                         "Invalid permission:" + getType);
                 }
-                return courseService.getCourses(sisUser);
+                return courseService.getCourses(sisUser, SisJoinCourse.JoinCourseType.ATTENDANCE);
             }
             default:
                 throw new IncorrectParameterException("Incorrect " +

@@ -2,6 +2,7 @@ package team.a9043.sign_in_system.controller;
 
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -83,11 +84,18 @@ public class SignInController {
         ".equals('code')")
     @ApiOperation("学生签到")
     public JSONObject signIn(@TokenUser @ApiIgnore SisUser sisUser,
-                             @PathVariable @ApiParam("排课") Integer ssId) throws IncorrectParameterException, InvalidTimeParameterException {
+                             @PathVariable @ApiParam("排课") Integer ssId,
+                             @RequestHeader("location") String location) throws IncorrectParameterException, InvalidTimeParameterException {
+        JSONObject locationJson;
+        try {
+            locationJson = new JSONObject(location);
+        } catch (JSONException e) {
+            throw new IncorrectParameterException(e.getMessage());
+        }
         LocalDateTime localDateTime = LocalDateTime.now();
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("success",
-            signInService.signIn(sisUser, ssId, localDateTime));
+            signInService.signIn(sisUser, ssId, localDateTime, locationJson));
         return jsonObject;
     }
 }

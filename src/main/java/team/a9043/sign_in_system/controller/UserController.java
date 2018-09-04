@@ -3,6 +3,7 @@ package team.a9043.sign_in_system.controller;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.json.JSONObject;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
@@ -46,5 +47,14 @@ public class UserController {
     @SuppressWarnings("unused")
     public void getTokens(@ApiParam("用户名") @RequestParam String suId,
                           @ApiParam("密码") @RequestParam String suPassword) {
+    }
+
+    @GetMapping("/students")
+    @PreAuthorize("hasAuthority('ADMINISTRATOR')")
+    public JSONObject getStudents(@RequestParam Integer page,
+                                  @RequestParam Integer pageSize,
+                                  @RequestParam(required = false) String suId,
+                                  @RequestParam(required = false) String suName) throws IncorrectParameterException {
+        return userService.getStudents(page, pageSize, suId, suName);
     }
 }
