@@ -32,6 +32,15 @@ public class MonitorController {
     @Resource
     private MonitorService monitorService;
 
+    @GetMapping("/monitors")
+    @PreAuthorize("hasAuthority('ADMINISTRATOR')")
+    @ApiOperation(value = "获得督导员", notes = "获得督导员")
+    public JSONObject getMonitors(@RequestParam @ApiParam("页数") Integer page,
+                                  @RequestParam @ApiParam("页数大小") Integer pageSize,
+                                  @RequestParam(required = false) @ApiParam("是否按督导分排序") Boolean ordByLackNum) {
+        return getMonitors(page, pageSize, ordByLackNum);
+    }
+
     @PostMapping("/courses/{scId}/monitor")
     @ApiOperation(value = "领取督导池", notes = "只可领取, 不可取消")
     public JSONObject drawMonitor(@TokenUser @ApiIgnore SisUser sisUser,

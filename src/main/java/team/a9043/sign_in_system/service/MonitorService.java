@@ -392,7 +392,7 @@ public class MonitorService {
         SisUserExample sisUserExample = new SisUserExample();
         sisUserExample.createCriteria().andSuAuthoritiesStrLike("%MONITOR%");
         if (null != ordByLackNum && ordByLackNum) {
-            sisUserExample.setOrderByClause("lackNum desc");
+            sisUserExample.setOrderByClause("lack_num desc");
             sisUserExample.setOrdByLackNum(true);
         }
 
@@ -426,7 +426,7 @@ public class MonitorService {
                     .filter(sisUserInfo -> sisUserInfo.getSuId().equals(suId))
                     .findAny()
                     .map(SisUserInfo::getLackNum)
-                    .orElse(null));
+                    .orElse(0));
             });
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("success", true);

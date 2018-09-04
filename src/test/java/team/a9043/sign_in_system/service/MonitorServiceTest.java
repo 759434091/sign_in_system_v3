@@ -101,4 +101,10 @@ public class MonitorServiceTest {
 
         monitorService.applyForTransfer(sisUser, 2, sisMonitorTrans);
     }
+
+    @Test
+    public void getMonitors() throws IncorrectParameterException {
+        JSONObject jsonObject = monitorService.getMonitors(1, 10, true);
+        log.info(jsonObject.toString(2));
+    }
 }
