@@ -91,7 +91,8 @@ public class AttRateSchedule {
                     return sisUserInfo;
                 })
                 .collect(ArrayList::new, (arrayList, sisUserInfo) -> {
-                    arrayList.add(sisUserInfo);
+                    if (!arrayList.contains(sisUserInfo))
+                        arrayList.add(sisUserInfo);
                 }, (arr1, arr2) -> {
 
                 });
