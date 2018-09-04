@@ -205,72 +205,72 @@ public class SisUserExample {
         }
 
         public Criteria andSuIdIsNull() {
-            addCriterion("su_id is null");
+            addCriterion("sis_user.su_id is null");
             return (Criteria) this;
         }
 
         public Criteria andSuIdIsNotNull() {
-            addCriterion("su_id is not null");
+            addCriterion("sis_user.su_id is not null");
             return (Criteria) this;
         }
 
         public Criteria andSuIdEqualTo(String value) {
-            addCriterion("su_id =", value, "suId");
+            addCriterion("sis_user.su_id =", value, "suId");
             return (Criteria) this;
         }
 
         public Criteria andSuIdNotEqualTo(String value) {
-            addCriterion("su_id <>", value, "suId");
+            addCriterion("sis_user.su_id <>", value, "suId");
             return (Criteria) this;
         }
 
         public Criteria andSuIdGreaterThan(String value) {
-            addCriterion("su_id >", value, "suId");
+            addCriterion("sis_user.su_id >", value, "suId");
             return (Criteria) this;
         }
 
         public Criteria andSuIdGreaterThanOrEqualTo(String value) {
-            addCriterion("su_id >=", value, "suId");
+            addCriterion("sis_user.su_id >=", value, "suId");
             return (Criteria) this;
         }
 
         public Criteria andSuIdLessThan(String value) {
-            addCriterion("su_id <", value, "suId");
+            addCriterion("sis_user.su_id <", value, "suId");
             return (Criteria) this;
         }
 
         public Criteria andSuIdLessThanOrEqualTo(String value) {
-            addCriterion("su_id <=", value, "suId");
+            addCriterion("sis_user.su_id <=", value, "suId");
             return (Criteria) this;
         }
 
         public Criteria andSuIdLike(String value) {
-            addCriterion("su_id like", value, "suId");
+            addCriterion("sis_user.su_id like", value, "suId");
             return (Criteria) this;
         }
 
         public Criteria andSuIdNotLike(String value) {
-            addCriterion("su_id not like", value, "suId");
+            addCriterion("sis_user.su_id not like", value, "suId");
             return (Criteria) this;
         }
 
         public Criteria andSuIdIn(List<String> values) {
-            addCriterion("su_id in", values, "suId");
+            addCriterion("sis_user.su_id in", values, "suId");
             return (Criteria) this;
         }
 
         public Criteria andSuIdNotIn(List<String> values) {
-            addCriterion("su_id not in", values, "suId");
+            addCriterion("sis_user.su_id not in", values, "suId");
             return (Criteria) this;
         }
 
         public Criteria andSuIdBetween(String value1, String value2) {
-            addCriterion("su_id between", value1, value2, "suId");
+            addCriterion("sis_user.su_id between", value1, value2, "suId");
             return (Criteria) this;
         }
 
         public Criteria andSuIdNotBetween(String value1, String value2) {
-            addCriterion("su_id not between", value1, value2, "suId");
+            addCriterion("sis_user.su_id not between", value1, value2, "suId");
             return (Criteria) this;
         }
 

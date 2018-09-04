@@ -104,7 +104,7 @@ public class MonitorServiceTest {
 
     @Test
     public void getMonitors() throws IncorrectParameterException {
-        JSONObject jsonObject = monitorService.getMonitors(1, 10, true);
+        JSONObject jsonObject = monitorService.getMonitors(1, 10, "2016220401001", null, true);
         log.info(jsonObject.toString(2));
     }
 }

@@ -431,6 +431,7 @@ public class MonitorService {
                 JSONObject sisUserJson = (JSONObject) sisUserObj;
                 String tSuId = sisUserJson.getString("suId");
 
+                sisUserJson.remove("suPassword");
                 sisUserJson.put("lackNum", sisUserInfoList.parallelStream()
                     .filter(sisUserInfo -> sisUserInfo.getSuId().equals(tSuId))
                     .findAny()
