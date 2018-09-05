@@ -7,8 +7,6 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.scheduling.Trigger;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
@@ -21,14 +19,13 @@ import team.a9043.sign_in_system.util.judgetime.JudgeTimeUtil;
 
 import javax.annotation.Resource;
 import javax.transaction.Transactional;
-import java.security.BasicPermission;
 import java.security.InvalidParameterException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -40,8 +37,8 @@ public class SignInService {
     private String signInKeyFormat = "sis_ssId_%s_week_%s";
     @Resource
     private ThreadPoolTaskScheduler threadPoolTaskScheduler;
-    @Resource
-    private RedisTemplate<String, Object> redisTemplate;
+    @Resource(name = "sisRedisTemplate")
+    private RedisTemplate<String, Object> sisRedisTemplate;
     @Resource
     private SisSignInMapper sisSignInMapper;
     @Resource
@@ -67,13 +64,13 @@ public class SignInService {
 
         Integer week = JudgeTimeUtil.getWeek(localDateTime.toLocalDate());
 
-        //check week todo must do
-/*        if (week < sisSchedule.getSsStartWeek() || week > sisSchedule.getSsEndWeek()) {
+        //check week
+        if (week < sisSchedule.getSsStartWeek() || week > sisSchedule.getSsEndWeek()) {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("success", false);
             jsonObject.put("message", "Invalid week: " + week);
             return jsonObject;
-        }*/
+        }
 
         //check suspend
         boolean isSuspend = sisSchedule.getSsSuspensionList()
@@ -94,7 +91,8 @@ public class SignInService {
         if (!sisSignInMapper.selectByExample(sisSignInExample).isEmpty()) {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("success", false);
-            jsonObject.put("message", "Check-in has been launched and completed: week " + week);
+            jsonObject.put("message", "Check-in has been launched and " +
+                "completed: week " + week);
             return jsonObject;
         }
 
@@ -121,13 +119,14 @@ public class SignInService {
             .filter(sisJoinCourse -> sisJoinCourse.getJoinCourseType()
                 .equals(team.a9043.sign_in_system.entity.SisJoinCourse.JoinCourseType.ATTENDANCE.ordinal()))
             .map(SisJoinCourse::getSuId)
-            .collect(Collectors.toMap(Function.identity(), (s) -> Boolean.FALSE));
+            .collect(Collectors.toMap(Function.identity(),
+                (s) -> Boolean.FALSE));
 
         String key =
             String.format(signInKeyFormat, ssId,
                 week);
 
-        if (Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
+        if (Boolean.TRUE.equals(sisRedisTemplate.hasKey(key))) {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("success", false);
             jsonObject.put("message", "Sign in is processing");
@@ -135,21 +134,22 @@ public class SignInService {
         }
 
         if (null != sisSchedule.getSlId()) {
-            SisLocation sisLocation = sisLocationMapper.selectByPrimaryKey(sisSchedule.getSlId());
+            SisLocation sisLocation =
+                sisLocationMapper.selectByPrimaryKey(sisSchedule.getSlId());
             if (null != sisLocation &&
                 null != sisLocation.getSlLat() &&
                 null != sisLocation.getSlLong()) {
-                redisTemplate.opsForHash()
+                sisRedisTemplate.opsForHash()
                     .put(key, "loc_lat", sisLocation.getSlLat());
-                redisTemplate.opsForHash()
+                sisRedisTemplate.opsForHash()
                     .put(key, "loc_long", sisLocation.getSlLong());
             }
         }
 
-        redisTemplate.opsForHash()
+        sisRedisTemplate.opsForHash()
             .put(key, "create_time", localDateTime);
 
-        redisTemplate.opsForHash().putAll(key, suIdMap);
+        sisRedisTemplate.opsForHash().putAll(key, suIdMap);
 
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.MINUTE, 10);
@@ -165,7 +165,7 @@ public class SignInService {
     @Transactional
     public JSONObject getSignIn(Integer ssId, Integer week) {
         String key = String.format(signInKeyFormat, ssId, week);
-        if (Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
+        if (Boolean.TRUE.equals(sisRedisTemplate.hasKey(key))) {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("success", true);
             jsonObject.put("error", false);
@@ -329,6 +329,29 @@ public class SignInService {
             JSONObject sisScheduleJson = (JSONObject) sisScheduleObj;
 
             Integer ssId = sisScheduleJson.getInt("ssId");
+
+            String keyPattern = String.format(signInKeyFormat, ssId, "*");
+            List<JSONObject> processingList =
+                Optional
+                    .ofNullable(sisRedisTemplate.keys(keyPattern))
+                    .map(c -> c.stream()
+                        .map(key -> {
+                            Matcher matcher = Pattern.compile(
+                                "sis_ssId_\\d+_week_(\\d+)")
+                                .matcher(key);
+                            if (!matcher.find())
+                                return null;
+
+                            JSONObject jsonObject = new JSONObject();
+                            jsonObject.put("ssId", ssId);
+                            jsonObject.put("week",
+                                Integer.valueOf(matcher.group(1)));
+                            return jsonObject;
+                        })
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList()))
+                    .orElse(null);
+
             List<JSONObject> sisSignInJsonList = StreamSupport
                 .stream(sisSignInJsonArray.spliterator(), false)
                 .map(sisSignInObj -> (JSONObject) sisSignInObj)
@@ -336,6 +359,7 @@ public class SignInService {
                     "ssId")))
                 .collect(Collectors.toList());
 
+            sisScheduleJson.put("sisProcessingList", processingList);
             sisScheduleJson.put("sisSignInList", sisSignInJsonList);
         });
 
@@ -362,7 +386,7 @@ public class SignInService {
             String.format(signInKeyFormat, ssId,
                 JudgeTimeUtil.getWeek(localDateTime.toLocalDate()));
 
-        LocalDateTime createTime = (LocalDateTime) redisTemplate
+        LocalDateTime createTime = (LocalDateTime) sisRedisTemplate
             .opsForHash()
             .get(key, "create_time");
         if (null == createTime)
@@ -375,14 +399,16 @@ public class SignInService {
         }
 
         //todo judge
-        if (redisTemplate.opsForHash().hasKey(key, "loc_lat") &&
-            redisTemplate.opsForHash().hasKey(key, "loc_long")) {
-            Double locLat = (Double) redisTemplate.opsForHash().get(key, "loc_lat");
-            Double locLong = (Double) redisTemplate.opsForHash().get(key, "loc_long");
+        if (sisRedisTemplate.opsForHash().hasKey(key, "loc_lat") &&
+            sisRedisTemplate.opsForHash().hasKey(key, "loc_long")) {
+            Double locLat = (Double) sisRedisTemplate.opsForHash().get(key,
+                "loc_lat");
+            Double locLong = (Double) sisRedisTemplate.opsForHash().get(key,
+                "loc_long");
             return true;
         }
 
-        redisTemplate.opsForHash().put(key, sisUser.getSuId(), true);
+        sisRedisTemplate.opsForHash().put(key, sisUser.getSuId(), true);
         return true;
     }
 
@@ -404,7 +430,7 @@ public class SignInService {
         @Transactional
         public void run() {
             Map<Object, Object> map =
-                redisTemplate.opsForHash().entries(key);
+                sisRedisTemplate.opsForHash().entries(key);
             SisSignIn sisSignIn = new SisSignIn();
             sisSignIn.setSsId(ssId);
             sisSignIn.setSsiWeek(week);
@@ -442,7 +468,7 @@ public class SignInService {
                 logger.error("error insert sisSignInDetailList: ");
                 return;
             }
-            redisTemplate.opsForHash().delete(key);
+            sisRedisTemplate.delete(key);
         }
     }
 }

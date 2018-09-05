@@ -11,14 +11,16 @@ import org.springframework.test.context.junit4.SpringRunner;
 import team.a9043.sign_in_system.mapper.SisJoinCourseMapper;
 import team.a9043.sign_in_system.mapper.SisScheduleMapper;
 import team.a9043.sign_in_system.mapper.SisUserInfoMapper;
-import team.a9043.sign_in_system.pojo.*;
+import team.a9043.sign_in_system.pojo.SisJoinCourse;
+import team.a9043.sign_in_system.pojo.SisJoinCourseExample;
+import team.a9043.sign_in_system.pojo.SisSchedule;
+import team.a9043.sign_in_system.pojo.SisScheduleExample;
 
 import javax.annotation.Resource;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author a9043
@@ -98,47 +100,5 @@ public class OtherTest {
 
     @Test
     public void teat4() {
-        SisUserInfo sisUserInfo3 = new SisUserInfo();
-        sisUserInfo3.setSuId("2016220401001");
-        sisUserInfo3.setSuiLackNum(1);
-
-        SisUserInfo sisUserInfo1 = new SisUserInfo();
-        sisUserInfo1.setSuId("2016220401001");
-        sisUserInfo1.setSuiLackNum(5);
-
-
-        SisUserInfo sisUserInfo4 = new SisUserInfo();
-        sisUserInfo4.setSuId("2016220401001");
-        sisUserInfo4.setSuiLackNum(5);
-
-
-        SisUserInfo sisUserInfo2 = new SisUserInfo();
-        sisUserInfo2.setSuId("2016220401007");
-        sisUserInfo2.setSuiLackNum(4);
-
-        Stream<SisUserInfo> sisUserInfoStream = Stream.of(sisUserInfo3, sisUserInfo1, sisUserInfo2, sisUserInfo4);
-        List<SisUserInfo> sisUserInfoList = sisUserInfoStream
-            .collect(ArrayList::new,
-                (list, sisUserInfo) -> {
-                    int idx = list.indexOf(sisUserInfo);
-                    if (-1 == idx) {
-                        list.add(sisUserInfo);
-                        return;
-                    }
-
-                    SisUserInfo stdSisUserInfo = list.get(idx);
-                    stdSisUserInfo.setSuiLackNum(stdSisUserInfo.getSuiLackNum() + sisUserInfo.getSuiLackNum());
-                },
-                (arr1, arr2) -> arr2.forEach(sisUserInfo -> {
-                    int idx = arr1.indexOf(sisUserInfo);
-                    if (-1 == idx) {
-                        arr1.add(sisUserInfo);
-                        return;
-                    }
-
-                    SisUserInfo stdSisUserInfo = arr1.get(idx);
-                    stdSisUserInfo.setSuiLackNum(stdSisUserInfo.getSuiLackNum() + sisUserInfo.getSuiLackNum());
-                }));
-        sisUserInfoMapper.insertList(sisUserInfoList);
     }
 }

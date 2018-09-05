@@ -23,6 +23,5 @@ public class SisUserInfo implements Serializable {
 
     @Column(length = 20)
     @NotNull
-    // TODO rename sui
     private Integer suiLackNum = 0;
 }
