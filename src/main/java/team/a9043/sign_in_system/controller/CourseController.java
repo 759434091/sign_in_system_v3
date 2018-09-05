@@ -70,7 +70,7 @@ public class CourseController {
      * @throws InvalidPermissionException  权限非法
      */
     @GetMapping("/courses")
-    @PreAuthorize("hasAnyAuthority('ADMINISTRATOR','STUDENT','MONITOR')")
+    @PreAuthorize("hasAnyAuthority('ADMINISTRATOR','STUDENT','TEACHER','MONITOR')")
     @ApiOperation(value = "获得课程",
         notes = "根据getType获取课程",
         produces = "application/json")

@@ -180,7 +180,7 @@ public class JudgeTimeUtil {
     }
 
     public static Integer getWeek(LocalDate localDate) throws InvalidTimeParameterException {
-        int days = Period.between(startDate, localDate).getDays();
+        int days = (int) startDate.until(localDate, ChronoUnit.DAYS);
         if (days <= 0)
             throw new InvalidTimeParameterException("Invalid localDate: " + localDate);
         return days / 7 + 1;

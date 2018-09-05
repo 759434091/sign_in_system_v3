@@ -7,6 +7,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.Trigger;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -20,12 +21,14 @@ import team.a9043.sign_in_system.util.judgetime.JudgeTimeUtil;
 
 import javax.annotation.Resource;
 import javax.transaction.Transactional;
+import java.security.BasicPermission;
 import java.security.InvalidParameterException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -55,22 +58,45 @@ public class SignInService {
     private SisLocationMapper sisLocationMapper;
 
     @Transactional
-    public boolean createSignIn(SisUser sisUser,
-                                Integer ssId,
-                                LocalDateTime localDateTime) throws InvalidTimeParameterException, InvalidPermissionException {
+    public JSONObject createSignIn(SisUser sisUser,
+                                   Integer ssId,
+                                   LocalDateTime localDateTime) throws InvalidTimeParameterException, InvalidPermissionException {
         SisSchedule sisSchedule = Optional
             .ofNullable(sisScheduleMapper.selectByPrimaryKey(ssId))
             .orElseThrow(() -> new InvalidParameterException("Invalid ssId: " + ssId));
 
         Integer week = JudgeTimeUtil.getWeek(localDateTime.toLocalDate());
 
+        //check week todo must do
+/*        if (week < sisSchedule.getSsStartWeek() || week > sisSchedule.getSsEndWeek()) {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("success", false);
+            jsonObject.put("message", "Invalid week: " + week);
+            return jsonObject;
+        }*/
+
+        //check suspend
         boolean isSuspend = sisSchedule.getSsSuspensionList()
             .stream()
             .anyMatch(tWeek -> tWeek.equals(week));
-        if (isSuspend)
-            throw new InvalidPermissionException(String.format(
+        if (isSuspend) {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("success", false);
+            jsonObject.put("message", String.format(
                 "Schedule %d week %d is in the suspension list",
                 ssId, week));
+            return jsonObject;
+        }
+
+        //check is end
+        SisSignInExample sisSignInExample = new SisSignInExample();
+        sisSignInExample.createCriteria().andSsIdEqualTo(ssId).andSsiWeekEqualTo(week);
+        if (!sisSignInMapper.selectByExample(sisSignInExample).isEmpty()) {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("success", false);
+            jsonObject.put("message", "Check-in has been launched and completed: week " + week);
+            return jsonObject;
+        }
 
         //get joinCourse
         SisJoinCourseExample sisJoinCourseExample = new SisJoinCourseExample();
@@ -90,19 +116,22 @@ public class SignInService {
                     "Invalid Permission in: " + ssId));
 
         //get suIdList
-        List<String> suIdList = sisJoinCourseList
+        Map<String, Boolean> suIdMap = sisJoinCourseList
             .parallelStream()
             .filter(sisJoinCourse -> sisJoinCourse.getJoinCourseType()
                 .equals(team.a9043.sign_in_system.entity.SisJoinCourse.JoinCourseType.ATTENDANCE.ordinal()))
             .map(SisJoinCourse::getSuId)
-            .collect(Collectors.toList());
+            .collect(Collectors.toMap(Function.identity(), (s) -> Boolean.FALSE));
 
         String key =
             String.format(signInKeyFormat, ssId,
                 week);
 
         if (Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
-            return false;
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("success", false);
+            jsonObject.put("message", "Sign in is processing");
+            return jsonObject;
         }
 
         if (null != sisSchedule.getSlId()) {
@@ -119,15 +148,18 @@ public class SignInService {
 
         redisTemplate.opsForHash()
             .put(key, "create_time", localDateTime);
-        suIdList
-            .forEach(suId -> redisTemplate.opsForHash()
-                .put(key, suId, false));
+
+        redisTemplate.opsForHash().putAll(key, suIdMap);
 
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.MINUTE, 10);
         threadPoolTaskScheduler.schedule(new EndSignInTask(key, ssId,
             week), calendar.toInstant());
-        return true;
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success", true);
+        jsonObject.put("message", "success");
+        return jsonObject;
     }
 
     @Transactional
@@ -378,7 +410,7 @@ public class SignInService {
             sisSignIn.setSsiWeek(week);
             sisSignIn.setSsiCreateTime((LocalDateTime) map.get("create_time"));
             boolean resSisSignIn = sisSignInMapper.insert(sisSignIn) > 0;
-            if (!resSisSignIn || null == sisSignIn.getSsiId()) {
+            if (!resSisSignIn) {
                 logger.error(String.format(
                     "error insert sisSignIn: [%s, %s]", ssId, week));
                 return;

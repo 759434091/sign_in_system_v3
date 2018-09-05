@@ -65,10 +65,8 @@ public class SignInController {
     public JSONObject createSignIn(@TokenUser @ApiIgnore SisUser sisUser,
                                    @PathVariable @ApiParam("排课") Integer ssId) throws InvalidTimeParameterException, InvalidPermissionException {
         LocalDateTime localDateTime = LocalDateTime.now();
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success",
-            signInService.createSignIn(sisUser, ssId, localDateTime));
-        return jsonObject;
+
+        return signInService.createSignIn(sisUser, ssId, localDateTime);
     }
 
     @GetMapping("/schedules/{ssId}/signIns/week/{week}")

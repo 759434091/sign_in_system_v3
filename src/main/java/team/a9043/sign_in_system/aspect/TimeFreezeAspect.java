@@ -30,7 +30,7 @@ public class TimeFreezeAspect {
         IntStream
             .range(0, args.length)
             .filter(i -> (argTypes[i].equals(LocalDateTime.class) && parameterNames[i].equals("currentDateTime")))
-            .forEach(i -> args[i] = LocalDateTime.of(2018, Month.AUGUST, 29,
+            .forEach(i -> args[i] = LocalDateTime.of(2018, Month.JUNE, 29,
                 20, 0,
                 0));
         //冻结 第七周 星期一 下午56节课 计网

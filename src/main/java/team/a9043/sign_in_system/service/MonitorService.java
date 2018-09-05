@@ -121,6 +121,8 @@ public class MonitorService {
 
         if (!sisUser.getSuAuthorities().contains(new SimpleGrantedAuthority(
             "ADMINISTRATOR")) &&
+            !sisUser.getSuAuthorities().contains(new SimpleGrantedAuthority(
+                "TEACHER")) &&
             !sisUser.getSuId().equals(sisCourse.getSuId())) {
             throw new InvalidPermissionException(
                 "Invalid permission: " + scId);
