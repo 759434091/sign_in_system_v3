@@ -40,6 +40,9 @@ public class SisSignIn {
     @Column
     private LocalDateTime ssiCreateTime;
 
+    @ApiModelProperty("到勤率")
+    private Double ssiAttRate;
+
     @OneToMany(cascade = {CascadeType.ALL})
     @JoinColumn(name = "ssiId", referencedColumnName = "ssiId")
     private Collection<SisSignInDetail> sisSignInDetails = new ArrayList<>();

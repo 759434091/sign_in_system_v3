@@ -11,6 +11,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
+import team.a9043.sign_in_system.aspect.SupervisionAspect;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
 import team.a9043.sign_in_system.mapper.*;
@@ -55,6 +56,8 @@ public class SignInService {
     private SisJoinCourseMapper sisJoinCourseMapper;
     @Resource
     private SisLocationMapper sisLocationMapper;
+    @Resource
+    private SupervisionAspect supervisionAspect;
 
     @Transactional
     public JSONObject createSignIn(SisUser sisUser,
@@ -123,6 +126,12 @@ public class SignInService {
             .map(SisJoinCourse::getSuId)
             .collect(Collectors.toMap(Function.identity(),
                 (s) -> Boolean.FALSE));
+        if (hashMap.isEmpty()) {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("success", false);
+            jsonObject.put("message", "No student in this course");
+            return jsonObject;
+        }
 
         String key =
             String.format(signInKeyFormat, ssId,
@@ -437,10 +446,9 @@ public class SignInService {
         return jsonObject;
     }
 
-    //todo attrate
     @Getter
     @Setter
-    class EndSignInTask implements Runnable {
+    public class EndSignInTask implements Runnable {
         private Logger logger = LoggerFactory.getLogger(EndSignInTask.class);
         private String key;
         private Integer ssId;
@@ -457,20 +465,12 @@ public class SignInService {
         public void run() {
             Map<Object, Object> map =
                 sisRedisTemplate.opsForHash().entries(key);
-            SisSignIn sisSignIn = new SisSignIn();
-            sisSignIn.setSsId(ssId);
-            sisSignIn.setSsiWeek(week);
-            sisSignIn.setSsiCreateTime((LocalDateTime) map.get("create_time"));
-            boolean resSisSignIn = sisSignInMapper.insert(sisSignIn) > 0;
-            if (!resSisSignIn) {
-                logger.error(String.format(
-                    "error insert sisSignIn: [%s, %s]", ssId, week));
-                return;
-            }
 
             map.remove("create_time");
             map.remove("loc_lat");
             map.remove("loc_long");
+
+            //create signInDetail list
             List<SisSignInDetail> sisSignInDetailList = map
                 .entrySet()
                 .parallelStream()
@@ -478,7 +478,6 @@ public class SignInService {
                     SisSignInDetail sisSignInDetail = new SisSignInDetail();
                     sisSignInDetail.setSuId((String) entry.getKey());
                     sisSignInDetail.setSsidStatus((boolean) entry.getValue());
-                    sisSignInDetail.setSsiId(sisSignIn.getSsiId());
                     return sisSignInDetail;
                 })
                 .collect(Collectors.toList());
@@ -488,13 +487,41 @@ public class SignInService {
                 return;
             }
 
+            //create signIn
+            SisSignIn sisSignIn = new SisSignIn();
+            sisSignIn.setSsId(ssId);
+            sisSignIn.setSsiWeek(week);
+            sisSignIn.setSsiCreateTime((LocalDateTime) map.get("create_time"));
+            long attNum = sisSignInDetailList.stream()
+                .filter(sisSignInDetail -> Boolean.TRUE.equals(sisSignInDetail.getSsidStatus()))
+                .count();
+            long totalNum = sisSignInDetailList.size();
+            double attRate = (double) attNum / totalNum;
+            sisSignIn.setSsiAttRate(attRate);
+
+            //insert signIn
+            boolean resSisSignIn = sisSignInMapper.insert(sisSignIn) > 0;
+            if (!resSisSignIn) {
+                logger.error(String.format(
+                    "error insert sisSignIn: [%s, %s]", ssId, week));
+                return;
+            }
+
+            //insert signInDetail
+            sisSignInDetailList.parallelStream().forEach(sisSignInDetail -> {
+                sisSignInDetail.setSsiId(sisSignIn.getSsiId());
+            });
             boolean res =
                 sisSignInDetailMapper.insertList(sisSignInDetailList) > 0;
             if (!res) {
                 logger.error("error insert sisSignInDetailList: " + new JSONArray(sisSignInDetailList).toString(2));
                 return;
             }
+
+            //finish
             sisRedisTemplate.delete(key);
+            log.info("start update scAttRate: by schedule " + ssId);
+            supervisionAspect.updateAttRate(ssId);
         }
     }
 }
