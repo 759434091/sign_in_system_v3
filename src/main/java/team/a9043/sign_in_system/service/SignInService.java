@@ -57,12 +57,12 @@ public class SignInService {
     @Transactional
     public JSONObject createSignIn(SisUser sisUser,
                                    Integer ssId,
-                                   LocalDateTime localDateTime) throws InvalidTimeParameterException, InvalidPermissionException {
+                                   LocalDateTime currentDateTime) throws InvalidTimeParameterException, InvalidPermissionException {
         SisSchedule sisSchedule = Optional
             .ofNullable(sisScheduleMapper.selectByPrimaryKey(ssId))
             .orElseThrow(() -> new InvalidParameterException("Invalid ssId: " + ssId));
 
-        Integer week = JudgeTimeUtil.getWeek(localDateTime.toLocalDate());
+        Integer week = JudgeTimeUtil.getWeek(currentDateTime.toLocalDate());
 
         //check week
         if (week < sisSchedule.getSsStartWeek() || week > sisSchedule.getSsEndWeek()) {
@@ -147,7 +147,7 @@ public class SignInService {
         }
 
         sisRedisTemplate.opsForHash()
-            .put(key, "create_time", localDateTime);
+            .put(key, "create_time", currentDateTime);
 
         sisRedisTemplate.opsForHash().putAll(key, suIdMap);
 
@@ -380,20 +380,20 @@ public class SignInService {
 
     public boolean signIn(SisUser sisUser,
                           Integer ssId,
-                          LocalDateTime localDateTime,
+                          LocalDateTime currentDateTime,
                           JSONObject locationJson) throws InvalidTimeParameterException, IncorrectParameterException {
         String key =
             String.format(signInKeyFormat, ssId,
-                JudgeTimeUtil.getWeek(localDateTime.toLocalDate()));
+                JudgeTimeUtil.getWeek(currentDateTime.toLocalDate()));
 
         LocalDateTime createTime = (LocalDateTime) sisRedisTemplate
             .opsForHash()
             .get(key, "create_time");
         if (null == createTime)
             throw new IncorrectParameterException(
-                String.format("Sign in not found: %d_%s", ssId, localDateTime));
+                String.format("Sign in not found: %d_%s", ssId, currentDateTime));
 
-        long until = createTime.until(localDateTime, ChronoUnit.MINUTES);
+        long until = createTime.until(currentDateTime, ChronoUnit.MINUTES);
         if (until > 10 || until < 0) {
             return false;
         }

@@ -198,7 +198,7 @@ public class MonitorService {
     public JSONObject insertSupervision(@NotNull SisUser sisUser,
                                         @NotNull Integer ssId,
                                         @NotNull SisSupervision sisSupervision,
-                                        @NotNull LocalDateTime localDateTime) throws IncorrectParameterException, ScheduleParserException, InvalidPermissionException, InvalidTimeParameterException {
+                                        @NotNull LocalDateTime currentDateTime) throws IncorrectParameterException, ScheduleParserException, InvalidPermissionException, InvalidTimeParameterException {
         //check exist
         SisSupervisionKey sisSupervisionKey = new SisSupervisionKey();
         sisSupervisionKey.setSsId(ssId);
@@ -243,7 +243,7 @@ public class MonitorService {
         //judge time
         if (!JudgeTimeUtil.isCourseTime(sisSchedule,
             sisSupervision.getSsvWeek(),
-            localDateTime)) {
+            currentDateTime)) {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("success", false);
             jsonObject.put("message", "Incorrect time");
