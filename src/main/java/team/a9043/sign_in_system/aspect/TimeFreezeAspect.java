@@ -14,6 +14,8 @@ import java.util.stream.IntStream;
 @Component
 @Aspect
 public class TimeFreezeAspect {
+    public static LocalDateTime freezeTime = LocalDateTime
+        .of(2018, Month.JUNE, 29, 20, 0, 0);
 
     @Around(value = "execution(* team.a9043.sign_in_system.service.*.*" +
         "(..,java.time.LocalDateTime,..)))")
@@ -30,9 +32,7 @@ public class TimeFreezeAspect {
         IntStream
             .range(0, args.length)
             .filter(i -> (argTypes[i].equals(LocalDateTime.class) && parameterNames[i].equals("currentDateTime")))
-            .forEach(i -> args[i] = LocalDateTime.of(2018, Month.JUNE, 29,
-                20, 0,
-                0));
+            .forEach(i -> args[i] = freezeTime);
         //冻结 第七周 星期一 下午56节课 计网
         return pjp.proceed(args);
     }
