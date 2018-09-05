@@ -1,6 +1,6 @@
 package team.a9043.sign_in_system.service;
 
-import lombok.extern.java.Log;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.json.JSONArray;
 import org.junit.Test;
@@ -9,7 +9,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
-import javax.transaction.Transactional;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -19,7 +18,7 @@ import java.util.List;
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest
-@Log
+@Slf4j
 public class ImportServiceTest {
     @Resource
     private ImportService importService;

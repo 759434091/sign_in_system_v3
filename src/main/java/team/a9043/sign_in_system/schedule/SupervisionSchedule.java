@@ -1,5 +1,7 @@
 package team.a9043.sign_in_system.schedule;
 
+import lombok.extern.slf4j.Slf4j;
+import org.json.JSONArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -19,8 +21,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class SupervisionSchedule {
-    private Logger logger = LoggerFactory.getLogger(SupervisionSchedule.class);
     @Resource
     private SisCourseMapper sisCourseMapper;
     @Resource
@@ -38,7 +40,8 @@ public class SupervisionSchedule {
             //获得督导课程
             SisCourseExample sisCourseExample = new SisCourseExample();
             sisCourseExample.createCriteria().andScNeedMonitorEqualTo(true).andSuIdIsNotNull();
-            List<SisCourse> sisCourseList = sisCourseMapper.selectByExample(sisCourseExample);
+            List<SisCourse> sisCourseList =
+                sisCourseMapper.selectByExample(sisCourseExample);
 
             //获得课程排课
             List<String> scIdList = sisCourseList.parallelStream()
@@ -49,23 +52,28 @@ public class SupervisionSchedule {
                 return;
             SisScheduleExample sisScheduleExample = new SisScheduleExample();
             sisScheduleExample.createCriteria().andScIdIn(scIdList);
-            List<SisSchedule> sisScheduleList = sisScheduleMapper.selectByExample(sisScheduleExample);
+            List<SisSchedule> sisScheduleList =
+                sisScheduleMapper.selectByExample(sisScheduleExample);
 
             //获得督导历史
-            List<Integer> ssIdList = sisScheduleList.parallelStream().map(SisSchedule::getSsId).distinct().collect(Collectors.toList());
+            List<Integer> ssIdList =
+                sisScheduleList.parallelStream().map(SisSchedule::getSsId).distinct().collect(Collectors.toList());
             if (ssIdList.isEmpty())
                 return;
 
-            SisSupervisionExample sisSupervisionExample = new SisSupervisionExample();
+            SisSupervisionExample sisSupervisionExample =
+                new SisSupervisionExample();
             sisSupervisionExample.createCriteria().andSsIdIn(ssIdList).andSsvWeekLessThanOrEqualTo(week);
-            List<SisSupervision> sisSupervisionList = sisSupervisionMapper.selectByExample(sisSupervisionExample);
+            List<SisSupervision> sisSupervisionList =
+                sisSupervisionMapper.selectByExample(sisSupervisionExample);
 
             List<SisUserInfo> sisUserInfoList = sisCourseList.parallelStream()
                 .map(sisCourse -> {
                     String scId = sisCourse.getScId();
                     String suId = sisCourse.getSuId();
 
-                    List<SisSchedule> scheduleList = sisScheduleList.parallelStream()
+                    List<SisSchedule> scheduleList =
+                        sisScheduleList.parallelStream()
                         .filter(sisSchedule -> sisSchedule.getScId().equals(scId))
                         .collect(Collectors.toList());
 
@@ -74,7 +82,8 @@ public class SupervisionSchedule {
                     int totalLackNum = scheduleList.parallelStream()
                         .mapToInt(sisSchedule -> {
                             Integer ssId = sisSchedule.getSsId();
-                            int countNum = (int) sisSupervisionList.parallelStream()
+                            int countNum =
+                                (int) sisSupervisionList.parallelStream()
                                 .filter(sisSupervision -> sisSupervision.getSsId().equals(ssId))
                                 .count();
 
@@ -112,7 +121,7 @@ public class SupervisionSchedule {
 
             boolean res = sisUserInfoMapper.insertList(sisUserInfoList) > 0;
             if (!res)
-                logger.error("insert sisUserInfo error");
+                log.error("insert sisUserInfo error: " + new JSONArray(sisUserInfoList));
         } catch (InvalidTimeParameterException e) {
             e.printStackTrace();
         }

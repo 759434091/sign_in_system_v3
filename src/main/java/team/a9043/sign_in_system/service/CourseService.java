@@ -2,7 +2,7 @@ package team.a9043.sign_in_system.service;
 
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
-import com.sun.org.apache.xpath.internal.operations.Bool;
+import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,22 +16,23 @@ import team.a9043.sign_in_system.mapper.SisDepartmentMapper;
 import team.a9043.sign_in_system.mapper.SisJoinCourseMapper;
 import team.a9043.sign_in_system.mapper.SisUserMapper;
 import team.a9043.sign_in_system.pojo.*;
-import team.a9043.sign_in_system.repository.SisCourseRepository;
 import team.a9043.sign_in_system.security.tokenuser.TokenUser;
 
 import javax.annotation.Resource;
-import javax.swing.table.TableRowSorter;
 import javax.transaction.Transactional;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
  * @author a9043
  */
 @Service
+@Slf4j
 public class CourseService {
     @Value("${pageSize.coursePageSize}")
     private Integer coursePageSize;
@@ -77,7 +78,8 @@ public class CourseService {
         if (null == pageSize)
             pageSize = coursePageSize;
         else if (pageSize <= 0 || pageSize > 500) {
-            throw new IncorrectParameterException("pageSize must between [1,500]");
+            throw new IncorrectParameterException("pageSize must between [1," +
+                "500]");
         }
 
 
@@ -203,10 +205,14 @@ public class CourseService {
         jsonObject.put("success", true);
         jsonObject.put("page", page);
         jsonObject.put("data", pageJson);
+        if (log.isDebugEnabled()) {
+            log.debug("select course: CourseService.getCourses(..)");
+        }
         return jsonObject;
     }
 
-    public JSONObject getCourses(@TokenUser SisUser sisUser, SisJoinCourse.JoinCourseType joinCourseType) throws ExecutionException, InterruptedException {
+    public JSONObject getCourses(@TokenUser SisUser sisUser,
+                                 SisJoinCourse.JoinCourseType joinCourseType) throws ExecutionException, InterruptedException {
         SisJoinCourseExample sisJoinCourseExample = new SisJoinCourseExample();
         sisJoinCourseExample.createCriteria().andSuIdEqualTo(sisUser.getSuId())
             .andJoinCourseTypeEqualTo(joinCourseType.ordinal());
@@ -286,6 +292,9 @@ public class CourseService {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("success", true);
         jsonObject.put("array", jsonArray);
+        if (log.isDebugEnabled()) {
+            log.debug("User " + sisUser.getSuId() + "get courseTable. ");
+        }
         return jsonObject;
     }
 
@@ -313,8 +322,10 @@ public class CourseService {
         boolean success = sisCourseMapper.updateByPrimaryKey(stdSisCourse) > 0;
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("success", success);
-        if (success)
+        if (success) {
             jsonObject.put("sisCourse", sisCourseJson);
+            log.info("Success modify scNeedMonitor: scId " + sisCourse.getScId());
+        }
         return jsonObject;
     }
 
@@ -359,7 +370,11 @@ public class CourseService {
             });
 
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", sisCourseMapper.updateNeedMonitorList(stdSisCourseList) > 0);
+        boolean success =
+            sisCourseMapper.updateNeedMonitorList(stdSisCourseList) > 0;
+        jsonObject.put("success", success);
+        if (success)
+            log.info("Success batchSupervision: monitorStatus " + monitorStatus);
         return jsonObject;
     }
 
@@ -379,7 +394,11 @@ public class CourseService {
             });
 
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", sisCourseMapper.updateNeedMonitorList(stdSisCourseList) > 0);
+        boolean success =
+            sisCourseMapper.updateNeedMonitorList(stdSisCourseList) > 0;
+        jsonObject.put("success", success);
+        if (success)
+            log.info("Success batchSupervision: monitorStatus " + monitorStatus + " scIdList -> " + new JSONArray(scIdList));
         return jsonObject;
     }
 

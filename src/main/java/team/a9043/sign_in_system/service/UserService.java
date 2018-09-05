@@ -2,6 +2,7 @@ package team.a9043.sign_in_system.service;
 
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,6 +32,7 @@ import java.util.stream.Collectors;
  * @author a9043
  */
 @Service
+@Slf4j
 public class UserService {
     private RestTemplate restTemplate;
     @Value("${wxapp.apiurl}")
@@ -77,6 +79,7 @@ public class UserService {
      * @param sisUser 表单用户
      * @return 操作结果
      */
+    @Deprecated
     @Transactional
     public boolean createUser(SisUser sisUser) {
         sisUser.setSuPassword(bCryptPasswordEncoder.encode(sisUser.getSuPassword()));
@@ -131,6 +134,7 @@ public class UserService {
         claimsMap.put("suAuthoritiesStr",
             sisUser.getSuAuthoritiesStr());
 
+        log.info("User " + sisUser.getSuId() + " successfully bind openId: " + openid);
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("success", true);
         jsonObject.put("error", false);

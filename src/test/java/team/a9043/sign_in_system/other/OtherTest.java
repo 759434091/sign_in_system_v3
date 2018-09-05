@@ -1,6 +1,6 @@
 package team.a9043.sign_in_system.other;
 
-import lombok.extern.java.Log;
+import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest
-@Log
+@Slf4j
 public class OtherTest {
     @Resource
     private SisJoinCourseMapper sisJoinCourseMapper;

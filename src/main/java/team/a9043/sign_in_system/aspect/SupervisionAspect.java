@@ -1,10 +1,9 @@
 package team.a9043.sign_in_system.aspect;
 
+import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
 import org.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import team.a9043.sign_in_system.mapper.SisCourseMapper;
 import team.a9043.sign_in_system.mapper.SisScheduleMapper;
@@ -20,8 +19,8 @@ import java.util.stream.DoubleStream;
 
 @Component
 @Aspect
+@Slf4j
 public class SupervisionAspect {
-    private Logger logger = LoggerFactory.getLogger(SupervisionAspect.class);
     @Resource
     private SisScheduleMapper sisScheduleMapper;
     @Resource
@@ -87,6 +86,6 @@ public class SupervisionAspect {
         updatedSisCourse.setScAttRate(BigDecimal.valueOf(totalRate));
         boolean resB = sisCourseMapper.updateByPrimaryKey(updatedSisCourse) > 0;
         if (!resB)
-            logger.error("con not update att rate at: " + scId + ", " + totalRate);
+            log.error("con not update att rate at: " + scId + ", " + totalRate);
     }
 }

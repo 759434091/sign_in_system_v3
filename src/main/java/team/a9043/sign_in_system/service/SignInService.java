@@ -2,6 +2,7 @@ package team.a9043.sign_in_system.service;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -32,6 +33,7 @@ import java.util.stream.StreamSupport;
 /**
  * @author a9043
  */
+@Slf4j
 @Service
 public class SignInService {
     private String signInKeyFormat = "sis_ssId_%s_week_%s";
@@ -114,7 +116,7 @@ public class SignInService {
                     "Invalid Permission in: " + ssId));
 
         //get suIdList
-        Map<String, Boolean> suIdMap = sisJoinCourseList
+        Map<String, Object> hashMap = sisJoinCourseList
             .parallelStream()
             .filter(sisJoinCourse -> sisJoinCourse.getJoinCourseType()
                 .equals(team.a9043.sign_in_system.entity.SisJoinCourse.JoinCourseType.ATTENDANCE.ordinal()))
@@ -133,36 +135,40 @@ public class SignInService {
             return jsonObject;
         }
 
+        log.info("create signIn schedule: " + key);
         if (null != sisSchedule.getSlId()) {
             SisLocation sisLocation =
                 sisLocationMapper.selectByPrimaryKey(sisSchedule.getSlId());
             if (null != sisLocation &&
                 null != sisLocation.getSlLat() &&
                 null != sisLocation.getSlLong()) {
-                sisRedisTemplate.opsForHash()
-                    .put(key, "loc_lat", sisLocation.getSlLat());
-                sisRedisTemplate.opsForHash()
-                    .put(key, "loc_long", sisLocation.getSlLong());
+                hashMap.put("loc_lat", sisLocation.getSlLat());
+                hashMap.put("loc_long", sisLocation.getSlLong());
+                if (log.isDebugEnabled()) {
+                    log.debug(String.format(
+                        "sign in schedule has location: key %s -> %s",
+                        key,
+                        new JSONObject(sisLocation)));
+                }
             }
         }
 
-        sisRedisTemplate.opsForHash()
-            .put(key, "create_time", currentDateTime);
 
-        sisRedisTemplate.opsForHash().putAll(key, suIdMap);
+        hashMap.put("create_time", currentDateTime);
+        sisRedisTemplate.opsForHash().putAll(key, hashMap);
 
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.MINUTE, 10);
         threadPoolTaskScheduler.schedule(new EndSignInTask(key, ssId,
             week), calendar.toInstant());
 
+        log.info("start signIn schedule and end at: " + calendar.toInstant().toString());
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("success", true);
         jsonObject.put("message", "success");
         return jsonObject;
     }
 
-    @Transactional
     public JSONObject getSignIn(Integer ssId, Integer week) {
         String key = String.format(signInKeyFormat, ssId, week);
         if (Boolean.TRUE.equals(sisRedisTemplate.hasKey(key))) {
@@ -248,7 +254,6 @@ public class SignInService {
             });
     }
 
-    //todo processing
     public JSONObject getSignIns(SisUser sisUser, String scId) throws IncorrectParameterException {
         //get course
         SisCourse sisCourse = Optional
@@ -378,24 +383,39 @@ public class SignInService {
         return getSignIns(null, scId);
     }
 
-    public boolean signIn(SisUser sisUser,
-                          Integer ssId,
-                          LocalDateTime currentDateTime,
-                          JSONObject locationJson) throws InvalidTimeParameterException, IncorrectParameterException {
+    @SuppressWarnings("ConstantConditions")
+    public JSONObject signIn(SisUser sisUser,
+                             Integer ssId,
+                             LocalDateTime currentDateTime,
+                             JSONObject locationJson) throws InvalidTimeParameterException, IncorrectParameterException, InvalidPermissionException {
+        if (log.isDebugEnabled()) {
+            log.debug("User " + sisUser.getSuId() + " try to signIn");
+        }
         String key =
             String.format(signInKeyFormat, ssId,
                 JudgeTimeUtil.getWeek(currentDateTime.toLocalDate()));
 
+        if (!sisRedisTemplate.hasKey(key))
+            throw new IncorrectParameterException(
+                String.format("Sign in not found: %d_%s", ssId,
+                    currentDateTime));
+
         LocalDateTime createTime = (LocalDateTime) sisRedisTemplate
             .opsForHash()
             .get(key, "create_time");
-        if (null == createTime)
-            throw new IncorrectParameterException(
-                String.format("Sign in not found: %d_%s", ssId, currentDateTime));
+        if (null == createTime) {
+            String errStr = String.format(
+                "SignIn error: No create_time %d_%s", ssId, currentDateTime);
+            log.error(errStr);
+            throw new InvalidPermissionException(errStr);
+        }
 
         long until = createTime.until(currentDateTime, ChronoUnit.MINUTES);
         if (until > 10 || until < 0) {
-            return false;
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("success", false);
+            jsonObject.put("message", "Error time until: " + until);
+            return jsonObject;
         }
 
         //todo judge
@@ -405,13 +425,19 @@ public class SignInService {
                 "loc_lat");
             Double locLong = (Double) sisRedisTemplate.opsForHash().get(key,
                 "loc_long");
-            return true;
         }
 
         sisRedisTemplate.opsForHash().put(key, sisUser.getSuId(), true);
-        return true;
+        if (log.isDebugEnabled()) {
+            log.debug("User " + sisUser.getSuId() + " successfully signIn");
+        }
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success", true);
+        jsonObject.put("message", "Success");
+        return jsonObject;
     }
 
+    //todo attrate
     @Getter
     @Setter
     class EndSignInTask implements Runnable {
@@ -465,7 +491,7 @@ public class SignInService {
             boolean res =
                 sisSignInDetailMapper.insertList(sisSignInDetailList) > 0;
             if (!res) {
-                logger.error("error insert sisSignInDetailList: ");
+                logger.error("error insert sisSignInDetailList: " + new JSONArray(sisSignInDetailList).toString(2));
                 return;
             }
             sisRedisTemplate.delete(key);

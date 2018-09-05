@@ -1,6 +1,6 @@
 package team.a9043.sign_in_system.service;
 
-import lombok.extern.java.Log;
+import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -18,7 +18,7 @@ import javax.transaction.Transactional;
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest
-@Log
+@Slf4j
 public class UserServiceTest {
     @Resource
     private UserService userService;

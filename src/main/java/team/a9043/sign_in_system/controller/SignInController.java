@@ -83,7 +83,7 @@ public class SignInController {
     @ApiOperation("学生签到")
     public JSONObject signIn(@TokenUser @ApiIgnore SisUser sisUser,
                              @PathVariable @ApiParam("排课") Integer ssId,
-                             @RequestHeader("location") String location) throws IncorrectParameterException, InvalidTimeParameterException {
+                             @RequestHeader("location") String location) throws IncorrectParameterException, InvalidTimeParameterException, InvalidPermissionException {
         JSONObject locationJson;
         try {
             locationJson = new JSONObject(location);

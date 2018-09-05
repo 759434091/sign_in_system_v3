@@ -37,10 +37,14 @@ public class MonitorController {
     @ApiOperation(value = "获得督导员", notes = "获得督导员")
     public JSONObject getMonitors(@RequestParam @ApiParam("页数") Integer page,
                                   @RequestParam @ApiParam("页数大小") Integer pageSize,
-                                  @RequestParam(required = false) @ApiParam("学号模糊") String suId,
-                                  @RequestParam(required = false) @ApiParam("姓名模糊") String suName,
-                                  @RequestParam(required = false) @ApiParam("是否按督导分排序") Boolean ordByLackNum) throws IncorrectParameterException {
-        return monitorService.getMonitors(page, pageSize, suId, suName, ordByLackNum);
+                                  @RequestParam(required = false) @ApiParam(
+                                      "学号模糊") String suId,
+                                  @RequestParam(required = false) @ApiParam(
+                                      "姓名模糊") String suName,
+                                  @RequestParam(required = false) @ApiParam(
+                                      "是否按督导分排序") Boolean ordByLackNum) throws IncorrectParameterException {
+        return monitorService.getMonitors(page, pageSize, suId, suName,
+            ordByLackNum);
     }
 
     @PostMapping("/courses/{scId}/monitor")
@@ -128,13 +132,15 @@ public class MonitorController {
 
     @PostMapping("/monitors/{suId}")
     @PreAuthorize("hasAuthority('ADMINISTRATOR')")
-    public JSONObject grantMonitor(@PathVariable String suId) throws IncorrectParameterException {
+    @ApiOperation("授予督导权")
+    public JSONObject grantMonitor(@PathVariable @ApiParam("用户Id") String suId) throws IncorrectParameterException {
         return monitorService.grantMonitor(suId);
     }
 
     @DeleteMapping("/monitors/{suId}")
     @PreAuthorize("hasAuthority('ADMINISTRATOR')")
-    public JSONObject revokeMonitor(@PathVariable String suId) throws IncorrectParameterException {
+    @ApiOperation("撤回")
+    public JSONObject revokeMonitor(@PathVariable @ApiParam("用户Id") String suId) throws IncorrectParameterException {
         return monitorService.revokeMonitor(suId);
     }
 }

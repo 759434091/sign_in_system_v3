@@ -41,27 +41,23 @@ public class UserController {
         return userService.modifyBindUser(sisUser, code);
     }
 
-    @ApiOperation(value = "获取Token",
-        notes = "用户名密码获取Token",
-        httpMethod = "POST")
-    @SuppressWarnings("unused")
-    public void getTokens(@ApiParam("用户名") @RequestParam String suId,
-                          @ApiParam("密码") @RequestParam String suPassword) {
-    }
-
     @GetMapping("/students")
     @PreAuthorize("hasAuthority('ADMINISTRATOR')")
-    public JSONObject getStudents(@RequestParam Integer page,
-                                  @RequestParam Integer pageSize,
-                                  @RequestParam(required = false) String suId,
-                                  @RequestParam(required = false) String suName) throws IncorrectParameterException {
+    @ApiOperation("模糊搜索学生")
+    public JSONObject getStudents(@RequestParam @ApiParam("页数") Integer page,
+                                  @RequestParam @ApiParam("页大小") Integer pageSize,
+                                  @RequestParam(required = false) @ApiParam(
+                                      "用户Id模糊") String suId,
+                                  @RequestParam(required = false) @ApiParam(
+                                      "用户名字模糊") String suName) throws IncorrectParameterException {
         return userService.getStudents(page, pageSize, suId, suName);
     }
 
     @PostMapping("/users/{suId}")
-    public JSONObject modifyPassword(@PathVariable String suId,
-                                     @RequestParam String oldPassword,
-                                     @RequestParam String newPassword) throws IncorrectParameterException {
+    @ApiOperation("修改密码")
+    public JSONObject modifyPassword(@PathVariable @ApiParam("用户Id") String suId,
+                                     @RequestParam @ApiParam("用户旧密码") String oldPassword,
+                                     @RequestParam @ApiParam("用户新密码") String newPassword) throws IncorrectParameterException {
         return userService.modifyPassword(suId, oldPassword, newPassword);
     }
 }

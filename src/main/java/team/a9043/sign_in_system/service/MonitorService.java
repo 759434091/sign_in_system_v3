@@ -2,6 +2,7 @@ package team.a9043.sign_in_system.service;
 
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.security.core.GrantedAuthority;
@@ -33,6 +34,7 @@ import java.util.stream.StreamSupport;
  * @author a9043
  */
 @Service
+@Slf4j
 public class MonitorService {
     @Resource
     private SisCourseMapper sisCourseMapper;
@@ -109,6 +111,9 @@ public class MonitorService {
         jsonObject.put("error", false);
         jsonObject.put("array", sisCourseJsonArray);
         jsonObject.put("arrSize", sisCourseJsonArray.length());
+        if (log.isDebugEnabled()) {
+            log.debug("User " + sisUser.getSuId() + " get course. ");
+        }
         return jsonObject;
     }
 
@@ -170,6 +175,9 @@ public class MonitorService {
         jsonObject.put("error", false);
         jsonObject.put("array", sisScheduleJsonArray);
         jsonObject.put("arrSize", sisScheduleJsonArray.length());
+        if (log.isDebugEnabled()) {
+            log.debug("User " + sisUser.getSuId() + " get supervisions: " + scId);
+        }
         return jsonObject;
     }
 
@@ -189,8 +197,10 @@ public class MonitorService {
         updatedSisCourse.setSuId(sisUser.getSuId());
 
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success",
-            sisCourseMapper.updateByPrimaryKeySelective(updatedSisCourse) > 0);
+        boolean success =
+            sisCourseMapper.updateByPrimaryKeySelective(updatedSisCourse) > 0;
+        jsonObject.put("success", success);
+        log.info("User " + sisUser.getSuId() + " has draw course: " + scId);
         return jsonObject;
     }
 
@@ -252,8 +262,9 @@ public class MonitorService {
 
         sisSupervision.setSsId(ssId);
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success",
-            sisSupervisionMapper.insert(sisSupervision) > 0);
+        boolean success = sisSupervisionMapper.insert(sisSupervision) > 0;
+        jsonObject.put("success", success);
+        log.info("User " + sisUser.getSuId() + " insert supervision: ssId " + ssId + " week " + ssvWeek);
         return jsonObject;
     }
 
@@ -388,7 +399,8 @@ public class MonitorService {
         if (null == pageSize)
             pageSize = 10;
         else if (pageSize <= 0 || pageSize > 500) {
-            throw new IncorrectParameterException("pageSize must between [1,500]");
+            throw new IncorrectParameterException("pageSize must between [1," +
+                "500]");
         }
 
 
@@ -408,7 +420,8 @@ public class MonitorService {
             sisUserExample.setOrdByLackNum(true);
         }
 
-        List<SisUser> sisUserList = sisUserMapper.selectByExample(sisUserExample);
+        List<SisUser> sisUserList =
+            sisUserMapper.selectByExample(sisUserExample);
         PageInfo<SisUser> pageInfo = new PageInfo<>(sisUserList);
 
         List<String> suIdList = sisUserList.parallelStream()
@@ -426,7 +439,8 @@ public class MonitorService {
 
         SisUserInfoExample sisUserInfoExample = new SisUserInfoExample();
         sisUserInfoExample.createCriteria().andSuIdIn(suIdList);
-        List<SisUserInfo> sisUserInfoList = sisUserInfoMapper.selectByExample(sisUserInfoExample);
+        List<SisUserInfo> sisUserInfoList =
+            sisUserInfoMapper.selectByExample(sisUserInfoExample);
 
         JSONObject pageJson = new JSONObject(pageInfo);
         pageJson.getJSONArray("list")
@@ -463,7 +477,8 @@ public class MonitorService {
         updatedSisUser.setSuAuthorities(authList);
 
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", sisUserMapper.updateByPrimaryKeySelective(updatedSisUser));
+        jsonObject.put("success",
+            sisUserMapper.updateByPrimaryKeySelective(updatedSisUser));
         return jsonObject;
     }
 
@@ -481,7 +496,8 @@ public class MonitorService {
         updatedSisUser.setSuAuthorities(authList);
 
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", sisUserMapper.updateByPrimaryKeySelective(updatedSisUser));
+        jsonObject.put("success",
+            sisUserMapper.updateByPrimaryKeySelective(updatedSisUser));
         return jsonObject;
     }
 }
