@@ -7,7 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -19,12 +18,9 @@ import team.a9043.sign_in_system.pojo.*;
 import javax.annotation.Nonnull;
 import javax.annotation.Resource;
 import javax.transaction.Transactional;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -78,24 +74,6 @@ public class ImportService {
         return jsonObject;
     }
 
-    public JSONObject readStuInfo(MultipartFile multipartFile) throws IOException, InvalidFormatException {
-        String key = "SIS_Process_" + UUID.randomUUID().toString().replaceAll("-", "");
-        readStuInfo(key, multipartFile.getInputStream());
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", true);
-        jsonObject.put("key", key);
-        return jsonObject;
-    }
-
-    public JSONObject readCozInfo(MultipartFile multipartFile) throws IOException, InvalidFormatException {
-        String key = "SIS_Process_" + UUID.randomUUID().toString().replaceAll("-", "");
-        readCozInfo(key, multipartFile.getInputStream());
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", true);
-        jsonObject.put("key", key);
-        return jsonObject;
-    }
-
     @Transactional
     @Async
     public void readCozInfo(String key, InputStream inputStream) throws IOException,
@@ -115,26 +93,27 @@ public class ImportService {
 
         //first
         addTeacher(sheetList, cozMap);
-        sisRedisTemplate.opsForValue().set(key, 20);
-        addLocation(sheetList, cozMap);
         sisRedisTemplate.opsForValue().set(key, 30);
-        addDepartment(sheetList, cozMap);
+        addLocation(sheetList, cozMap);
         sisRedisTemplate.opsForValue().set(key, 40);
+        addDepartment(sheetList, cozMap);
+        sisRedisTemplate.opsForValue().set(key, 50);
 
         //second depend on first
         List<List<?>> newCozSheetList = addCourse(sheetList, cozMap);
-        sisRedisTemplate.opsForValue().set(key, 55);
+        sisRedisTemplate.opsForValue().set(key, 70);
 
         //third depend on second
         addJoinCourseTeaching(newCozSheetList, cozMap);
-        sisRedisTemplate.opsForValue().set(key, 65);
-        addCourseDepart(newCozSheetList, cozMap);
         sisRedisTemplate.opsForValue().set(key, 80);
+        addCourseDepart(newCozSheetList, cozMap);
+        sisRedisTemplate.opsForValue().set(key, 90);
         addCourseSchedule(newCozSheetList, cozMap);
         sisRedisTemplate.opsForValue().set(key, 100, 10, TimeUnit.MINUTES);
     }
 
     @Transactional
+    @Async
     public void readStuInfo(String key, InputStream inputStream) throws IOException,
         InvalidFormatException {
         final String[] rowNameList = {"学号", "姓名", "课程序号"};
@@ -216,6 +195,9 @@ public class ImportService {
             sisUserSet.parallelStream().map(SisUser::getSuId).collect(Collectors.toList());
         SisUserExample sisUserExample = new SisUserExample();
         sisUserExample.createCriteria().andSuIdIn(suIdList);
+        if (suIdList.isEmpty())
+            return true;
+
         List<String> oldSuIdList =
             sisUserMapper.selectByExample(sisUserExample)
                 .stream()
@@ -227,6 +209,9 @@ public class ImportService {
                 return !oldSuIdList.contains(suId);
             })
             .collect(Collectors.toList());
+
+        if (insertSisUserList.isEmpty())
+            return true;
         int res = sisUserMapper.insertList(insertSisUserList);
         if (res <= 0) {
             logger.error("error insert teachers");
@@ -248,6 +233,8 @@ public class ImportService {
             .map(locStr -> locStr.replaceAll("[樓]", "楼"))
             .filter(locStr -> !locStr.equals("") && locStr.length() > 1)
             .collect(Collectors.toSet());
+        if (firstLocStrSet.isEmpty())
+            return true;
 
         SisLocationExample sisLocationExample = new SisLocationExample();
         sisLocationExample.createCriteria().andSlNameIn(new ArrayList<>(firstLocStrSet));
@@ -265,6 +252,9 @@ public class ImportService {
                 return sisLocation;
             })
             .collect(Collectors.toList());
+
+        if (sisLocationList.isEmpty())
+            return true;
         int res = sisLocationMapper.insertList(sisLocationList);
         if (res <= 0) {
             logger.error("error insert locations");
@@ -286,6 +276,8 @@ public class ImportService {
                 "("))
             .filter(depStr -> !depStr.equals("") && depStr.length() > 1)
             .collect(Collectors.toSet());
+        if (firstDepStrSet.isEmpty())
+            return true;
 
         SisDepartmentExample sisDepartmentExample = new SisDepartmentExample();
         sisDepartmentExample.createCriteria().andSdNameIn(new ArrayList<>(firstDepStrSet));
@@ -303,6 +295,9 @@ public class ImportService {
                     return sisDepartment;
                 })
                 .collect(Collectors.toList());
+
+        if (insertSisDepartmentList.isEmpty())
+            return true;
         int res = sisDepartmentMapper.insertList(insertSisDepartmentList);
         if (res <= 0) {
             logger.error("error insert departments");
@@ -341,6 +336,9 @@ public class ImportService {
             })
             .filter(Objects::nonNull)
             .collect(Collectors.toList());
+        if (sisCourseList.isEmpty())
+            return new ArrayList<>();
+
         List<String> suIdList =
             sisCourseList.parallelStream().map(SisCourse::getScId).collect(Collectors.toList());
         SisCourseExample sisCourseExample = new SisCourseExample();
@@ -350,6 +348,9 @@ public class ImportService {
         List<SisCourse> insertSisCourseList = sisCourseList.parallelStream()
             .filter(sisCourse -> !scIdList.contains(sisCourse.getScId()))
             .collect(Collectors.toList());
+
+        if (insertSisCourseList.isEmpty())
+            return new ArrayList<>();
         int res = sisCourseMapper.insertList(insertSisCourseList);
         if (res <= 0) {
             logger.error("error insert courses");
@@ -392,6 +393,9 @@ public class ImportService {
             .filter(Objects::nonNull)
             .flatMap(Collection::parallelStream)
             .collect(Collectors.toList());
+
+        if (sisJoinCourseList.isEmpty())
+            return true;
         int res = sisJoinCourseMapper.insertList(sisJoinCourseList);
         if (res <= 0) {
             logger.error("error insert sisJoinCourses");
@@ -414,6 +418,9 @@ public class ImportService {
                 .filter(gradeStr -> !gradeStr.equals("") && gradeStr.length() > 1))
             .flatMap(Stream::distinct)
             .collect(Collectors.toList());
+
+        if (sdNameList.isEmpty())
+            return true;
         SisDepartmentExample sisDepartmentExample = new SisDepartmentExample();
         sisDepartmentExample.createCriteria().andSdNameIn(sdNameList);
         List<SisDepartment> sisDepartmentList =
@@ -451,6 +458,8 @@ public class ImportService {
             .flatMap(Collection::parallelStream)
             .collect(Collectors.toList());
 
+        if (sisJoinDepartList.isEmpty())
+            return true;
         int res = sisJoinDepartMapper.insertList(sisJoinDepartList);
         if (res <= 0) {
             logger.error("error insert sisJoinDeparts");
@@ -497,6 +506,9 @@ public class ImportService {
             .map(locStr -> locStr.replaceAll("[樓]", "楼"))
             .filter(locStr -> !locStr.equals("") && locStr.length() > 1)
             .collect(Collectors.toSet());
+        if (slNameList.isEmpty())
+            return true;
+
         SisLocationExample sisLocationExample = new SisLocationExample();
         sisLocationExample.createCriteria().andSlNameIn(new ArrayList<>(slNameList));
         List<SisLocation> locationList =
@@ -621,6 +633,8 @@ public class ImportService {
             .flatMap(Collection::parallelStream)
             .collect(Collectors.toList());
 
+        if (sisScheduleList.isEmpty())
+            return true;
         int res = sisScheduleMapper.insertList(sisScheduleList);
         if (res <= 0) {
             logger.error("error insert sisSchedules");
@@ -718,7 +732,8 @@ public class ImportService {
         }
     }
 
-    List<List<?>> readExcel(InputStream inputStream) throws IOException, InvalidFormatException {
+    List<List<?>> readExcel(InputStream inputStream) throws IOException,
+        InvalidFormatException {
         Workbook workbook = WorkbookFactory.create(inputStream);
         Sheet sheet = workbook.getSheetAt(0);
 

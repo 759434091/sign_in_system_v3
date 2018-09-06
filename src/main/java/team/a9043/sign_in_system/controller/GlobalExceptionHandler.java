@@ -1,5 +1,7 @@
 package team.a9043.sign_in_system.controller;
 
+import org.apache.poi.POIXMLException;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.json.JSONObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
@@ -68,7 +71,10 @@ public class GlobalExceptionHandler {
         IncorrectParameterException.class,
         InvalidTimeParameterException.class,
         String2ValueException.class,
-        MethodArgumentTypeMismatchException.class})
+        MethodArgumentTypeMismatchException.class,
+        MissingServletRequestPartException.class,
+        InvalidFormatException.class,
+        POIXMLException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public void handleBadRequest(Exception e,
                                  HttpServletResponse response) throws IOException {
