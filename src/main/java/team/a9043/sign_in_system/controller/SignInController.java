@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
+import team.a9043.sign_in_system.pojo.SisLocation;
 import team.a9043.sign_in_system.pojo.SisUser;
 import team.a9043.sign_in_system.security.tokenuser.TokenUser;
 import team.a9043.sign_in_system.service.SignInService;
@@ -24,6 +25,40 @@ import java.time.LocalDateTime;
 public class SignInController {
     @Resource
     private SignInService signInService;
+
+    @PutMapping("/schedules/{ssId}/locations/{slId}")
+    @PreAuthorize("hasAnyAuthority('TEACHER','ADMINISTRATOR')")
+    public JSONObject modifyScheduleLocation(@PathVariable Integer ssId,
+                                             @PathVariable Integer slId) throws IncorrectParameterException {
+        return signInService.modifyScheduleLocation(ssId, slId);
+    }
+
+    @GetMapping("/locations/{slId}")
+    public JSONObject getLocation(@PathVariable Integer slId) throws IncorrectParameterException {
+        return signInService.getLocation(slId);
+    }
+
+    @GetMapping("/locations")
+    public JSONObject getLocations(@RequestParam Integer page,
+                                   @RequestParam Integer pageSize,
+                                   @RequestParam Integer slId,
+                                   @RequestParam String slName) throws IncorrectParameterException {
+        return signInService.getLocations(page, pageSize, slId, slName);
+    }
+
+    //todo property check
+    @PutMapping("/locations/{slId}")
+    @PreAuthorize("hasAuthority('ADMINISTRATOR')")
+    public JSONObject modifyLocation(@PathVariable Integer slId,
+                                     @RequestBody SisLocation sisLocation) throws IncorrectParameterException {
+        return signInService.modifyLocation(slId, sisLocation);
+    }
+
+    @PostMapping("/locations")
+    @PreAuthorize("hasAuthority('ADMINISTRATOR')")
+    public JSONObject createLocation(@RequestBody SisLocation sisLocation) {
+        return signInService.createLocation(sisLocation);
+    }
 
     @GetMapping("/courses/{scId}/signIns")
     @PreAuthorize("hasAnyAuthority('ADMINISTRATOR','STUDENT','TEACHER')")
