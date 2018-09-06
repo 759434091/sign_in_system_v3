@@ -36,7 +36,7 @@ public class ImportController {
 
     @PostMapping("/students/import")
     @PreAuthorize("hasAuthority('ADMINISTRATOR')")
-    public JSONObject importStuInfo(@RequestPart MultipartFile multipartFile) throws IOException, InvalidFormatException {
+    public JSONObject importStuInfo(@RequestPart("stuInfo") MultipartFile multipartFile) throws IOException, InvalidFormatException {
         return fileService.readStuInfo(multipartFile);
     }
 }

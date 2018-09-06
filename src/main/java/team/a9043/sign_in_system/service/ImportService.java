@@ -668,6 +668,9 @@ public class ImportService {
             .collect(Collectors.toSet());
         List<String> suIdList =
             firstSisUserList.parallelStream().map(SisUser::getSuId).collect(Collectors.toList());
+        if (suIdList.isEmpty())
+            return true;
+
         SisUserExample sisUserExample = new SisUserExample();
         sisUserExample.createCriteria().andSuIdIn(suIdList);
         List<String> oldSuIdList =
@@ -677,6 +680,8 @@ public class ImportService {
             .filter(sisUser -> !oldSuIdList.contains(sisUser.getSuId()))
             .collect(Collectors.toList());
 
+        if (sisUserList.isEmpty())
+            return true;
         int res = sisUserMapper.insertList(sisUserList);
         if (res <= 0) {
             logger.error("error insert students");
@@ -690,11 +695,10 @@ public class ImportService {
     @Transactional
     boolean addAttendance(List<List<?>> sheetList,
                           Map<String, Integer> stuMap) {
-
         SisJoinCourseExample sisJoinCourseExample = new SisJoinCourseExample();
 
         List<SisJoinCourse> sisJoinCourseList =
-            sheetList.stream().skip(1).parallel()
+            sheetList.stream().skip(1)
                 .map(row -> {
                     String scId = row.get(stuMap.get("课程序号")).toString().trim();
                     if ("".equals(scId))
@@ -713,6 +717,9 @@ public class ImportService {
                 })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
+        if (sisJoinCourseList.isEmpty())
+            return true;
+
         sisJoinCourseExample.getOredCriteria().removeIf(Objects::isNull);
         List<SisJoinCourse> oldSisJoinCourseList =
             sisJoinCourseMapper.selectByExample(sisJoinCourseExample);
@@ -722,6 +729,8 @@ public class ImportService {
                 .filter(sisJoinCourse -> !oldSisJoinCourseList.contains(sisJoinCourse))
                 .collect(Collectors.toList());
 
+        if (insertSisJoinCourse.isEmpty())
+            return true;
         int res = sisJoinCourseMapper.insertList(insertSisJoinCourse);
         if (res <= 0) {
             logger.error("error insert student sisJoinCourses");
