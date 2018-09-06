@@ -84,6 +84,7 @@ public class SignInService {
         if (null == sisLocation)
             throw new IncorrectParameterException("Incorrecr location slId: " + slId);
 
+        log.info("get location by id: " + slId);
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("success", true);
         jsonObject.put("sisLocation", new JSONObject(sisLocation));
@@ -171,6 +172,7 @@ public class SignInService {
         return jsonObject;
     }
 
+    /*----------------------------------------------------------*/
     @Transactional
     public JSONObject createSignIn(SisUser sisUser,
                                    Integer ssId,
@@ -256,24 +258,32 @@ public class SignInService {
             return jsonObject;
         }
 
-        log.info("create signIn schedule: " + key);
-        if (null != sisSchedule.getSlId()) {
-            SisLocation sisLocation =
-                sisLocationMapper.selectByPrimaryKey(sisSchedule.getSlId());
-            if (null != sisLocation &&
-                null != sisLocation.getSlLat() &&
-                null != sisLocation.getSlLong()) {
-                hashMap.put("loc_lat", sisLocation.getSlLat());
-                hashMap.put("loc_long", sisLocation.getSlLong());
-                if (log.isDebugEnabled()) {
-                    log.debug(String.format(
-                        "sign in schedule has location: key %s -> %s",
-                        key,
-                        new JSONObject(sisLocation)));
-                }
-            }
+        if (null == sisSchedule.getSlId()) {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("success", false);
+            jsonObject.put("message", "该课程未指定课程，请指定课程");
         }
 
+        SisLocation sisLocation =
+            sisLocationMapper.selectByPrimaryKey(sisSchedule.getSlId());
+        if (null == sisLocation ||
+            null == sisLocation.getSlLat() ||
+            null == sisLocation.getSlLong()) {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("success", false);
+            jsonObject.put("message", "地点信息不全，请联系管理员");
+            return jsonObject;
+        }
+
+        log.info("create signIn schedule: " + key);
+        hashMap.put("loc_lat", sisLocation.getSlLat());
+        hashMap.put("loc_long", sisLocation.getSlLong());
+        if (log.isDebugEnabled()) {
+            log.debug(String.format(
+                "sign in schedule has location: key %s -> %s",
+                key,
+                new JSONObject(sisLocation)));
+        }
 
         hashMap.put("create_time", currentDateTime);
         sisRedisTemplate.opsForHash().putAll(key, hashMap);
@@ -620,9 +630,8 @@ public class SignInService {
             }
 
             //insert signInDetail
-            sisSignInDetailList.parallelStream().forEach(sisSignInDetail -> {
-                sisSignInDetail.setSsiId(sisSignIn.getSsiId());
-            });
+            sisSignInDetailList.parallelStream()
+                .forEach(sisSignInDetail -> sisSignInDetail.setSsiId(sisSignIn.getSsiId()));
             boolean res =
                 sisSignInDetailMapper.insertList(sisSignInDetailList) > 0;
             if (!res) {

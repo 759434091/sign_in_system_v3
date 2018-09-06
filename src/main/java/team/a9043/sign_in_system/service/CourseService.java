@@ -293,7 +293,7 @@ public class CourseService {
         jsonObject.put("success", true);
         jsonObject.put("array", jsonArray);
         if (log.isDebugEnabled()) {
-            log.debug("User " + sisUser.getSuId() + "get courseTable. ");
+            log.debug("User " + sisUser.getSuId() + " get courseTable. ");
         }
         return jsonObject;
     }

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
@@ -66,7 +67,8 @@ public class GlobalExceptionHandler {
         MissingPathVariableException.class,
         IncorrectParameterException.class,
         InvalidTimeParameterException.class,
-        String2ValueException.class})
+        String2ValueException.class,
+        MethodArgumentTypeMismatchException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public void handleBadRequest(Exception e,
                                  HttpServletResponse response) throws IOException {
@@ -81,7 +83,7 @@ public class GlobalExceptionHandler {
     })
     @ResponseStatus(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
     public JSONObject handleUnsupportedMediaType(Exception e,
-                                                  HttpServletResponse response) {
+                                                 HttpServletResponse response) {
         response.setHeader("Access-Control-Allow-Origin", "*");
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("errMsg", e.getMessage());

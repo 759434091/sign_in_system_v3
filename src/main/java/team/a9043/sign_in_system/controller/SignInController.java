@@ -41,8 +41,8 @@ public class SignInController {
     @GetMapping("/locations")
     public JSONObject getLocations(@RequestParam Integer page,
                                    @RequestParam Integer pageSize,
-                                   @RequestParam Integer slId,
-                                   @RequestParam String slName) throws IncorrectParameterException {
+                                   @RequestParam(required = false) Integer slId,
+                                   @RequestParam(required = false) String slName) throws IncorrectParameterException {
         return signInService.getLocations(page, pageSize, slId, slName);
     }
 
