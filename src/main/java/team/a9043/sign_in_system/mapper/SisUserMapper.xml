@@ -15,6 +15,7 @@
         <result column="su_openid" jdbcType="VARCHAR" property="suOpenid"/>
         <result column="su_password" jdbcType="VARCHAR" property="suPassword"/>
         <result column="sui_lack_num" jdbcType="INTEGER" property="suiLackNum"/>
+        <result column="sui_coz_lack_num" jdbcType="INTEGER" property="suiCozLackNum"/>
     </resultMap>
     <sql id="Example_Where_Clause">
         <!--
@@ -120,6 +121,7 @@
             distinct
         </if>
         <include refid="Base_Column_List"/>
+        , count(ssid_id) sui_coz_lack_num
         <if test="ordByLackNum != null">
             , sui_lack_num
         </if>
@@ -127,10 +129,16 @@
         <if test="ordByLackNum != null">
             left outer join sis_user_info on sis_user_info.su_id = sis_user.su_id
         </if>
+        left outer join sis_sign_in_detail on sis_sign_in_detail.su_id = sis_user.su_id
+        and sis_sign_in_detail.ssid_status = false
         <if test="_parameter != null">
             <include refid="Example_Where_Clause"/>
         </if>
-        <if test="orderByClause != null">
+        group by sis_user.su_id
+        <if test="orderByCozLackNum != null and orderByCozLackNum == true">
+            order by sui_coz_lack_num desc
+        </if>
+        <if test="orderByCozLackNum == null and orderByClause != null">
             order by ${orderByClause}
         </if>
     </select>

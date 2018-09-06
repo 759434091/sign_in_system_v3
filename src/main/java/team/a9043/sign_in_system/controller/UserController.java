@@ -46,11 +46,14 @@ public class UserController {
     @ApiOperation("模糊搜索学生")
     public JSONObject getStudents(@RequestParam @ApiParam("页数") Integer page,
                                   @RequestParam @ApiParam("页大小") Integer pageSize,
-                                  @RequestParam(required = false) @ApiParam(
-                                      "用户Id模糊") String suId,
-                                  @RequestParam(required = false) @ApiParam(
-                                      "用户名字模糊") String suName) throws IncorrectParameterException {
-        return userService.getStudents(page, pageSize, suId, suName);
+                                  @RequestParam(required = false)
+                                  @ApiParam("用户Id模糊") String suId,
+                                  @RequestParam(required = false)
+                                  @ApiParam("用户名字模糊") String suName,
+                                  @RequestParam(required = false)
+                                  @ApiParam("缺勤数排序")
+                                      Boolean orderByCozLackNum) throws IncorrectParameterException {
+        return userService.getStudents(page, pageSize, suId, suName, orderByCozLackNum);
     }
 
     @PostMapping("/users/{suId}")

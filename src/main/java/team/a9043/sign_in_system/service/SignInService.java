@@ -105,7 +105,6 @@ public class SignInService {
                 "pageSize must between [1, 500]");
         }
 
-        PageHelper.startPage(page, pageSize);
         SisLocationExample sisLocationExample = new SisLocationExample();
         SisLocationExample.Criteria criteria = sisLocationExample.createCriteria();
         if (null != slId)
@@ -113,6 +112,7 @@ public class SignInService {
         if (null != slName)
             criteria.andSlNameLike(CourseService.getFuzzySearch(slName));
 
+        PageHelper.startPage(page, pageSize);
         List<SisLocation> sisLocationList = sisLocationMapper.selectByExample(sisLocationExample);
         PageInfo<SisLocation> pageInfo = PageInfo.of(sisLocationList);
 

@@ -6,6 +6,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.WxServerException;
 import team.a9043.sign_in_system.pojo.SisUser;
 import team.a9043.sign_in_system.util.JwtUtil;
@@ -52,5 +53,11 @@ public class UserServiceTest {
         JSONObject b = new JSONObject(JwtUtil.parseJwt(bToken));
         log.info(a.toString(2));
         log.info(b.toString(2));
+    }
+
+    @Test
+    public void getStudents() throws IncorrectParameterException {
+        JSONObject jsonObject = userService.getStudents(1, 10, null, null, true);
+        log.info(jsonObject.toString(2));
     }
 }

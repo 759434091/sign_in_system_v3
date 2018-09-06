@@ -82,8 +82,6 @@ public class CourseService {
                 "500]");
         }
 
-
-        PageHelper.startPage(page, pageSize);
         SisCourseExample sisCourseExample = new SisCourseExample();
         SisCourseExample.Criteria criteria = sisCourseExample.createCriteria();
         if (null != needMonitor) {
@@ -105,6 +103,7 @@ public class CourseService {
             sisCourseExample.setSdId(sdId);
         }
 
+        PageHelper.startPage(page, pageSize);
         List<SisCourse> sisCourseList =
             sisCourseMapper.selectByExample(sisCourseExample);
         PageInfo<SisCourse> pageInfo = new PageInfo<>(sisCourseList);

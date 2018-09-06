@@ -52,6 +52,16 @@ public class SisUser {
 
     private String suiLackNum;
 
+    private String suiCozLackNum;
+
+    public String getSuiCozLackNum() {
+        return suiCozLackNum;
+    }
+
+    public void setSuiCozLackNum(String suiCozLackNum) {
+        this.suiCozLackNum = suiCozLackNum;
+    }
+
     public String getSuiLackNum() {
         return suiLackNum;
     }

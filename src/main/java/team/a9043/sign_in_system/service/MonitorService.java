@@ -403,8 +403,6 @@ public class MonitorService {
                 "500]");
         }
 
-
-        PageHelper.startPage(page, pageSize);
         SisUserExample sisUserExample = new SisUserExample();
         SisUserExample.Criteria criteria = sisUserExample.createCriteria();
         criteria.andSuAuthoritiesStrLike("%MONITOR%");
@@ -420,6 +418,7 @@ public class MonitorService {
             sisUserExample.setOrdByLackNum(true);
         }
 
+        PageHelper.startPage(page, pageSize);
         List<SisUser> sisUserList =
             sisUserMapper.selectByExample(sisUserExample);
         PageInfo<SisUser> pageInfo = new PageInfo<>(sisUserList);

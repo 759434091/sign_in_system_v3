@@ -30,6 +30,16 @@ public class SisUserExample {
 
     private Boolean ordByLackNum;
 
+    private Boolean orderByCozLackNum;
+
+    public Boolean getOrderByCozLackNum() {
+        return orderByCozLackNum;
+    }
+
+    public void setOrderByCozLackNum(Boolean orderByCozLackNum) {
+        this.orderByCozLackNum = orderByCozLackNum;
+    }
+
     public Boolean getOrdByLackNum() {
         return ordByLackNum;
     }

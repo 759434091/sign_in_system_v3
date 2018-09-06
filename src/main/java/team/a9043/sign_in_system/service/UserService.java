@@ -13,7 +13,10 @@ import org.springframework.web.client.RestTemplate;
 import team.a9043.sign_in_system.convertor.JsonObjectHttpMessageConverter;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.WxServerException;
+import team.a9043.sign_in_system.mapper.SisSignInDetailMapper;
 import team.a9043.sign_in_system.mapper.SisUserMapper;
+import team.a9043.sign_in_system.pojo.SisSignInDetail;
+import team.a9043.sign_in_system.pojo.SisSignInDetailExample;
 import team.a9043.sign_in_system.pojo.SisUser;
 import team.a9043.sign_in_system.pojo.SisUserExample;
 import team.a9043.sign_in_system.util.JwtUtil;
@@ -45,6 +48,8 @@ public class UserService {
     private BCryptPasswordEncoder bCryptPasswordEncoder;
     @Resource
     private SisUserMapper sisUserMapper;
+    @Resource
+    private SisSignInDetailMapper sisSignInDetailMapper;
 
     public UserService(@Value("${wxapp.rooturl}") String rooturl,
                        @Autowired JsonObjectHttpMessageConverter jsonObjectHttpMessageConverter) {
@@ -207,7 +212,8 @@ public class UserService {
     public JSONObject getStudents(@Nullable Integer page,
                                   @Nullable Integer pageSize,
                                   @Nullable String suId,
-                                  @Nullable String suName) throws IncorrectParameterException {
+                                  @Nullable String suName,
+                                  @Nullable Boolean orderByCozLackNum) throws IncorrectParameterException {
         if (null == page) {
             throw new IncorrectParameterException("Incorrect page: " + null);
         }
@@ -221,12 +227,13 @@ public class UserService {
                 "pageSize must between [1, 500]");
         }
 
-
-        PageHelper.startPage(page, pageSize);
         SisUserExample sisUserExample = new SisUserExample();
         SisUserExample.Criteria criteria = sisUserExample.createCriteria();
         criteria.andSuAuthoritiesStrLike("%STUDENT%");
 
+        if (null != orderByCozLackNum) {
+            sisUserExample.setOrderByCozLackNum(orderByCozLackNum);
+        }
         if (null != suId) {
             criteria.andSuIdLike("%" + suId + "%");
         }
@@ -234,6 +241,7 @@ public class UserService {
             criteria.andSuNameLike(CourseService.getFuzzySearch(suName));
         }
 
+        PageHelper.startPage(page, pageSize);
         List<SisUser> sisUserList =
             sisUserMapper.selectByExample(sisUserExample);
         PageInfo<SisUser> pageInfo = new PageInfo<>(sisUserList);
@@ -255,9 +263,10 @@ public class UserService {
         pageJson.getJSONArray("list")
             .forEach(sisUserObj -> {
                 JSONObject sisUserJson = (JSONObject) sisUserObj;
-
                 sisUserJson.remove("suPassword");
             });
+
+        log.info("UserService.getStudents(..) success");
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("success", true);
         jsonObject.put("page", page);
