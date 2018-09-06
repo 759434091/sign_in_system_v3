@@ -2,12 +2,17 @@ package team.a9043.sign_in_system.service;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import team.a9043.sign_in_system.mapper.*;
 import team.a9043.sign_in_system.pojo.*;
 
@@ -16,7 +21,11 @@ import javax.annotation.Resource;
 import javax.transaction.Transactional;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -46,32 +55,106 @@ public class ImportService {
     private SisJoinDepartMapper sisJoinDepartMapper;
     @Resource
     private SisScheduleMapper sisScheduleMapper;
+    @Resource(name = "sisRedisTemplate")
+    private RedisTemplate<String, Object> sisRedisTemplate;
+
+    public JSONObject getProgress(String key) {
+        Integer progress = (Integer) sisRedisTemplate.opsForValue().get(key);
+        if (null == progress) {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("success", false);
+            jsonObject.put("message", "No process.");
+            return jsonObject;
+        }
+        if (progress.equals(-1)) {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("success", false);
+            jsonObject.put("message", "Process error");
+            return jsonObject;
+        }
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success", true);
+        jsonObject.put("progress", progress);
+        return jsonObject;
+    }
+
+    public JSONObject readStuInfo(MultipartFile multipartFile) throws IOException, InvalidFormatException {
+        String key = "SIS_Process_" + UUID.randomUUID().toString().replaceAll("-", "");
+        readStuInfo(key, multipartFile.getInputStream());
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success", true);
+        jsonObject.put("key", key);
+        return jsonObject;
+    }
+
+    public JSONObject readCozInfo(MultipartFile multipartFile) throws IOException, InvalidFormatException {
+        String key = "SIS_Process_" + UUID.randomUUID().toString().replaceAll("-", "");
+        readCozInfo(key, multipartFile.getInputStream());
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success", true);
+        jsonObject.put("key", key);
+        return jsonObject;
+    }
 
     @Transactional
-    public void readCozInfo(File file) throws IOException,
+    @Async
+    public void readCozInfo(String key, InputStream inputStream) throws IOException,
         InvalidFormatException {
         final String[] rowNameList = {"课程序号", "课程名称", "教师工号", "授课教师", "学年度学期"
             , "上课地点", "上课时间", "年级", "上课院系", "实际人数", "容量"};
 
-        List<List<?>> sheetList = readExcel(file);
+        sisRedisTemplate.opsForValue().set(key, 0);
+        List<List<?>> sheetList = readExcel(inputStream);
+        sisRedisTemplate.opsForValue().set(key, 10);
         Map<String, Integer> cozMap = getMap(sheetList, rowNameList);
         if (null == cozMap) {
             logger.error("文件不合法");
+            sisRedisTemplate.opsForValue().set(key, -1, 10, TimeUnit.MINUTES);
             return;
         }
 
         //first
         addTeacher(sheetList, cozMap);
+        sisRedisTemplate.opsForValue().set(key, 20);
         addLocation(sheetList, cozMap);
+        sisRedisTemplate.opsForValue().set(key, 30);
         addDepartment(sheetList, cozMap);
+        sisRedisTemplate.opsForValue().set(key, 40);
 
         //second depend on first
         List<List<?>> newCozSheetList = addCourse(sheetList, cozMap);
+        sisRedisTemplate.opsForValue().set(key, 55);
 
         //third depend on second
         addJoinCourseTeaching(newCozSheetList, cozMap);
+        sisRedisTemplate.opsForValue().set(key, 65);
         addCourseDepart(newCozSheetList, cozMap);
+        sisRedisTemplate.opsForValue().set(key, 80);
         addCourseSchedule(newCozSheetList, cozMap);
+        sisRedisTemplate.opsForValue().set(key, 100, 10, TimeUnit.MINUTES);
+    }
+
+    @Transactional
+    public void readStuInfo(String key, InputStream inputStream) throws IOException,
+        InvalidFormatException {
+        final String[] rowNameList = {"学号", "姓名", "课程序号"};
+        sisRedisTemplate.opsForValue().set(key, 10);
+        List<List<?>> sheetList = readExcel(inputStream);
+        sisRedisTemplate.opsForValue().set(key, 30);
+        Map<String, Integer> stuMap = getMap(sheetList, rowNameList);
+        sisRedisTemplate.opsForValue().set(key, 50);
+        if (null == stuMap) {
+            logger.error("文件不合法");
+            sisRedisTemplate.opsForValue().set(key, -1, 10, TimeUnit.MINUTES);
+            return;
+        }
+
+        //base
+        addStudent(sheetList, stuMap);
+        sisRedisTemplate.opsForValue().set(key, 70);
+        //depend on base
+        addAttendance(sheetList, stuMap);
+        sisRedisTemplate.opsForValue().set(key, 100, 10, TimeUnit.MINUTES);
     }
 
     private Map<String, Integer> getMap(@Nonnull List<List<?>> sheetList,
@@ -90,25 +173,6 @@ public class ImportService {
         if (rowNameMap.size() < rowNameList.length)
             return null;
         return rowNameMap;
-    }
-
-    @Transactional
-    public void readStuInfo(File file) throws IOException,
-        InvalidFormatException {
-        final String[] rowNameList = {"学号", "姓名", "课程序号"};
-
-        List<List<?>> sheetList = readExcel(file);
-        Map<String, Integer> stuMap = getMap(sheetList, rowNameList);
-        if (null == stuMap) {
-            logger.error("文件不合法");
-            return;
-        }
-
-        //base
-        addStudent(sheetList, stuMap);
-
-        //depend on base
-        addAttendance(sheetList, stuMap);
     }
 
     @Transactional
@@ -654,13 +718,8 @@ public class ImportService {
         }
     }
 
-    List<List<?>> readExcel(File file) throws IOException,
-        InvalidFormatException {
-        if (null == file)
-            throw new IOException("File not found: null");
-        if (!file.exists())
-            throw new IOException("File not found: " + file.getAbsolutePath());
-        Workbook workbook = WorkbookFactory.create(file);
+    List<List<?>> readExcel(InputStream inputStream) throws IOException, InvalidFormatException {
+        Workbook workbook = WorkbookFactory.create(inputStream);
         Sheet sheet = workbook.getSheetAt(0);
 
         return StreamSupport.stream(sheet.spliterator(), true)
