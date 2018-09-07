@@ -63,4 +63,10 @@ public class UserController {
                                      @RequestParam @ApiParam("用户新密码") String newPassword) throws IncorrectParameterException {
         return userService.modifyPassword(suId, oldPassword, newPassword);
     }
+
+
+    @DeleteMapping("/users/{suId}")
+    public JSONObject deleteUser(@PathVariable String suId) throws IncorrectParameterException {
+        return userService.deleteUser(suId);
+    }
 }

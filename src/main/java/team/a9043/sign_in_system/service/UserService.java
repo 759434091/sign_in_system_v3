@@ -298,5 +298,20 @@ public class UserService {
             sisUserMapper.updateByPrimaryKey(sisUser) > 0);
         return jsonObject;
     }
+
+    public JSONObject deleteUser(String suId) throws IncorrectParameterException {
+        SisUser sisUser = sisUserMapper.selectByPrimaryKey(suId);
+        if (null == sisUser)
+            throw new IncorrectParameterException("User not found.");
+
+        boolean success = sisUserMapper.deleteByPrimaryKey(suId) > 0;
+        if (!success)
+            log.error("Delete user Error: " + suId);
+        else if (log.isDebugEnabled())
+            log.debug("User delete success: " + suId);
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success", success);
+        return jsonObject;
+    }
 }
 

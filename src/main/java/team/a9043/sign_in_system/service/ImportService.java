@@ -12,6 +12,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.mapper.*;
 import team.a9043.sign_in_system.pojo.*;
 
@@ -768,5 +769,24 @@ public class ImportService {
                 })
                 .collect(Collectors.toList()))
             .collect(Collectors.toList());
+    }
+
+    /*------------------------------------------------*/
+
+    @Transactional
+    public JSONObject deleteCourse(String scId) throws IncorrectParameterException {
+        SisCourse sisCourse = sisCourseMapper.selectByPrimaryKey(scId);
+        if (null == sisCourse)
+            throw new IncorrectParameterException("Course not found: " + scId);
+
+        boolean success = sisCourseMapper.deleteByPrimaryKey(scId) > 0;
+
+        if (!success)
+            logger.error("Delete course error: " + scId);
+        else
+            logger.error("Delete course success: " + scId);
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success", success);
+        return jsonObject;
     }
 }
