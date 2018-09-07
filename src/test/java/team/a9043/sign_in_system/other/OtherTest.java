@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
@@ -17,6 +18,11 @@ import team.a9043.sign_in_system.pojo.SisSchedule;
 import team.a9043.sign_in_system.pojo.SisScheduleExample;
 
 import javax.annotation.Resource;
+import javax.crypto.*;
+import javax.crypto.spec.SecretKeySpec;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -39,6 +45,11 @@ public class OtherTest {
     private ThreadPoolTaskScheduler threadPoolTaskScheduler;
     @Resource
     private SisUserInfoMapper sisUserInfoMapper;
+
+    @Value("${location.privateKey}")
+    private String privateKey;
+    @Value("${location.publicKey}")
+    private String publicKey;
 
     @Test
     public void test() {
@@ -99,6 +110,29 @@ public class OtherTest {
     }
 
     @Test
-    public void teat4() {
+    public void teat4() throws NoSuchAlgorithmException,
+        NoSuchPaddingException, InvalidKeyException, BadPaddingException,
+        IllegalBlockSizeException {
+        KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
+        keyGenerator.init(128, new SecureRandom());
+        SecretKey secretKey = keyGenerator.generateKey();
+        String keyStr =
+            Base64.getEncoder().encodeToString(secretKey.getEncoded());
+        log.info("new Key: " + keyStr);
+
+        //do
+        SecretKeySpec secretKeySpec =
+            new SecretKeySpec(Base64.getDecoder().decode(keyStr), "AES");
+
+        Cipher cipher = Cipher.getInstance("AES");
+        cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec);
+
+        String enStr = Base64.getEncoder().encodeToString(cipher.doFinal(
+            "123456".getBytes()));
+
+        Cipher cipher1 = Cipher.getInstance("AES");
+        cipher.init(Cipher.DECRYPT_MODE, secretKey);
+        log.info(new String(cipher.doFinal(Base64.getDecoder().decode(enStr))));
     }
 }
+

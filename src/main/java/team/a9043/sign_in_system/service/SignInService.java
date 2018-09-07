@@ -5,11 +5,11 @@ import com.github.pagehelper.PageInfo;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.annotations.JoinColumnOrFormula;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -19,6 +19,7 @@ import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
 import team.a9043.sign_in_system.mapper.*;
 import team.a9043.sign_in_system.pojo.*;
+import team.a9043.sign_in_system.util.LocationUtil;
 import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
 import team.a9043.sign_in_system.util.judgetime.JudgeTimeUtil;
 
@@ -40,6 +41,8 @@ import java.util.stream.StreamSupport;
 @Slf4j
 @Service
 public class SignInService {
+    @Value("${location.limit}")
+    private int MAX_DISTANCE;
     private String signInKeyFormat = "sis_ssId_%s_week_%s";
     @Resource
     private ThreadPoolTaskScheduler threadPoolTaskScheduler;
@@ -560,10 +563,22 @@ public class SignInService {
         //todo judge
         if (sisRedisTemplate.opsForHash().hasKey(key, "loc_lat") &&
             sisRedisTemplate.opsForHash().hasKey(key, "loc_long")) {
-            Double locLat = (Double) sisRedisTemplate.opsForHash().get(key,
+            Double stdLocLat = (Double) sisRedisTemplate.opsForHash().get(key,
                 "loc_lat");
-            Double locLong = (Double) sisRedisTemplate.opsForHash().get(key,
+            Double stdLocLong = (Double) sisRedisTemplate.opsForHash().get(key,
                 "loc_long");
+            double locLat = locationJson.getDouble("loc_lat");
+            double locLong = locationJson.getDouble("loc_long");
+
+            double distance = LocationUtil.getDistance(stdLocLat, stdLocLong,
+                locLat, locLong);
+            if (distance > MAX_DISTANCE) {
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("success", false);
+                jsonObject.put("message",
+                    "Error location distance: " + distance);
+                return jsonObject;
+            }
         }
 
         sisRedisTemplate.opsForHash().put(key, sisUser.getSuId(), true);

@@ -13,6 +13,8 @@ import team.a9043.sign_in_system.util.JwtUtil;
 
 import javax.annotation.Resource;
 import javax.transaction.Transactional;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author a9043
@@ -32,8 +34,12 @@ public class UserServiceTest {
         sisUser.setSuPassword("123456");
         sisUser.setSuAuthoritiesStr("STUDENT");
         sisUser.setSuName("卢学能");
-        boolean res = userService.createUser(sisUser);
-        log.info("res " + res);
+        Map<String, Object> claimsMap = new HashMap<>();
+        claimsMap.put("suId", sisUser.getSuId());
+        claimsMap.put("suName", sisUser.getSuName());
+        claimsMap.put("suAuthoritiesStr", sisUser.getSuAuthoritiesStr());
+        claimsMap.put("type", "password");
+        log.info("res " + JwtUtil.createJWT(claimsMap));
     }
 
     @Test
@@ -43,21 +49,9 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testToken() {
-        String aToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9" +
-            ".eyJpc3MiOiJhOTA0MyIsInN1SWQiOiIyMDE2MjIwNDAxMDAxIiwic3VBdXRob3JpdGllc1N0ciI6IlNUVURFTlQiLCJleHAiOjE1MzUyMDc2MjIsInN1TmFtZSI6IuWNouWtpuiDvSJ9.X96XQ-BrYk4zWc1HNK7TD9vJOf9fcw73suRaKzug_UY3xAGR2w2-oM_TJwEbFTtZVoqEVDZXKTbbrmtr74kykg";
-        String bToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9" +
-            ".eyJpc3MiOiJhOTA0MyIsInN1SWQiOiIyMDE2MjIwNDAxMDAxIiwic3VBdXRob3JpdGllc1N0ciI6IlNUVURFTlQiLCJleHAiOjE1MzUyMDc3NjcsInN1TmFtZSI6IjIwMTYyMjA0MDEwMDEifQ.BbaUts5SgMi7HXXYH-RZ0oFuEMSHDpXgsKF7xw8w7Cl_byxzu8_-fQl2lYu0CN8GeMwh2bdbOmuqDTgk_-U03Q";
-
-        JSONObject a = new JSONObject(JwtUtil.parseJwt(aToken));
-        JSONObject b = new JSONObject(JwtUtil.parseJwt(bToken));
-        log.info(a.toString(2));
-        log.info(b.toString(2));
-    }
-
-    @Test
     public void getStudents() throws IncorrectParameterException {
-        JSONObject jsonObject = userService.getStudents(1, 10, null, null, true);
+        JSONObject jsonObject = userService.getStudents(1, 10, null, null,
+            true);
         log.info(jsonObject.toString(2));
     }
 }

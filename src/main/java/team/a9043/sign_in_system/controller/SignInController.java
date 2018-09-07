@@ -4,6 +4,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
@@ -16,15 +17,30 @@ import team.a9043.sign_in_system.service.SignInService;
 import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
 
 import javax.annotation.Resource;
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.SecretKeySpec;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
+import java.util.Base64;
 
 /**
  * @author a9043
  */
 @RestController
 public class SignInController {
+    private SecretKeySpec secretKey;
     @Resource
     private SignInService signInService;
+
+    public SignInController(@Value("${location.secretKey}")
+                                String secretKeyStr) {
+        this.secretKey =
+            new SecretKeySpec(Base64.getDecoder().decode(secretKeyStr), "AES");
+    }
 
     @PutMapping("/schedules/{ssId}/locations/{slId}")
     @PreAuthorize("hasAnyAuthority('TEACHER','ADMINISTRATOR')")
@@ -128,11 +144,19 @@ public class SignInController {
     @ApiOperation("学生签到")
     public JSONObject signIn(@TokenUser @ApiIgnore SisUser sisUser,
                              @PathVariable @ApiParam("排课") Integer ssId,
-                             @RequestHeader("location") String location) throws IncorrectParameterException, InvalidTimeParameterException, InvalidPermissionException {
+                             @RequestHeader("Access-Token")
+                             @ApiParam(value = "json的加密内容进行Base64编码",
+                                 allowableValues = "{loc_lat: Double, " +
+                                     "loc_long: Double}") String base64EncodeAESBytesStr) throws IncorrectParameterException, InvalidTimeParameterException, InvalidPermissionException {
         JSONObject locationJson;
         try {
-            locationJson = new JSONObject(location);
-        } catch (JSONException e) {
+            Cipher cipher = Cipher.getInstance("AES");
+            cipher.init(Cipher.DECRYPT_MODE, secretKey);
+            String locationString =
+                new String(cipher.doFinal(Base64.getDecoder().decode(base64EncodeAESBytesStr)));
+            locationJson =
+                new JSONObject(locationString);
+        } catch (JSONException | NoSuchAlgorithmException | IllegalBlockSizeException | BadPaddingException | NoSuchPaddingException | InvalidKeyException e) {
             throw new IncorrectParameterException(e.getMessage());
         }
         LocalDateTime localDateTime = LocalDateTime.now();
