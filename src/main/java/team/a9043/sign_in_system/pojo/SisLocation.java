@@ -1,5 +1,7 @@
 package team.a9043.sign_in_system.pojo;
 
+import org.springframework.lang.NonNull;
+
 public class SisLocation {
     /**
      *
@@ -17,6 +19,7 @@ public class SisLocation {
      *
      * @mbg.generated Sat Sep 01 21:38:31 CST 2018
      */
+    @NonNull
     private String slName;
 
     /**
@@ -26,6 +29,7 @@ public class SisLocation {
      *
      * @mbg.generated Sat Sep 01 21:38:31 CST 2018
      */
+    @NonNull
     private Double slLat;
 
     /**
@@ -35,6 +39,7 @@ public class SisLocation {
      *
      * @mbg.generated Sat Sep 01 21:38:31 CST 2018
      */
+    @NonNull
     private Double slLong;
 
     /**

@@ -46,7 +46,6 @@ public class SignInController {
         return signInService.getLocations(page, pageSize, slId, slName);
     }
 
-    //todo property check
     @PutMapping("/locations/{slId}")
     @PreAuthorize("hasAuthority('ADMINISTRATOR')")
     public JSONObject modifyLocation(@PathVariable Integer slId,
@@ -54,10 +53,21 @@ public class SignInController {
         return signInService.modifyLocation(slId, sisLocation);
     }
 
+    @DeleteMapping("/locations/{slId}")
+    @PreAuthorize("hasAuthority('ADMINISTRATOR')")
+    public JSONObject deleteLocation(@PathVariable Integer slId) throws IncorrectParameterException {
+        return signInService.deleteLocation(slId);
+    }
+
     @PostMapping("/locations")
     @PreAuthorize("hasAuthority('ADMINISTRATOR')")
     public JSONObject createLocation(@RequestBody SisLocation sisLocation) {
         return signInService.createLocation(sisLocation);
+    }
+
+    @GetMapping("/users/{suId}/signIns")
+    public JSONObject getSignIns(@PathVariable String suId) {
+        return signInService.getStuSignIns(suId);
     }
 
     @GetMapping("/courses/{scId}/signIns")

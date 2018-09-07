@@ -5,6 +5,7 @@ import com.github.pagehelper.PageInfo;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.annotations.JoinColumnOrFormula;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -72,7 +73,8 @@ public class SignInService {
         sisSchedule.setSlId(sisLocation.getSlId());
         boolean success = sisScheduleMapper.updateByPrimaryKey(sisSchedule) > 0;
         if (success)
-            log.info("Success in update schedule location: ssId " + ssId + " slId " + slId);
+            log.info("Success in update schedule location: ssId " + ssId + " " +
+                "slId " + slId);
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("success", success);
         jsonObject.put("sisSchedule", new JSONObject(sisSchedule));
@@ -91,7 +93,8 @@ public class SignInService {
         return jsonObject;
     }
 
-    public JSONObject getLocations(Integer page, Integer pageSize, Integer slId, String slName) throws IncorrectParameterException {
+    public JSONObject getLocations(Integer page, Integer pageSize,
+                                   Integer slId, String slName) throws IncorrectParameterException {
         if (null == page) {
             throw new IncorrectParameterException("Incorrect page: " + null);
         }
@@ -106,14 +109,16 @@ public class SignInService {
         }
 
         SisLocationExample sisLocationExample = new SisLocationExample();
-        SisLocationExample.Criteria criteria = sisLocationExample.createCriteria();
+        SisLocationExample.Criteria criteria =
+            sisLocationExample.createCriteria();
         if (null != slId)
             criteria.andSlIdEqualTo(slId);
         if (null != slName)
             criteria.andSlNameLike(CourseService.getFuzzySearch(slName));
 
         PageHelper.startPage(page, pageSize);
-        List<SisLocation> sisLocationList = sisLocationMapper.selectByExample(sisLocationExample);
+        List<SisLocation> sisLocationList =
+            sisLocationMapper.selectByExample(sisLocationExample);
         PageInfo<SisLocation> pageInfo = PageInfo.of(sisLocationList);
 
         if (sisLocationList.isEmpty()) {
@@ -135,14 +140,16 @@ public class SignInService {
     public JSONObject createLocation(SisLocation sisLocation) {
         SisLocationExample sisLocationExample = new SisLocationExample();
         sisLocationExample.createCriteria().andSlNameLike("%" + sisLocation.getSlName() + "%");
-        SisLocation stdSisLocation = sisLocationMapper.selectByExample(sisLocationExample)
-            .stream()
-            .findAny()
-            .orElse(null);
+        SisLocation stdSisLocation =
+            sisLocationMapper.selectByExample(sisLocationExample)
+                .stream()
+                .findAny()
+                .orElse(null);
         if (null != stdSisLocation) {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("success", false);
-            jsonObject.put("message", "location exist: " + stdSisLocation.getSlId() + ", " + stdSisLocation.getSlName());
+            jsonObject.put("message",
+                "location exist: " + stdSisLocation.getSlId() + ", " + stdSisLocation.getSlName());
             return jsonObject;
         }
 
@@ -163,7 +170,8 @@ public class SignInService {
 
         stdSisLocation.setSlLat(sisLocation.getSlLat());
         stdSisLocation.setSlLong(sisLocation.getSlLong());
-        boolean success = sisLocationMapper.updateByPrimaryKeySelective(stdSisLocation) > 0;
+        boolean success =
+            sisLocationMapper.updateByPrimaryKeySelective(stdSisLocation) > 0;
         if (success)
             log.info("Success in modifying location: " + slId);
         JSONObject jsonObject = new JSONObject();
@@ -565,6 +573,94 @@ public class SignInService {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("success", true);
         jsonObject.put("message", "Success");
+        return jsonObject;
+    }
+
+    public JSONObject getStuSignIns(String suId) {
+        SisSignInDetailExample sisSignInDetailExample =
+            new SisSignInDetailExample();
+        sisSignInDetailExample.createCriteria().andSuIdEqualTo(suId);
+        List<SisSignInDetail> sisSignInDetailList =
+            sisSignInDetailMapper.selectByExample(sisSignInDetailExample);
+        if (sisSignInDetailList.isEmpty()) {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("success", true);
+            jsonObject.put("array", new ArrayList<>());
+        }
+
+        //join sisSignIn
+        List<Integer> ssiIdList =
+            sisSignInDetailList.parallelStream().map(SisSignInDetail::getSsiId).distinct().collect(Collectors.toList());
+        SisSignInExample sisSignInExample = new SisSignInExample();
+        sisSignInExample.createCriteria().andSsiIdIn(ssiIdList);
+        List<SisSignIn> sisSignInList =
+            sisSignInMapper.selectByExample(sisSignInExample);
+
+        //join schedule
+        List<Integer> ssIdList =
+            sisSignInList.stream().map(SisSignIn::getSsId).distinct().collect(Collectors.toList());
+        SisScheduleExample sisScheduleExample = new SisScheduleExample();
+        sisScheduleExample.createCriteria().andSsIdIn(ssIdList);
+        List<SisSchedule> sisScheduleList =
+            sisScheduleMapper.selectByExample(sisScheduleExample);
+
+        //join course
+        List<String> scIdList =
+            sisScheduleList.stream().map(SisSchedule::getScId).distinct().collect(Collectors.toList());
+        SisCourseExample sisCourseExample = new SisCourseExample();
+        sisCourseExample.createCriteria().andScIdIn(scIdList);
+        List<SisCourse> sisCourseList =
+            sisCourseMapper.selectByExample(sisCourseExample);
+
+        JSONArray signInDetailJsonArray = new JSONArray(sisSignInDetailList);
+        signInDetailJsonArray.forEach(signInDetailObj -> {
+            JSONObject jsonObject = (JSONObject) signInDetailObj;
+
+            Integer ssiId = jsonObject.getInt("ssiId");
+            SisSignIn sisSignIn =
+                sisSignInList.stream().filter(s -> s.getSsiId().equals(ssiId)).findAny().orElse(null);
+            if (null == sisSignIn)
+                return;
+
+            Integer ssId = sisSignIn.getSsId();
+            SisSchedule sisSchedule =
+                sisScheduleList.stream().filter(s -> s.getSsId().equals(ssId)).findAny().orElse(null);
+            if (null == sisSchedule)
+                return;
+
+            String scId = sisSchedule.getScId();
+            SisCourse sisCourse =
+                sisCourseList.stream().filter(c -> c.getScId().equals(scId)).findAny().orElse(null);
+            if (null == sisCourse)
+                return;
+
+            JSONObject scheduleJson = new JSONObject(sisSchedule);
+            scheduleJson.put("sisCourse", new JSONObject(sisCourse));
+
+            JSONObject signInJson = new JSONObject(sisSignIn);
+            signInJson.put("sisSchedule", scheduleJson);
+
+            jsonObject.put("sisSignIn", signInJson);
+        });
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success", true);
+        jsonObject.put("array", signInDetailJsonArray);
+        return jsonObject;
+    }
+
+    @Transactional
+    public JSONObject deleteLocation(Integer slId) throws IncorrectParameterException {
+        SisLocation sisLocation = sisLocationMapper.selectByPrimaryKey(slId);
+        if (null == sisLocation)
+            throw new IncorrectParameterException("Location not found: " + slId);
+        boolean success = sisLocationMapper.deleteByPrimaryKey(slId) > 0;
+        if (!success)
+            log.info("Delete location error: " + slId);
+        else
+            log.info("Delete location success: " + slId);
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success", success);
         return jsonObject;
     }
 

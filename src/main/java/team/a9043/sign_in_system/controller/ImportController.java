@@ -7,6 +7,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
+import team.a9043.sign_in_system.exception.InvalidPermissionException;
 import team.a9043.sign_in_system.pojo.SisSchedule;
 import team.a9043.sign_in_system.pojo.SisUser;
 import team.a9043.sign_in_system.service.FileService;
@@ -46,24 +47,34 @@ public class ImportController {
     }
 
     @PostMapping("/courses/{scId}")
-    @ApiOperation(value = "新增/修改课程", notes = "根据scId，if force, 将会删除旧课程、排课、教课、参课，再重新导入")
+    @ApiOperation(value = "新增/修改课程", notes = "根据scId，if force, " +
+        "将会删除旧课程、排课、教课、参课，再重新导入")
     public JSONObject createCourse(@PathVariable String scId,
                                    @RequestParam("scName") String scName,
-                                   @RequestParam(value = "scGrade", required = false) String scGrade,
-                                   @RequestParam(value = "sdNameList[]", required = false) String[] sdNameList,
-                                   @RequestParam(value = "sdIdLis[]t", required = false) Integer[] sdIdList,
-                                   @RequestParam(value = "teacherList[]", required = false) List<SisUser> teacherList,
-                                   @RequestParam(value = "force", required = false) Boolean force) {
+                                   @RequestParam(value = "scGrade", required
+                                       = false) String scGrade,
+                                   @RequestParam(value = "sdNameList[]",
+                                       required = false) String[] sdNameList,
+                                   @RequestParam(value = "sdIdLis[]t",
+                                       required = false) Integer[] sdIdList,
+                                   @RequestParam(value = "teacherList[]",
+                                       required = false) List<SisUser> teacherList,
+                                   @RequestParam(value = "force", required =
+                                       false) Boolean force) {
         return null;//todo
     }
 
     @PutMapping("/courses/{scId}")
     public JSONObject modifyCourse(@PathVariable String scId,
                                    @RequestParam("scName") String scName,
-                                   @RequestParam(value = "scGrade", required = false) String scGrade,
-                                   @RequestParam(value = "sdNameList[]", required = false) String[] sdNameList,
-                                   @RequestParam(value = "sdIdLis[]t", required = false) Integer[] sdIdList,
-                                   @RequestParam(value = "teacherList[]", required = false) List<SisUser> teacherList) {
+                                   @RequestParam(value = "scGrade", required
+                                       = false) String scGrade,
+                                   @RequestParam(value = "sdNameList[]",
+                                       required = false) String[] sdNameList,
+                                   @RequestParam(value = "sdIdLis[]t",
+                                       required = false) Integer[] sdIdList,
+                                   @RequestParam(value = "teacherList[]",
+                                       required = false) List<SisUser> teacherList) {
         return null;//todo
     }
 
@@ -73,49 +84,62 @@ public class ImportController {
     }
 
     @PostMapping("/courses/{scId}/schedules")
-    @ApiOperation(value = "新增/修改排课", notes = "根据scId，if force, 先删除旧排课（保留已存在地点），然后重新更新")
+    @ApiOperation(value = "新增/修改排课", notes = "根据scId，if force, " +
+        "先删除旧排课（保留已存在地点），然后重新更新")
     public JSONObject createSchedule(@PathVariable String scId,
                                      @RequestBody SisSchedule sisSchedule,
-                                     @RequestParam(value = "slName", required = false) String slName,
-                                     @RequestParam(value = "slLat", required = false) Double slLat,
-                                     @RequestParam(value = "slLong", required = false) Double slLong,
-                                     @RequestParam(value = "force", required = false) Boolean force) {
+                                     @RequestParam(value = "slName",
+                                         required = false) String slName,
+                                     @RequestParam(value = "slLat", required
+                                         = false) Double slLat,
+                                     @RequestParam(value = "slLong",
+                                         required = false) Double slLong,
+                                     @RequestParam(value = "force", required
+                                         = false) Boolean force) {
         return null;//todo
     }
 
     @PutMapping("/schedules/{ssId}")
     public JSONObject modifySchedule(@PathVariable String ssId,
                                      @RequestBody SisSchedule sisSchedule,
-                                     @RequestParam(value = "slName", required = false) String slName,
-                                     @RequestParam(value = "slLat", required = false) Double slLat,
-                                     @RequestParam(value = "slLong", required = false) Double slLong,
-                                     @RequestParam(value = "force", required = false) Boolean force) {
+                                     @RequestParam(value = "slName",
+                                         required = false) String slName,
+                                     @RequestParam(value = "slLat", required
+                                         = false) Double slLat,
+                                     @RequestParam(value = "slLong",
+                                         required = false) Double slLong,
+                                     @RequestParam(value = "force", required
+                                         = false) Boolean force) {
         return null;//todo
     }
 
     @DeleteMapping("/schedules/{ssId}")
-    public JSONObject deleteSchedule(@PathVariable Integer ssId) {
-        return null;//todo
+    public JSONObject deleteSchedule(@PathVariable Integer ssId) throws IncorrectParameterException {
+        return importService.deleteSchedule(ssId);
     }
 
     @PostMapping("/students/{suId}")
-    @ApiOperation(value = "新增/修改用户", notes = "根据suId，if force，先删除旧用户信息（包括参加的课堂），然后再更新")
+    @ApiOperation(value = "新增/修改用户", notes = "根据suId，if " +
+        "force，先删除旧用户信息（包括参加的课堂），然后再更新")
     public JSONObject createStudent(@PathVariable String suId,
                                     @RequestParam String suName,
-                                    @RequestParam(value = "scIdList[]", required = false) String[] scIdList,
-                                    @RequestParam(value = "force", required = false) Boolean force) {
-        return null;//todo
+                                    @RequestParam(value = "scIdList[]",
+                                        required = false) List<String> scIdList,
+                                    @RequestParam(value = "force", required =
+                                        false) Boolean force) throws InvalidPermissionException, IncorrectParameterException {
+        return importService.createStudent(suId, suName, scIdList, force);
     }
 
     @PutMapping("/students/{suId}")
-    public JSONObject createStudent(@PathVariable String suId,
+    public JSONObject modifyStudent(@PathVariable String suId,
                                     @RequestParam String suName,
-                                    @RequestParam(value = "scIdList[]", required = false) String[] scIdList) {
-        return null;//todo
+                                    @RequestParam(value = "scIdList[]",
+                                        required = false) List<String> scIds) throws IncorrectParameterException {
+        return importService.modifyStudent(suId, suName, scIds);
     }
 
     @DeleteMapping("/joinCourses/{sjcId}")
-    public JSONObject deleteJoinCourse(@PathVariable Integer sjcId) {
-        return null;//todo
+    public JSONObject deleteJoinCourse(@PathVariable Integer sjcId) throws IncorrectParameterException {
+        return importService.deleteJoinCourse(sjcId);
     }
 }

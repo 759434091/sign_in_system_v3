@@ -2,6 +2,7 @@ package team.a9043.sign_in_system.service;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +14,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
+import team.a9043.sign_in_system.exception.InvalidPermissionException;
 import team.a9043.sign_in_system.mapper.*;
 import team.a9043.sign_in_system.pojo.*;
 
@@ -787,6 +789,163 @@ public class ImportService {
             logger.error("Delete course success: " + scId);
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("success", success);
+        return jsonObject;
+    }
+
+    @Transactional
+    public JSONObject deleteJoinCourse(Integer sjcId) throws IncorrectParameterException {
+        SisJoinCourse sisJoinCourse =
+            sisJoinCourseMapper.selectByPrimaryKey(sjcId);
+        if (null == sisJoinCourse)
+            throw new IncorrectParameterException("JoinCourse not found: " + sjcId);
+
+        boolean success = sisJoinCourseMapper.deleteByPrimaryKey(sjcId) > 0;
+
+        if (!success)
+            logger.error("Delete joinCourse error: " + sjcId);
+        else
+            logger.error("Delete joinCourse success: " + sjcId);
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success", success);
+        return jsonObject;
+    }
+
+    @Transactional
+    public JSONObject deleteSchedule(Integer ssId) throws IncorrectParameterException {
+        SisSchedule sisSchedule =
+            sisScheduleMapper.selectByPrimaryKey(ssId);
+        if (null == sisSchedule)
+            throw new IncorrectParameterException("Schedule not found: " + ssId);
+
+        boolean success = sisScheduleMapper.deleteByPrimaryKey(ssId) > 0;
+
+        if (!success)
+            logger.error("Delete Schedule error: " + ssId);
+        else
+            logger.error("Delete Schedule success: " + ssId);
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success", success);
+        return jsonObject;
+    }
+
+    @SuppressWarnings("Duplicates")
+    @Transactional
+    public JSONObject modifyStudent(String suId, String suName,
+                                    List<String> scIdList) throws IncorrectParameterException {
+        SisUser sisUser = sisUserMapper.selectByPrimaryKey(suId);
+        if (null == sisUser)
+            throw new IncorrectParameterException("User not found: " + suId);
+
+        sisUser.setSuName(suName);
+        boolean res = sisUserMapper.updateByPrimaryKey(sisUser) > 0;
+        if (!res) {
+            logger.error("modify student name error: " + suId);
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("success", false);
+            return jsonObject;
+        }
+
+        SisJoinCourseExample sisJoinCourseExample = new SisJoinCourseExample();
+        sisJoinCourseExample.createCriteria()
+            .andSuIdEqualTo(suId)
+            .andJoinCourseTypeEqualTo(SisJoinCourse.JoinCourseType.ATTENDANCE.ordinal());
+        sisJoinCourseMapper.deleteByExample(sisJoinCourseExample);
+
+        if (!scIdList.isEmpty()) {
+            SisCourseExample sisCourseExample = new SisCourseExample();
+            sisCourseExample.createCriteria().andScIdIn(scIdList);
+            List<SisCourse> sisCourseList =
+                sisCourseMapper.selectByExample(sisCourseExample);
+            if (sisCourseList.size() != scIdList.size()) {
+                throw new IncorrectParameterException(
+                    "ScIdList error: found course " + sisCourseList.size());
+            }
+
+            List<SisJoinCourse> sisJoinCourseList =
+                sisCourseList.stream()
+                    .map(sisCourse -> {
+                        SisJoinCourse sisJoinCourse = new SisJoinCourse();
+                        sisJoinCourse.setJoinCourseType(SisJoinCourse.JoinCourseType.ATTENDANCE.ordinal());
+                        sisJoinCourse.setScId(sisCourse.getScId());
+                        sisJoinCourse.setSuId(suId);
+                        return sisJoinCourse;
+                    })
+                    .collect(Collectors.toList());
+
+            boolean success =
+                sisJoinCourseMapper.insertList(sisJoinCourseList) > 0;
+            if (!success) {
+                logger.error("modify student joinCourses error: " + new JSONArray(scIdList.toString()).toString());
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("success", false);
+                return jsonObject;
+            }
+        }
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success", true);
+        return jsonObject;
+    }
+
+    @SuppressWarnings("Duplicates")
+    public JSONObject createStudent(String suId, String suName,
+                                    List<String> scIdList, Boolean force) throws IncorrectParameterException, InvalidPermissionException {
+        SisUser sisUser = sisUserMapper.selectByPrimaryKey(suId);
+        if (null != sisUser) {
+            if (force)
+                return modifyStudent(suId, suName, scIdList);
+            else
+                throw new InvalidPermissionException(
+                    "User exist (add force param to modify):" + suId);
+        }
+
+        SisUser newUser = new SisUser();
+        newUser.setSuId(suId);
+        newUser.setSuName(suName);
+        newUser.setSuAuthoritiesStr("STUDENT");
+        newUser.setSuPassword(bCryptPasswordEncoder.encode("123456"));
+        boolean res =
+            sisUserMapper.insert(newUser) > 0;
+        if (!res) {
+            logger.error("insert student error: " + suId);
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("success", false);
+            return jsonObject;
+        }
+
+        if (!scIdList.isEmpty()) {
+            SisCourseExample sisCourseExample = new SisCourseExample();
+            sisCourseExample.createCriteria().andScIdIn(scIdList);
+            List<SisCourse> sisCourseList =
+                sisCourseMapper.selectByExample(sisCourseExample);
+            if (sisCourseList.size() != scIdList.size()) {
+                throw new IncorrectParameterException(
+                    "ScIdList error: found course " + sisCourseList.size());
+            }
+
+            List<SisJoinCourse> sisJoinCourseList =
+                sisCourseList.stream()
+                    .map(sisCourse -> {
+                        SisJoinCourse sisJoinCourse = new SisJoinCourse();
+                        sisJoinCourse.setJoinCourseType(SisJoinCourse.JoinCourseType.ATTENDANCE.ordinal());
+                        sisJoinCourse.setScId(sisCourse.getScId());
+                        sisJoinCourse.setSuId(suId);
+                        return sisJoinCourse;
+                    })
+                    .collect(Collectors.toList());
+
+            boolean success =
+                sisJoinCourseMapper.insertList(sisJoinCourseList) > 0;
+            if (!success) {
+                logger.error("modify student joinCourses error: " + new JSONArray(scIdList.toString()).toString());
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("success", false);
+                return jsonObject;
+            }
+        }
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success", true);
         return jsonObject;
     }
 }
