@@ -560,7 +560,6 @@ public class SignInService {
             return jsonObject;
         }
 
-        //todo judge
         if (sisRedisTemplate.opsForHash().hasKey(key, "loc_lat") &&
             sisRedisTemplate.opsForHash().hasKey(key, "loc_long")) {
             Double stdLocLat = (Double) sisRedisTemplate.opsForHash().get(key,
