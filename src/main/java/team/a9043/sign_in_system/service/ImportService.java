@@ -12,9 +12,9 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
+import team.a9043.sign_in_system.exception.UnknownServerError;
 import team.a9043.sign_in_system.mapper.*;
 import team.a9043.sign_in_system.pojo.*;
 
@@ -947,5 +947,294 @@ public class ImportService {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("success", true);
         return jsonObject;
+    }
+
+    public JSONObject modifyCourse(String scId, SisCourse sisCourse,
+                                   List<SisSchedule> mSisScheduleList,
+                                   List<SisSchedule> nSisScheduleList,
+                                   List<SisDepartment> sisDepartmentList) throws IncorrectParameterException, UnknownServerError {
+        JSONObject jsonObject = new JSONObject();
+        SisCourse stdSisCourse = sisCourseMapper.selectByPrimaryKey(scId);
+        if (null == stdSisCourse)
+            throw new IncorrectParameterException("SisCourse not found: " + scId);
+        if (null == sisCourse.getScName() || sisCourse.getScName().trim().isEmpty())
+            throw new IncorrectParameterException(
+                "Course Name can not be blank: " + sisCourse.getScName());
+        if (null != sisCourse.getScActSize() && sisCourse.getScActSize() < 0)
+            throw new IncorrectParameterException(
+                "Invalid scActSize: " + sisCourse.getScActSize());
+        if (null != sisCourse.getScMaxSize() && sisCourse.getScMaxSize() < 0)
+            throw new IncorrectParameterException(
+                "Invalid scMaxSize: " + sisCourse.getScActSize());
+        if (null != sisCourse.getScGrade() && (sisCourse.getScGrade() < 2010 || sisCourse.getScGrade() > 2050))
+            throw new IncorrectParameterException(
+                "Invalid scActSize (must between [2010, 2050]): " + sisCourse.getScGrade());
+        if (null == sisCourse.getScNeedMonitor())
+            sisCourse.setScNeedMonitor(false);
+
+        if (sisCourse.getScNeedMonitor().equals(false))
+            sisCourse.setSuId(null);
+        else
+            sisCourse.setSuId(stdSisCourse.getSuId());
+
+        sisCourse.setScId(stdSisCourse.getScId());
+        sisCourse.setScAttRate(stdSisCourse.getScAttRate());
+        boolean successCoz = sisCourseMapper.updateByPrimaryKey(sisCourse) > 0;
+        if (!successCoz)
+            throw new UnknownServerError("update course error");
+
+        SisJoinDepartExample sisJoinDepartExample =
+            new SisJoinDepartExample();
+        sisJoinDepartExample.createCriteria().andScIdEqualTo(scId);
+        if (sisJoinDepartMapper.deleteByExample(sisJoinDepartExample) < 0)
+            throw new UnknownServerError("delete joinDepart error");
+
+        if (!sisDepartmentList.isEmpty()) {
+            List<Integer> sdIdList =
+                sisDepartmentList.stream().map(SisDepartment::getSdId).filter(Objects::nonNull).collect(Collectors.toList());
+            if (sdIdList.isEmpty())
+                throw new IncorrectParameterException("There are illegal " +
+                    "department in departmentList");
+            SisDepartmentExample sisDepartmentExample =
+                new SisDepartmentExample();
+            sisDepartmentExample.createCriteria().andSdIdIn(sdIdList);
+            List<SisDepartment> stdSisDepartList =
+                sisDepartmentMapper.selectByExample(sisDepartmentExample);
+            if (stdSisDepartList.size() != sisDepartmentList.size())
+                throw new IncorrectParameterException("There are illegal " +
+                    "department in departmentList");
+
+
+            List<SisJoinDepart> sisJoinDepartList =
+                stdSisDepartList.stream().map(d -> {
+                    SisJoinDepart sisJoinDepart = new SisJoinDepart();
+                    sisJoinDepart.setSdId(d.getSdId());
+                    sisJoinDepart.setScId(scId);
+                    return sisJoinDepart;
+                }).collect(Collectors.toList());
+
+            boolean resJoinDepart =
+                sisJoinDepartMapper.insertList(sisJoinDepartList) > 0;
+            if (!resJoinDepart)
+                throw new UnknownServerError("insert joinDepart error");
+        }
+
+        if (mSisScheduleList.stream().anyMatch(s -> null == s.getSsId()))
+            throw new IncorrectParameterException(
+                "There are schedules with illegal ssId in the list");
+        List<SisSchedule> stdScheduleList;
+        if (!mSisScheduleList.isEmpty()) {
+            SisScheduleExample sisScheduleExample = new SisScheduleExample();
+            sisScheduleExample.createCriteria()
+                .andSsIdIn(mSisScheduleList.stream().map(SisSchedule::getSsId).collect(Collectors.toList()));
+            stdScheduleList =
+                sisScheduleMapper.selectByExample(sisScheduleExample);
+            if (stdScheduleList.size() != mSisScheduleList.size())
+                throw new IncorrectParameterException(
+                    "There are illegal schedule's ssId in mScheduleList");
+        } else {
+            stdScheduleList = new ArrayList<>();
+        }
+
+        if (mSisScheduleList.isEmpty()) {
+            SisScheduleExample sisScheduleExample = new SisScheduleExample();
+            sisScheduleExample.createCriteria()
+                .andScIdEqualTo(scId);
+
+            if (sisScheduleMapper.deleteByExample(sisScheduleExample) < 0)
+                throw new UnknownServerError("delete schedules error");
+        } else {
+            SisScheduleExample sisScheduleExample = new SisScheduleExample();
+            sisScheduleExample.createCriteria()
+                .andScIdEqualTo(scId)
+                .andSsIdNotIn(mSisScheduleList.stream().map(SisSchedule::getSsId).collect(Collectors.toList()));
+            if (sisScheduleMapper.deleteByExample(sisScheduleExample) < 0)
+                throw new UnknownServerError("delete schedules error");
+        }
+
+        if (!modifyScheduleList(mSisScheduleList, stdScheduleList, scId))
+            throw new UnknownServerError("update schedule list error.");
+
+        if (!insertScheduleList(nSisScheduleList, scId))
+            throw new UnknownServerError("insert schedule list error.");
+
+        jsonObject.put("success", true);
+        return jsonObject;
+    }
+
+    private boolean modifyScheduleList(List<SisSchedule> mSisScheduleList,
+                                       List<SisSchedule> stdScheduleList,
+                                       String scId) throws IncorrectParameterException {
+        if (mSisScheduleList.isEmpty())
+            return true;
+        if (mSisScheduleList.stream().anyMatch(m -> null == m.getSsId()))
+            throw new IncorrectParameterException(
+                "The ssId in the schedule to be modified can not be null.");
+
+
+        List<Integer> slIdList =
+            mSisScheduleList.stream().map(SisSchedule::getSlId).filter(Objects::nonNull).collect(Collectors.toList());
+        List<SisLocation> sisLocationList = getSisLocations(slIdList);
+
+        for (SisSchedule m : mSisScheduleList) {
+            SisSchedule stdSchedule =
+                stdScheduleList.stream()
+                    .filter(s -> s.getSsId().equals(m.getSsId()))
+                    .findAny()
+                    .orElseThrow(() -> new IncorrectParameterException(
+                        "schedule not found: " + m.getSsId()));
+            if (null == m.getSsStartWeek())
+                throw new IncorrectParameterException(
+                    "ssStartWeek can not be null: " + m.getSsId());
+            if (null == m.getSsEndWeek())
+                throw new IncorrectParameterException(
+                    "ssEndWeek can not be null: " + m.getSsId());
+            if (m.getSsStartWeek() < 1 || m.getSsStartWeek() > 25)
+                throw new IncorrectParameterException(
+                    "ssStartWeek can only between [1, 25]: " + m.getSsId());
+            if (m.getSsEndWeek() < 1 || m.getSsEndWeek() > 25)
+                throw new IncorrectParameterException(
+                    "ssEndWeek can only between [1, 25]: " + m.getSsId());
+            if (m.getSsStartWeek() > m.getSsEndWeek())
+                throw new IncorrectParameterException(
+                    "ssEndWeek is small than ssStartWeek (fxxk you): " + m.getSsId());
+            if (null == m.getSsFortnight())
+                throw new IncorrectParameterException(
+                    "ssFortNight can not be null: " + m.getSsId());
+            try {
+                SisSchedule.SsFortnight.valueOf(m.getSsFortnight());
+            } catch (IndexOutOfBoundsException e) {
+                throw new IncorrectParameterException(
+                    "Illegal ssFortNight: " + m.getSsId() + " , message: "
+                        + e.getMessage());
+            }
+            if (null == m.getSsStartTime())
+                throw new IncorrectParameterException(
+                    "ssStartTime can not be null: " + m.getSsId());
+            if (null == m.getSsEndTime())
+                throw new IncorrectParameterException(
+                    "ssEndTime can not be null: " + m.getSsId());
+            if (m.getSsStartTime() < 1 || m.getSsStartTime() > 12)
+                throw new IncorrectParameterException(
+                    "ssStartTime can only between [1, 12]: " + m.getSsId());
+            if (m.getSsEndTime() < 1 || m.getSsEndTime() > 25)
+                throw new IncorrectParameterException(
+                    "ssEndTime can only between [1, 12]: " + m.getSsId());
+            if (m.getSsStartTime() > m.getSsEndTime())
+                throw new IncorrectParameterException(
+                    "ssEndTime is small than ssStartTime (fxxk you): " + m.getSsId());
+            if (!m.getSsYearEtTerm().matches("\\d{4}-\\d{4}-[12]"))
+                throw new IncorrectParameterException(
+                    "Illegal ssYearEtTerm: " + m.getSsId() + " " + m.getSsYearEtTerm());
+            try {
+                if (Integer.valueOf(m.getSsYearEtTerm().substring(0, 4)) >= Integer.valueOf(m.getSsYearEtTerm().substring(5, 9)))
+                    throw new IncorrectParameterException(
+                        "Illegal ssYearEtTerm endYear is equal or smaller" +
+                            " than startYear: " + m.getSsId());
+            } catch (NumberFormatException e) {
+                throw new IncorrectParameterException(
+                    "Illegal ssYearEtTerm: " + m.getSsId() + " " + m.getSsYearEtTerm());
+            }
+            if (m.getSsDayOfWeek() < 1 || m.getSsDayOfWeek() > 7)
+                throw new IncorrectParameterException(
+                    "Illegal ssDayOfWeek in ssId: " + m.getSsId());
+            if (null != m.getSlId() && sisLocationList.stream().noneMatch(l -> l.getSlId().equals(m.getSlId())))
+                throw new IncorrectParameterException(
+                    "Illegal slId in ssId: " + m.getSsId() + " slId: " + m.getSlId());
+            m.setScId(scId);
+            m.setSsSuspension(stdSchedule.getSsSuspension());
+
+            if (sisScheduleMapper.updateByPrimaryKey(m) <= 0)
+                return false;
+        }
+        return true;
+    }
+
+    private boolean insertScheduleList(List<SisSchedule> nSisScheduleList,
+                                       String scId) throws IncorrectParameterException {
+        if (nSisScheduleList.isEmpty())
+            return true;
+        List<Integer> slIdList =
+            nSisScheduleList.stream().map(SisSchedule::getSlId).filter(Objects::nonNull).collect(Collectors.toList());
+        List<SisLocation> sisLocationList;
+        sisLocationList = getSisLocations(slIdList);
+
+        for (SisSchedule m : nSisScheduleList) {
+            if (null == m.getSsStartWeek())
+                throw new IncorrectParameterException(
+                    "ssStartWeek can not be null: " + m.getSsId());
+            if (null == m.getSsEndWeek())
+                throw new IncorrectParameterException(
+                    "ssEndWeek can not be null: " + m.getSsId());
+            if (m.getSsStartWeek() < 1 || m.getSsStartWeek() > 25)
+                throw new IncorrectParameterException(
+                    "ssStartWeek can only between [1, 25]: " + m.getSsId());
+            if (m.getSsEndWeek() < 1 || m.getSsEndWeek() > 25)
+                throw new IncorrectParameterException(
+                    "ssEndWeek can only between [1, 25]: " + m.getSsId());
+            if (m.getSsStartWeek() > m.getSsEndWeek())
+                throw new IncorrectParameterException(
+                    "ssEndWeek is small than ssStartWeek (fxxk you): " + m.getSsId());
+            if (null == m.getSsFortnight())
+                throw new IncorrectParameterException(
+                    "ssFortNight can not be null: " + m.getSsId());
+            try {
+                SisSchedule.SsFortnight.valueOf(m.getSsFortnight());
+            } catch (IndexOutOfBoundsException e) {
+                throw new IncorrectParameterException(
+                    "Illegal ssFortNight: " + m.getSsId() + " , message: "
+                        + e.getMessage());
+            }
+            if (null == m.getSsStartTime())
+                throw new IncorrectParameterException(
+                    "ssStartTime can not be null: " + m.getSsId());
+            if (null == m.getSsEndTime())
+                throw new IncorrectParameterException(
+                    "ssEndTime can not be null: " + m.getSsId());
+            if (m.getSsStartTime() < 1 || m.getSsStartTime() > 12)
+                throw new IncorrectParameterException(
+                    "ssStartTime can only between [1, 12]: " + m.getSsId());
+            if (m.getSsEndTime() < 1 || m.getSsEndTime() > 25)
+                throw new IncorrectParameterException(
+                    "ssEndTime can only between [1, 12]: " + m.getSsId());
+            if (m.getSsStartTime() > m.getSsEndTime())
+                throw new IncorrectParameterException(
+                    "ssEndTime is small than ssStartTime (fxxk you): " + m.getSsId());
+            if (!m.getSsYearEtTerm().matches("\\d{4}-\\d{4}-[12]"))
+                throw new IncorrectParameterException(
+                    "Illegal ssYearEtTerm: " + m.getSsId() + " " + m.getSsYearEtTerm());
+            try {
+                if (Integer.valueOf(m.getSsYearEtTerm().substring(0, 4)) >= Integer.valueOf(m.getSsYearEtTerm().substring(5, 9)))
+                    throw new IncorrectParameterException(
+                        "Illegal ssYearEtTerm endYear is equal or smaller" +
+                            " than startYear: " + m.getSsId());
+            } catch (NumberFormatException e) {
+                throw new IncorrectParameterException(
+                    "Illegal ssYearEtTerm: " + m.getSsId() + " " + m.getSsYearEtTerm());
+            }
+            if (m.getSsDayOfWeek() < 1 || m.getSsDayOfWeek() > 7)
+                throw new IncorrectParameterException(
+                    "Illegal ssDayOfWeek in ssId: " + m.getSsId());
+            if (null != m.getSlId() && sisLocationList.stream().noneMatch(l -> l.getSlId().equals(m.getSlId())))
+                throw new IncorrectParameterException(
+                    "Illegal slId in ssId: " + m.getSsId() + " slId: " + m.getSlId());
+            m.setScId(scId);
+            m.setSsSuspension("");
+        }
+        return sisScheduleMapper.insertList(nSisScheduleList) > 0;
+    }
+
+    private List<SisLocation> getSisLocations(List<Integer> slIdList) {
+        List<SisLocation> sisLocationList;
+        if (slIdList.isEmpty())
+            sisLocationList = new ArrayList<>();
+        else {
+            SisLocationExample sisLocationExample =
+                new SisLocationExample();
+            sisLocationExample.createCriteria().andSlIdIn(slIdList);
+            sisLocationList =
+                sisLocationMapper.selectByExample(sisLocationExample);
+        }
+        return sisLocationList;
     }
 }

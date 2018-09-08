@@ -1,5 +1,6 @@
 package team.a9043.sign_in_system.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.POIXMLException;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.json.JSONObject;
@@ -16,10 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.NoHandlerFoundException;
-import team.a9043.sign_in_system.exception.IncorrectParameterException;
-import team.a9043.sign_in_system.exception.InvalidPermissionException;
-import team.a9043.sign_in_system.exception.String2ValueException;
-import team.a9043.sign_in_system.exception.WxServerException;
+import team.a9043.sign_in_system.exception.*;
 import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
 
 import javax.servlet.http.HttpServletResponse;
@@ -27,6 +25,7 @@ import java.io.IOException;
 
 @ControllerAdvice
 @RestController
+@Slf4j
 public class GlobalExceptionHandler {
     private static final String errResStr =
         "{\"success\":false,\"error\":true,\"errType\":\"%s\"," +
@@ -85,6 +84,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler({
+
         HttpMediaTypeNotSupportedException.class
     })
     @ResponseStatus(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
@@ -97,10 +97,14 @@ public class GlobalExceptionHandler {
         return jsonObject;
     }
 
-    @ExceptionHandler(WxServerException.class)
+    @ExceptionHandler({
+        WxServerException.class,
+        UnknownServerError.class
+    })
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public void handleInternalServerError(Exception e,
                                           HttpServletResponse response) throws IOException {
+        log.error(e.getMessage(), e);
         response.setHeader("Content-type",
             "application/json;charset=utf-8");
         response.getWriter().write(
@@ -113,7 +117,7 @@ public class GlobalExceptionHandler {
                             HttpServletResponse response) throws IOException {
         response.setHeader("Content-type",
             "application/json;charset=utf-8");
-        e.printStackTrace();
+        log.error(e.getMessage(), e);
         response.getWriter().write(
             formatErr(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()));
     }

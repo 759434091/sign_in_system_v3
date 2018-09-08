@@ -20,6 +20,7 @@ import team.a9043.sign_in_system.pojo.SisScheduleExample;
 import javax.annotation.Resource;
 import javax.crypto.*;
 import javax.crypto.spec.SecretKeySpec;
+import java.math.BigDecimal;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -43,13 +44,6 @@ public class OtherTest {
     private TaskExecutor taskExecutor;
     @Resource
     private ThreadPoolTaskScheduler threadPoolTaskScheduler;
-    @Resource
-    private SisUserInfoMapper sisUserInfoMapper;
-
-    @Value("${location.privateKey}")
-    private String privateKey;
-    @Value("${location.publicKey}")
-    private String publicKey;
 
     @Test
     public void test() {
@@ -113,16 +107,17 @@ public class OtherTest {
     public void teat4() throws NoSuchAlgorithmException,
         NoSuchPaddingException, InvalidKeyException, BadPaddingException,
         IllegalBlockSizeException {
-        KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
-        keyGenerator.init(128, new SecureRandom());
-        SecretKey secretKey = keyGenerator.generateKey();
-        String keyStr =
-            Base64.getEncoder().encodeToString(secretKey.getEncoded());
-        log.info("new Key: " + keyStr);
-
         //do
+        byte[] bytes = Base64.getDecoder()
+            .decode("JWmPJIqFj+Lxu4GbO/RP7w==");
+        StringBuilder stringBuilder = new StringBuilder();
+        for (byte b : bytes) {
+            stringBuilder.append(Integer.toString(b, 2));
+        }
+        log.info(stringBuilder.toString().replaceAll("-", ""));
+        log.info(new JSONArray(bytes).toString());
         SecretKeySpec secretKeySpec =
-            new SecretKeySpec(Base64.getDecoder().decode(keyStr), "AES");
+            new SecretKeySpec(bytes, "AES");
 
         Cipher cipher = Cipher.getInstance("AES");
         cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec);
@@ -130,9 +125,15 @@ public class OtherTest {
         String enStr = Base64.getEncoder().encodeToString(cipher.doFinal(
             "123456".getBytes()));
 
+        log.info(enStr);
         Cipher cipher1 = Cipher.getInstance("AES");
-        cipher.init(Cipher.DECRYPT_MODE, secretKey);
-        log.info(new String(cipher.doFinal(Base64.getDecoder().decode(enStr))));
+        cipher.init(Cipher.DECRYPT_MODE, secretKeySpec);
+        log.info(new String(cipher.doFinal(Base64.getDecoder().decode(
+            "a3pk8E4cTWyFdUz9E5VcyQ=="))));
+    }
+
+    @Test
+    public void test5() {
+        log.info("2017-2018-2".substring(5, 9));
     }
 }
-

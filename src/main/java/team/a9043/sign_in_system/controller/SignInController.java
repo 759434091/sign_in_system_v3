@@ -156,8 +156,9 @@ public class SignInController {
                 new String(cipher.doFinal(Base64.getDecoder().decode(base64EncodeAESBytesStr)));
             locationJson =
                 new JSONObject(locationString);
-        } catch (JSONException | NoSuchAlgorithmException | IllegalBlockSizeException | BadPaddingException | NoSuchPaddingException | InvalidKeyException e) {
-            throw new IncorrectParameterException(e.getMessage());
+        } catch (JSONException | NoSuchAlgorithmException | IllegalBlockSizeException | BadPaddingException | NoSuchPaddingException | InvalidKeyException | IllegalArgumentException e) {
+            throw new IncorrectParameterException(e.getMessage() + " " +
+                "Base64Str: " + base64EncodeAESBytesStr);
         }
         LocalDateTime localDateTime = LocalDateTime.now();
         JSONObject jsonObject = new JSONObject();

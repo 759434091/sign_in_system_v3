@@ -189,4 +189,9 @@ public class CourseController {
         return courseService.batchSupervision(monitorStatus, needMonitor,
             hasMonitor, sdId, scGrade, scId, scName);
     }
+
+    @GetMapping("/courses/{scId}/departments")
+    public JSONObject getCourseDepartments(@PathVariable String scId) {
+        return courseService.getCourseDepartments(scId);
+    }
 }

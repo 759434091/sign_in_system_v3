@@ -11,10 +11,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import team.a9043.sign_in_system.async.AsyncJoinService;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
-import team.a9043.sign_in_system.mapper.SisCourseMapper;
-import team.a9043.sign_in_system.mapper.SisDepartmentMapper;
-import team.a9043.sign_in_system.mapper.SisJoinCourseMapper;
-import team.a9043.sign_in_system.mapper.SisUserMapper;
+import team.a9043.sign_in_system.mapper.*;
 import team.a9043.sign_in_system.pojo.*;
 import team.a9043.sign_in_system.security.tokenuser.TokenUser;
 
@@ -46,6 +43,8 @@ public class CourseService {
     private SisDepartmentMapper sisDepartmentMapper;
     @Resource
     private AsyncJoinService asyncJoinService;
+    @Resource
+    private SisJoinDepartMapper sisJoinDepartMapper;
 
     public JSONObject getDepartments(String sdName) {
 
@@ -398,6 +397,30 @@ public class CourseService {
         jsonObject.put("success", success);
         if (success)
             log.info("Success batchSupervision: monitorStatus " + monitorStatus + " scIdList -> " + new JSONArray(scIdList));
+        return jsonObject;
+    }
+
+
+    public JSONObject getCourseDepartments(String scId) {
+        SisJoinDepartExample sisJoinDepartExample = new SisJoinDepartExample();
+        sisJoinDepartExample.createCriteria().andScIdEqualTo(scId);
+        List<SisJoinDepart> sisJoinDepartList =
+            sisJoinDepartMapper.selectByExample(sisJoinDepartExample);
+        if (sisJoinDepartList.isEmpty()) {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("success", true);
+            jsonObject.put("array", new ArrayList<>());
+            return jsonObject;
+        }
+
+        SisDepartmentExample sisDepartmentExample = new SisDepartmentExample();
+        sisDepartmentExample.createCriteria().andSdIdIn(sisJoinDepartList.stream().map(SisJoinDepart::getSdId).distinct().collect(Collectors.toList()));
+        List<SisDepartment> sisDepartmentList =
+            sisDepartmentMapper.selectByExample(sisDepartmentExample);
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success", true);
+        jsonObject.put("array", new JSONArray(sisDepartmentList));
         return jsonObject;
     }
 

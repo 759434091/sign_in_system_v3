@@ -1,5 +1,9 @@
 package team.a9043.sign_in_system.controller;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.ApiOperation;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.json.JSONObject;
@@ -8,6 +12,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
+import team.a9043.sign_in_system.exception.UnknownServerError;
+import team.a9043.sign_in_system.pojo.SisCourse;
+import team.a9043.sign_in_system.pojo.SisDepartment;
 import team.a9043.sign_in_system.pojo.SisSchedule;
 import team.a9043.sign_in_system.pojo.SisUser;
 import team.a9043.sign_in_system.service.FileService;
@@ -66,56 +73,37 @@ public class ImportController {
 
     @PutMapping("/courses/{scId}")
     public JSONObject modifyCourse(@PathVariable String scId,
-                                   @RequestParam("scName") String scName,
-                                   @RequestParam(value = "scGrade", required
-                                       = false) String scGrade,
-                                   @RequestParam(value = "sdNameList[]",
-                                       required = false) String[] sdNameList,
-                                   @RequestParam(value = "sdIdLis[]t",
-                                       required = false) Integer[] sdIdList,
-                                   @RequestParam(value = "teacherList[]",
-                                       required = false) List<SisUser> teacherList) {
-        return null;//todo
+                                   @RequestPart("course") String course,
+                                   @RequestPart("mScheduleList") String mScheduleList,
+                                   @RequestPart("nScheduleList") String nScheduleList,
+                                   @RequestPart("departList") String departList) throws IncorrectParameterException, UnknownServerError {
+        ObjectMapper objectMapper =
+            new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        try {
+            SisCourse sisCourse =
+                objectMapper.readValue(course, SisCourse.class);
+            List<SisSchedule> mSisScheduleList =
+                objectMapper.readValue(mScheduleList,
+                    objectMapper.getTypeFactory().constructParametricType(List.class,
+                        SisSchedule.class));
+            List<SisSchedule> nSisScheduleList =
+                objectMapper.readValue(nScheduleList,
+                    objectMapper.getTypeFactory().constructParametricType(List.class,
+                        SisSchedule.class));
+            List<SisDepartment> sisDepartmentList =
+                objectMapper.readValue(departList,
+                    objectMapper.getTypeFactory().constructParametricType(List.class,
+                        SisDepartment.class));
+            return importService.modifyCourse(scId, sisCourse,
+                mSisScheduleList, nSisScheduleList, sisDepartmentList);
+        } catch (IOException e) {
+            throw new IncorrectParameterException(e.getMessage());
+        }
     }
 
     @DeleteMapping("/courses/{scId}")
     public JSONObject deleteCourse(@PathVariable String scId) throws IncorrectParameterException {
         return importService.deleteCourse(scId);
-    }
-
-    @PostMapping("/courses/{scId}/schedules")
-    @ApiOperation(value = "新增/修改排课", notes = "根据scId，if force, " +
-        "先删除旧排课（保留已存在地点），然后重新更新")
-    public JSONObject createSchedule(@PathVariable String scId,
-                                     @RequestBody SisSchedule sisSchedule,
-                                     @RequestParam(value = "slName",
-                                         required = false) String slName,
-                                     @RequestParam(value = "slLat", required
-                                         = false) Double slLat,
-                                     @RequestParam(value = "slLong",
-                                         required = false) Double slLong,
-                                     @RequestParam(value = "force", required
-                                         = false) Boolean force) {
-        return null;//todo
-    }
-
-    @PutMapping("/schedules/{ssId}")
-    public JSONObject modifySchedule(@PathVariable String ssId,
-                                     @RequestBody SisSchedule sisSchedule,
-                                     @RequestParam(value = "slName",
-                                         required = false) String slName,
-                                     @RequestParam(value = "slLat", required
-                                         = false) Double slLat,
-                                     @RequestParam(value = "slLong",
-                                         required = false) Double slLong,
-                                     @RequestParam(value = "force", required
-                                         = false) Boolean force) {
-        return null;//todo
-    }
-
-    @DeleteMapping("/schedules/{ssId}")
-    public JSONObject deleteSchedule(@PathVariable Integer ssId) throws IncorrectParameterException {
-        return importService.deleteSchedule(ssId);
     }
 
     @PostMapping("/students/{suId}")

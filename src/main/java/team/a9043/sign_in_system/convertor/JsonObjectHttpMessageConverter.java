@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 
 /**
  * org.json.JSONObject HttpMessageConverter
@@ -45,6 +46,8 @@ public class JsonObjectHttpMessageConverter extends AbstractHttpMessageConverter
 
     @Override
     protected void writeInternal(JSONObject jsonObject, HttpOutputMessage httpOutputMessage) throws IOException, HttpMessageNotWritableException {
-        httpOutputMessage.getBody().write(jsonObject.toString().getBytes());
+        OutputStreamWriter outputStreamWriter =
+            new OutputStreamWriter(httpOutputMessage.getBody());
+        jsonObject.write(outputStreamWriter).flush();
     }
 }

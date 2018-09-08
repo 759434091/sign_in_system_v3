@@ -10,9 +10,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.stereotype.Component;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 
 /**
  * org.json.JSONArray HttpMessageConverter
@@ -45,6 +43,8 @@ public class JsonArrayHttpMessageConverter extends AbstractHttpMessageConverter<
 
     @Override
     protected void writeInternal(JSONArray objects, HttpOutputMessage outputMessage) throws IOException, HttpMessageNotWritableException {
-        outputMessage.getBody().write(objects.toString().getBytes());
+        OutputStreamWriter outputStreamWriter =
+            new OutputStreamWriter(outputMessage.getBody());
+        objects.write(outputStreamWriter).flush();
     }
 }
