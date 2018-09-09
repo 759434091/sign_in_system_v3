@@ -949,6 +949,51 @@ public class ImportService {
         return jsonObject;
     }
 
+    public JSONObject createCourse(String scId, SisCourse sisCourse,
+                                   List<SisSchedule> sisScheduleList,
+                                   List<SisDepartment> sisDepartmentList) throws IncorrectParameterException, UnknownServerError {
+        JSONObject jsonObject = new JSONObject();
+        SisCourse stdSisCourse = sisCourseMapper.selectByPrimaryKey(scId);
+        if (null != stdSisCourse)
+            throw new IncorrectParameterException("SisCourse exists: " + scId);
+        if (null == sisCourse.getScName() || sisCourse.getScName().trim().isEmpty())
+            throw new IncorrectParameterException(
+                "Course Name can not be blank: " + sisCourse.getScName());
+        if (null != sisCourse.getScActSize() && sisCourse.getScActSize() < 0)
+            throw new IncorrectParameterException(
+                "Invalid scActSize: " + sisCourse.getScActSize());
+        if (null != sisCourse.getScMaxSize() && sisCourse.getScMaxSize() < 0)
+            throw new IncorrectParameterException(
+                "Invalid scMaxSize: " + sisCourse.getScActSize());
+        if (null != sisCourse.getScGrade() && (sisCourse.getScGrade() < 2010 || sisCourse.getScGrade() > 2050))
+            throw new IncorrectParameterException(
+                "Invalid scActSize (must between [2010, 2050]): " + sisCourse.getScGrade());
+        if (null == sisCourse.getScNeedMonitor())
+            sisCourse.setScNeedMonitor(false);
+
+        sisCourse.setSuId(null);
+        sisCourse.setScId(scId);
+        sisCourse.setScAttRate(null);
+        boolean successCoz = sisCourseMapper.insert(sisCourse) > 0;
+        if (!successCoz)
+            throw new UnknownServerError("update course error");
+
+        SisJoinDepartExample sisJoinDepartExample =
+            new SisJoinDepartExample();
+        sisJoinDepartExample.createCriteria().andScIdEqualTo(scId);
+        if (sisJoinDepartMapper.deleteByExample(sisJoinDepartExample) < 0)
+            throw new UnknownServerError("delete joinDepart error");
+
+        insertJoinDepart(scId, sisDepartmentList);
+
+        if (!insertScheduleList(sisScheduleList, scId))
+            throw new UnknownServerError("insert schedule list error.");
+
+        jsonObject.put("success", true);
+        return jsonObject;
+    }
+
+
     public JSONObject modifyCourse(String scId, SisCourse sisCourse,
                                    List<SisSchedule> mSisScheduleList,
                                    List<SisSchedule> nSisScheduleList,
@@ -989,6 +1034,57 @@ public class ImportService {
         if (sisJoinDepartMapper.deleteByExample(sisJoinDepartExample) < 0)
             throw new UnknownServerError("delete joinDepart error");
 
+        insertJoinDepart(scId, sisDepartmentList);
+
+        if (mSisScheduleList.stream().anyMatch(s -> null == s.getSsId()))
+            throw new IncorrectParameterException(
+                "There are schedules with illegal ssId in the list");
+        List<SisSchedule> stdScheduleList;
+        if (!mSisScheduleList.isEmpty()) {
+            SisScheduleExample sisScheduleExample = new SisScheduleExample();
+            sisScheduleExample.createCriteria()
+                .andSsIdIn(mSisScheduleList.stream().map(SisSchedule::getSsId).collect(Collectors.toList()));
+            stdScheduleList =
+                sisScheduleMapper.selectByExample(sisScheduleExample);
+            if (stdScheduleList.size() != mSisScheduleList.size())
+                throw new IncorrectParameterException(
+                    "There are illegal schedule's ssId in mScheduleList");
+        } else {
+            stdScheduleList = new ArrayList<>();
+        }
+
+        if (mSisScheduleList.isEmpty()) {
+            SisScheduleExample sisScheduleExample = new SisScheduleExample();
+            sisScheduleExample.createCriteria()
+                .andScIdEqualTo(scId);
+
+            if (sisScheduleMapper.deleteByExample(sisScheduleExample) < 0)
+                throw new UnknownServerError("delete schedules error");
+        } else {
+            List<Integer> ssIdList =
+                mSisScheduleList.stream().map(SisSchedule::getSsId).collect(Collectors.toList());
+            SisScheduleExample sisScheduleExample = new SisScheduleExample();
+            SisScheduleExample.Criteria criteria =
+                sisScheduleExample.createCriteria();
+            criteria.andScIdEqualTo(scId);
+            if (!ssIdList.isEmpty())
+                criteria.andSsIdNotIn(ssIdList);
+            if (sisScheduleMapper.deleteByExample(sisScheduleExample) < 0)
+                throw new UnknownServerError("delete schedules error");
+        }
+
+        if (!modifyScheduleList(mSisScheduleList, stdScheduleList, scId))
+            throw new UnknownServerError("update schedule list error.");
+
+        if (!insertScheduleList(nSisScheduleList, scId))
+            throw new UnknownServerError("insert schedule list error.");
+
+        jsonObject.put("success", true);
+        return jsonObject;
+    }
+
+    private void insertJoinDepart(String scId,
+                                  List<SisDepartment> sisDepartmentList) throws IncorrectParameterException, UnknownServerError {
         if (!sisDepartmentList.isEmpty()) {
             List<Integer> sdIdList =
                 sisDepartmentList.stream().map(SisDepartment::getSdId).filter(Objects::nonNull).collect(Collectors.toList());
@@ -1018,48 +1114,6 @@ public class ImportService {
             if (!resJoinDepart)
                 throw new UnknownServerError("insert joinDepart error");
         }
-
-        if (mSisScheduleList.stream().anyMatch(s -> null == s.getSsId()))
-            throw new IncorrectParameterException(
-                "There are schedules with illegal ssId in the list");
-        List<SisSchedule> stdScheduleList;
-        if (!mSisScheduleList.isEmpty()) {
-            SisScheduleExample sisScheduleExample = new SisScheduleExample();
-            sisScheduleExample.createCriteria()
-                .andSsIdIn(mSisScheduleList.stream().map(SisSchedule::getSsId).collect(Collectors.toList()));
-            stdScheduleList =
-                sisScheduleMapper.selectByExample(sisScheduleExample);
-            if (stdScheduleList.size() != mSisScheduleList.size())
-                throw new IncorrectParameterException(
-                    "There are illegal schedule's ssId in mScheduleList");
-        } else {
-            stdScheduleList = new ArrayList<>();
-        }
-
-        if (mSisScheduleList.isEmpty()) {
-            SisScheduleExample sisScheduleExample = new SisScheduleExample();
-            sisScheduleExample.createCriteria()
-                .andScIdEqualTo(scId);
-
-            if (sisScheduleMapper.deleteByExample(sisScheduleExample) < 0)
-                throw new UnknownServerError("delete schedules error");
-        } else {
-            SisScheduleExample sisScheduleExample = new SisScheduleExample();
-            sisScheduleExample.createCriteria()
-                .andScIdEqualTo(scId)
-                .andSsIdNotIn(mSisScheduleList.stream().map(SisSchedule::getSsId).collect(Collectors.toList()));
-            if (sisScheduleMapper.deleteByExample(sisScheduleExample) < 0)
-                throw new UnknownServerError("delete schedules error");
-        }
-
-        if (!modifyScheduleList(mSisScheduleList, stdScheduleList, scId))
-            throw new UnknownServerError("update schedule list error.");
-
-        if (!insertScheduleList(nSisScheduleList, scId))
-            throw new UnknownServerError("insert schedule list error.");
-
-        jsonObject.put("success", true);
-        return jsonObject;
     }
 
     private boolean modifyScheduleList(List<SisSchedule> mSisScheduleList,
@@ -1236,5 +1290,113 @@ public class ImportService {
                 sisLocationMapper.selectByExample(sisLocationExample);
         }
         return sisLocationList;
+    }
+
+    public JSONObject modifyDepartment(Integer sdId, String sdName) throws IncorrectParameterException {
+        if ("".equals(sdName.trim()))
+            throw new IncorrectParameterException("sdName can not be blank");
+        SisDepartment sisDepartment =
+            sisDepartmentMapper.selectByPrimaryKey(sdId);
+        if (null == sisDepartment)
+            throw new IncorrectParameterException("department not found: " + sdId);
+
+        sisDepartment.setSdName(sdName.trim());
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success",
+            sisDepartmentMapper.updateByPrimaryKey(sisDepartment));
+        return jsonObject;
+    }
+
+    public JSONObject deleteDepartment(Integer sdId) throws IncorrectParameterException {
+        SisDepartment sisDepartment =
+            sisDepartmentMapper.selectByPrimaryKey(sdId);
+        if (null == sisDepartment)
+            throw new IncorrectParameterException("department not found: " + sdId);
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success",
+            sisDepartmentMapper.deleteByPrimaryKey(sdId));
+        return jsonObject;
+    }
+
+    public JSONObject addDepartment(String sdName) throws IncorrectParameterException {
+        if ("".equals(sdName.trim()))
+            throw new IncorrectParameterException("sdName can not be blank");
+        SisDepartment sisDepartment = new SisDepartment();
+        sisDepartment.setSdName(sdName);
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success",
+            sisDepartmentMapper.insert(sisDepartment));
+        return jsonObject;
+    }
+
+    public JSONObject modifyJoinCourses(String scId,
+                                        List<SisJoinCourse> sisJoinCourseList) throws IncorrectParameterException, UnknownServerError {
+        SisCourse sisCourse = sisCourseMapper.selectByPrimaryKey(scId);
+        if (null == sisCourse)
+            throw new IncorrectParameterException("course not found: " + scId);
+
+        List<String> suIdList =
+            sisJoinCourseList.stream()
+                .filter(sjc -> null != sjc.getSuId())
+                .map(SisJoinCourse::getSuId)
+                .collect(Collectors.toList());
+        List<SisUser> sisUserList;
+        if (suIdList.isEmpty()) {
+            sisUserList = new ArrayList<>();
+        } else {
+            SisUserExample sisUserExample = new SisUserExample();
+            sisUserExample.createCriteria().andSuIdIn(suIdList);
+            sisUserList = sisUserMapper.selectByExample(sisUserExample);
+        }
+
+        sisJoinCourseList =
+            sisJoinCourseList.stream()
+                .filter(sjc -> null != sjc.getSuId())
+                .peek(sjc -> {
+                    sjc.setJoinCourseType(SisJoinCourse.JoinCourseType.ATTENDANCE.ordinal());
+                    sjc.setScId(scId);
+                })
+                .distinct()
+                .collect(Collectors.toList());
+
+        List<SisJoinCourse> mSisJoinCourseList =
+            sisJoinCourseList.stream().filter(sjc -> null != sjc.getSjcId()).collect(Collectors.toList());
+
+        //delete
+        if (!mSisJoinCourseList.isEmpty()) {
+            SisJoinCourseExample sisJoinCourseExample =
+                new SisJoinCourseExample();
+            SisJoinCourseExample.Criteria criteria =
+                sisJoinCourseExample.createCriteria();
+            criteria.andScIdEqualTo(scId);
+
+            List<Integer> sjcList =
+                mSisJoinCourseList.stream().map(SisJoinCourse::getSjcId).collect(Collectors.toList());
+            if (!sjcList.isEmpty())
+                criteria.
+                    andSjcIdNotIn(mSisJoinCourseList.stream().map(SisJoinCourse::getSjcId).collect(Collectors.toList()));
+            if (sisJoinCourseMapper.deleteByExample(sisJoinCourseExample) < 0)
+                throw new UnknownServerError("delete join course error");
+        }
+
+        //add
+        List<SisJoinCourse> nSisJoinCourseList =
+            sisJoinCourseList.stream().filter(sjc -> null == sjc.getSjcId()).collect(Collectors.toList());
+        if (!nSisJoinCourseList.isEmpty()) {
+            if (nSisJoinCourseList.stream()
+                .anyMatch(sjc -> sisUserList.stream()
+                    .noneMatch(u -> u.getSuId().equals(sjc.getSuId())))) {
+                throw new IncorrectParameterException("found invalid suId");
+            }
+
+            boolean res =
+                sisJoinCourseMapper.insertList(nSisJoinCourseList) > 0;
+            if (!res)
+                throw new UnknownServerError("insert join course error");
+        }
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success", true);
+        return jsonObject;
     }
 }

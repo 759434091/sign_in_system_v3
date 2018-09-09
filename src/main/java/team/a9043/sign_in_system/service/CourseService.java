@@ -111,7 +111,7 @@ public class CourseService {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("success", false);
             jsonObject.put("page", page);
-            jsonObject.put("message", "No courses");
+            jsonObject.put("message", "查询结果为空");
             return jsonObject;
         }
 
@@ -401,6 +401,7 @@ public class CourseService {
     }
 
 
+    @SuppressWarnings("Duplicates")
     public JSONObject getCourseDepartments(String scId) {
         SisJoinDepartExample sisJoinDepartExample = new SisJoinDepartExample();
         sisJoinDepartExample.createCriteria().andScIdEqualTo(scId);
@@ -421,6 +422,43 @@ public class CourseService {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("success", true);
         jsonObject.put("array", new JSONArray(sisDepartmentList));
+        return jsonObject;
+    }
+
+
+    @SuppressWarnings("Duplicates")
+    public JSONObject getJoinCourseStudents(String scId) {
+        SisJoinCourseExample sisJoinCourseExample = new SisJoinCourseExample();
+        sisJoinCourseExample.createCriteria()
+            .andScIdEqualTo(scId)
+            .andJoinCourseTypeEqualTo(SisJoinCourse.JoinCourseType.ATTENDANCE.ordinal());
+        List<SisJoinCourse> sisJoinCourseList =
+            sisJoinCourseMapper.selectByExample(sisJoinCourseExample);
+        if (sisJoinCourseList.isEmpty()) {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("success", true);
+            jsonObject.put("array", new ArrayList<>());
+            return jsonObject;
+        }
+
+        SisUserExample sisUserExample = new SisUserExample();
+        sisUserExample.createCriteria()
+            .andSuIdIn(sisJoinCourseList.stream().map(SisJoinCourse::getSuId).distinct().collect(Collectors.toList()));
+
+        List<SisUser> sisUserList =
+            sisUserMapper.selectByExample(sisUserExample);
+        JSONArray joinCourseJsonArray = new JSONArray(sisJoinCourseList);
+        joinCourseJsonArray.forEach(jcObj -> {
+            JSONObject jcJson = (JSONObject) jcObj;
+            String suId = jcJson.getString("suId");
+            SisUser sisUser1 =
+                sisUserList.stream().filter(s -> s.getSuId().equals(suId)).findAny().orElse(null);
+            jcJson.put("sisUser", null == sisUser1 ? null :
+                new JSONObject(sisUser1));
+        });
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success", true);
+        jsonObject.put("array", joinCourseJsonArray);
         return jsonObject;
     }
 

@@ -194,4 +194,9 @@ public class CourseController {
     public JSONObject getCourseDepartments(@PathVariable String scId) {
         return courseService.getCourseDepartments(scId);
     }
+
+    @GetMapping("/courses/{scId}/joinCourses")
+    public JSONObject getJoinCourseStudents(@PathVariable String scId) {
+        return courseService.getJoinCourseStudents(scId);
+    }
 }

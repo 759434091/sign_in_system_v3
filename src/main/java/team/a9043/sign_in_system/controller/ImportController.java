@@ -13,10 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
 import team.a9043.sign_in_system.exception.UnknownServerError;
-import team.a9043.sign_in_system.pojo.SisCourse;
-import team.a9043.sign_in_system.pojo.SisDepartment;
-import team.a9043.sign_in_system.pojo.SisSchedule;
-import team.a9043.sign_in_system.pojo.SisUser;
+import team.a9043.sign_in_system.pojo.*;
 import team.a9043.sign_in_system.service.FileService;
 import team.a9043.sign_in_system.service.ImportService;
 
@@ -57,18 +54,27 @@ public class ImportController {
     @ApiOperation(value = "新增/修改课程", notes = "根据scId，if force, " +
         "将会删除旧课程、排课、教课、参课，再重新导入")
     public JSONObject createCourse(@PathVariable String scId,
-                                   @RequestParam("scName") String scName,
-                                   @RequestParam(value = "scGrade", required
-                                       = false) String scGrade,
-                                   @RequestParam(value = "sdNameList[]",
-                                       required = false) String[] sdNameList,
-                                   @RequestParam(value = "sdIdLis[]t",
-                                       required = false) Integer[] sdIdList,
-                                   @RequestParam(value = "teacherList[]",
-                                       required = false) List<SisUser> teacherList,
-                                   @RequestParam(value = "force", required =
-                                       false) Boolean force) {
-        return null;//todo
+                                   @RequestPart("course") String course,
+                                   @RequestPart("scheduleList") String scheduleList,
+                                   @RequestPart("departList") String departList) throws IncorrectParameterException, UnknownServerError {
+        ObjectMapper objectMapper =
+            new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        try {
+            SisCourse sisCourse =
+                objectMapper.readValue(course, SisCourse.class);
+            List<SisSchedule> sisScheduleList =
+                objectMapper.readValue(scheduleList,
+                    objectMapper.getTypeFactory().constructParametricType(List.class,
+                        SisSchedule.class));
+            List<SisDepartment> sisDepartmentList =
+                objectMapper.readValue(departList,
+                    objectMapper.getTypeFactory().constructParametricType(List.class,
+                        SisDepartment.class));
+            return importService.createCourse(scId, sisCourse,
+                sisScheduleList, sisDepartmentList);
+        } catch (IOException e) {
+            throw new IncorrectParameterException(e.getMessage());
+        }
     }
 
     @PutMapping("/courses/{scId}")
@@ -126,8 +132,30 @@ public class ImportController {
         return importService.modifyStudent(suId, suName, scIds);
     }
 
+    @PutMapping("/courses/{scId}/joinCourses")
+    public JSONObject modifyJoinCourses(@PathVariable String scId,
+                                        @RequestBody List<SisJoinCourse> joinCourseList) throws IncorrectParameterException, UnknownServerError {
+        return importService.modifyJoinCourses(scId, joinCourseList);
+    }
+
     @DeleteMapping("/joinCourses/{sjcId}")
     public JSONObject deleteJoinCourse(@PathVariable Integer sjcId) throws IncorrectParameterException {
         return importService.deleteJoinCourse(sjcId);
+    }
+
+    @PutMapping("/departments/{sdId}")
+    public JSONObject modifyDepartment(@PathVariable Integer sdId,
+                                       @RequestParam String sdName) throws IncorrectParameterException {
+        return importService.modifyDepartment(sdId, sdName);
+    }
+
+    @DeleteMapping("/departments/{sdId}")
+    public JSONObject deleteDepartment(@PathVariable Integer sdId) throws IncorrectParameterException {
+        return importService.deleteDepartment(sdId);
+    }
+
+    @PostMapping("/departments")
+    public JSONObject addDepartment(@RequestParam String sdName) throws IncorrectParameterException {
+        return importService.addDepartment(sdName);
     }
 }
