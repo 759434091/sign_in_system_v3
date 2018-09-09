@@ -114,10 +114,8 @@ public class JudgeTimeUtil {
                                                int actionWeek,
                                                int stdSsStartWeek,
                                                int stdSsEndWeek,
-                                               SisSchedule.SsFortnight stdSsFortnight) {
-        int nowWeek =
-            (Math.toIntExact(localDateTime
-                .toLocalDate().until(startDate, ChronoUnit.DAYS)) - 1) / 7 + 1;
+                                               SisSchedule.SsFortnight stdSsFortnight) throws InvalidTimeParameterException {
+        int nowWeek = getWeek(localDateTime.toLocalDate());
         if (nowWeek != actionWeek || nowWeek < stdSsStartWeek || nowWeek > stdSsEndWeek)
             return false;
 
