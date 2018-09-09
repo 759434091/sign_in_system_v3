@@ -66,6 +66,7 @@ public class UserController {
 
 
     @DeleteMapping("/users/{suId}")
+    @PreAuthorize("hasAuthority('ADMINISTRATOR')")
     public JSONObject deleteUser(@PathVariable String suId) throws IncorrectParameterException {
         return userService.deleteUser(suId);
     }

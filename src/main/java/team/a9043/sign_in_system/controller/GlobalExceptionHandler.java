@@ -10,6 +10,7 @@ import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MissingPathVariableException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.bind.ServletRequestBindingException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -73,7 +74,8 @@ public class GlobalExceptionHandler {
         MethodArgumentTypeMismatchException.class,
         MissingServletRequestPartException.class,
         InvalidFormatException.class,
-        POIXMLException.class})
+        POIXMLException.class,
+        ServletRequestBindingException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public void handleBadRequest(Exception e,
                                  HttpServletResponse response) throws IOException {

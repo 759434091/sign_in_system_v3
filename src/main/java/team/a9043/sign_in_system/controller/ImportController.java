@@ -1,8 +1,6 @@
 package team.a9043.sign_in_system.controller;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.ApiOperation;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -13,7 +11,10 @@ import org.springframework.web.multipart.MultipartFile;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
 import team.a9043.sign_in_system.exception.UnknownServerError;
-import team.a9043.sign_in_system.pojo.*;
+import team.a9043.sign_in_system.pojo.SisCourse;
+import team.a9043.sign_in_system.pojo.SisDepartment;
+import team.a9043.sign_in_system.pojo.SisJoinCourse;
+import team.a9043.sign_in_system.pojo.SisSchedule;
 import team.a9043.sign_in_system.service.FileService;
 import team.a9043.sign_in_system.service.ImportService;
 
@@ -78,6 +79,7 @@ public class ImportController {
     }
 
     @PutMapping("/courses/{scId}")
+    @PreAuthorize("hasAuthority('ADMINISTRATOR')")
     public JSONObject modifyCourse(@PathVariable String scId,
                                    @RequestPart("course") String course,
                                    @RequestPart("mScheduleList") String mScheduleList,
@@ -108,11 +110,13 @@ public class ImportController {
     }
 
     @DeleteMapping("/courses/{scId}")
+    @PreAuthorize("hasAuthority('ADMINISTRATOR')")
     public JSONObject deleteCourse(@PathVariable String scId) throws IncorrectParameterException {
         return importService.deleteCourse(scId);
     }
 
     @PostMapping("/students/{suId}")
+    @PreAuthorize("hasAuthority('ADMINISTRATOR')")
     @ApiOperation(value = "新增/修改用户", notes = "根据suId，if " +
         "force，先删除旧用户信息（包括参加的课堂），然后再更新")
     public JSONObject createStudent(@PathVariable String suId,
@@ -125,6 +129,7 @@ public class ImportController {
     }
 
     @PutMapping("/students/{suId}")
+    @PreAuthorize("hasAuthority('ADMINISTRATOR')")
     public JSONObject modifyStudent(@PathVariable String suId,
                                     @RequestParam String suName,
                                     @RequestParam(value = "scIdList[]",
@@ -133,28 +138,33 @@ public class ImportController {
     }
 
     @PutMapping("/courses/{scId}/joinCourses")
+    @PreAuthorize("hasAuthority('ADMINISTRATOR')")
     public JSONObject modifyJoinCourses(@PathVariable String scId,
                                         @RequestBody List<SisJoinCourse> joinCourseList) throws IncorrectParameterException, UnknownServerError {
         return importService.modifyJoinCourses(scId, joinCourseList);
     }
 
     @DeleteMapping("/joinCourses/{sjcId}")
+    @PreAuthorize("hasAuthority('ADMINISTRATOR')")
     public JSONObject deleteJoinCourse(@PathVariable Integer sjcId) throws IncorrectParameterException {
         return importService.deleteJoinCourse(sjcId);
     }
 
     @PutMapping("/departments/{sdId}")
+    @PreAuthorize("hasAuthority('ADMINISTRATOR')")
     public JSONObject modifyDepartment(@PathVariable Integer sdId,
                                        @RequestParam String sdName) throws IncorrectParameterException {
         return importService.modifyDepartment(sdId, sdName);
     }
 
     @DeleteMapping("/departments/{sdId}")
+    @PreAuthorize("hasAuthority('ADMINISTRATOR')")
     public JSONObject deleteDepartment(@PathVariable Integer sdId) throws IncorrectParameterException {
         return importService.deleteDepartment(sdId);
     }
 
     @PostMapping("/departments")
+    @PreAuthorize("hasAuthority('ADMINISTRATOR')")
     public JSONObject addDepartment(@RequestParam String sdName) throws IncorrectParameterException {
         return importService.addDepartment(sdName);
     }

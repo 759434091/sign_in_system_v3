@@ -1368,7 +1368,8 @@ public class ImportService {
                 new SisJoinCourseExample();
             SisJoinCourseExample.Criteria criteria =
                 sisJoinCourseExample.createCriteria();
-            criteria.andScIdEqualTo(scId);
+            criteria.andScIdEqualTo(scId)
+                .andJoinCourseTypeEqualTo(SisJoinCourse.JoinCourseType.ATTENDANCE.ordinal());
 
             List<Integer> sjcList =
                 mSisJoinCourseList.stream().map(SisJoinCourse::getSjcId).collect(Collectors.toList());
