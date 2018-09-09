@@ -4,26 +4,26 @@ import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.task.TaskExecutor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.test.context.junit4.SpringRunner;
 import team.a9043.sign_in_system.mapper.SisJoinCourseMapper;
 import team.a9043.sign_in_system.mapper.SisScheduleMapper;
-import team.a9043.sign_in_system.mapper.SisUserInfoMapper;
 import team.a9043.sign_in_system.pojo.SisJoinCourse;
 import team.a9043.sign_in_system.pojo.SisJoinCourseExample;
 import team.a9043.sign_in_system.pojo.SisSchedule;
 import team.a9043.sign_in_system.pojo.SisScheduleExample;
 
 import javax.annotation.Resource;
-import javax.crypto.*;
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
-import java.math.BigDecimal;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -44,6 +44,8 @@ public class OtherTest {
     private TaskExecutor taskExecutor;
     @Resource
     private ThreadPoolTaskScheduler threadPoolTaskScheduler;
+    @Resource(name = "sisRedisTemplate")
+    private RedisTemplate<String, Object> sisRedisTemplate;
 
     @Test
     public void test() {
@@ -134,6 +136,7 @@ public class OtherTest {
 
     @Test
     public void test5() {
-        log.info("2017-2018-2".substring(5, 9));
+        sisRedisTemplate.opsForValue().set("a", "a");
+        log.info((String) sisRedisTemplate.opsForValue().get("a"));
     }
 }
