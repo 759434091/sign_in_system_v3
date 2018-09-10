@@ -723,13 +723,31 @@ public class ImportService {
         if (sisJoinCourseList.isEmpty())
             return true;
 
+        //get course
+        List<String> scIdList = sisJoinCourseList.parallelStream()
+            .map(SisJoinCourse::getScId)
+            .distinct()
+            .collect(Collectors.toList());
+
+        SisCourseExample sisCourseExample = new SisCourseExample();
+        sisCourseExample.createCriteria().andScIdIn(scIdList);
+        List<String> extScIdList =
+            sisCourseMapper.selectByExample(sisCourseExample).parallelStream()
+                .map(SisCourse::getScId)
+                .collect(Collectors.toList());
+        sisCourseExample = null;
+        scIdList = null;
+
+        //get old join course
         sisJoinCourseExample.getOredCriteria().removeIf(Objects::isNull);
         List<SisJoinCourse> oldSisJoinCourseList =
             sisJoinCourseMapper.selectByExample(sisJoinCourseExample);
 
         List<SisJoinCourse> insertSisJoinCourse =
             sisJoinCourseList.parallelStream()
-                .filter(sisJoinCourse -> !oldSisJoinCourseList.contains(sisJoinCourse))
+                .filter(sisJoinCourse ->
+                    !oldSisJoinCourseList.contains(sisJoinCourse) &&
+                        extScIdList.contains(sisJoinCourse.getScId()))
                 .collect(Collectors.toList());
 
         if (insertSisJoinCourse.isEmpty())

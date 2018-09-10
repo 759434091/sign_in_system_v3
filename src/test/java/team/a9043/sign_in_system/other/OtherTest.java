@@ -8,6 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.junit4.SpringRunner;
 import team.a9043.sign_in_system.mapper.SisJoinCourseMapper;
 import team.a9043.sign_in_system.mapper.SisScheduleMapper;
@@ -46,6 +47,8 @@ public class OtherTest {
     private ThreadPoolTaskScheduler threadPoolTaskScheduler;
     @Resource(name = "sisRedisTemplate")
     private RedisTemplate<String, Object> sisRedisTemplate;
+    @Resource
+    private BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Test
     public void test() {
@@ -136,7 +139,6 @@ public class OtherTest {
 
     @Test
     public void test5() {
-        sisRedisTemplate.opsForValue().set("a", "a");
-        log.info((String) sisRedisTemplate.opsForValue().get("a"));
+        log.info(bCryptPasswordEncoder.encode("123456"));
     }
 }
