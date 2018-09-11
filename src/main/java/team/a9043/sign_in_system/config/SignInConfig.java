@@ -16,9 +16,9 @@ public class SignInConfig {
         redisTemplate.setKeySerializer(stringRedisSerializer);
         redisTemplate.setHashKeySerializer(stringRedisSerializer);
 
-        Optional
+        /*Optional
             .ofNullable(redisTemplate.keys("*"))
-            .ifPresent(redisTemplate::delete);
+            .ifPresent(redisTemplate::delete);*/
         return redisTemplate;
     }
 }

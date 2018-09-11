@@ -17,8 +17,8 @@ public class TimeFreezeAspect {
     public static LocalDateTime freezeTime = LocalDateTime
         .of(2018, Month.MAY, 30, 14, 35, 0);
 
-    @Around(value = "execution(* team.a9043.sign_in_system.service.*.*" +
-        "(..,java.time.LocalDateTime,..)))")
+    /*@Around(value = "execution(* team.a9043.sign_in_system.service.*.*" +
+        "(..,java.time.LocalDateTime,..)))")*/
     public Object freezeDateTime(ProceedingJoinPoint pjp) throws Throwable {
         Signature signature = pjp.getSignature();
         MethodSignature methodSignature = (MethodSignature) signature;

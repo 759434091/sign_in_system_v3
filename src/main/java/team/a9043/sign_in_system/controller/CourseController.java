@@ -39,8 +39,7 @@ public class CourseController {
     @GetMapping("/week")
     @ApiOperation(value = "获得当前周和服务器时间")
     public JSONObject getWeek() throws InvalidTimeParameterException {
-        // todo unFreeze
-        LocalDateTime localDateTime = TimeFreezeAspect.freezeTime;
+        LocalDateTime localDateTime = LocalDateTime.now();
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("server_time", localDateTime);
         jsonObject.put("week",

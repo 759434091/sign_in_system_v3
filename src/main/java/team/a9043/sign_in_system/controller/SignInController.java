@@ -161,9 +161,6 @@ public class SignInController {
                 "Base64Str: " + base64EncodeAESBytesStr);
         }
         LocalDateTime localDateTime = LocalDateTime.now();
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success",
-            signInService.signIn(sisUser, ssId, localDateTime, locationJson));
-        return jsonObject;
+        return signInService.signIn(sisUser, ssId, localDateTime, locationJson);
     }
 }

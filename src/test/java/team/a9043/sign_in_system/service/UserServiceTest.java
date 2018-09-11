@@ -38,7 +38,7 @@ public class UserServiceTest {
         claimsMap.put("suId", sisUser.getSuId());
         claimsMap.put("suName", sisUser.getSuName());
         claimsMap.put("suAuthoritiesStr", sisUser.getSuAuthoritiesStr());
-        claimsMap.put("type", "password");
+        claimsMap.put("type", "code");
         log.info("res " + JwtUtil.createJWT(claimsMap));
     }
 
