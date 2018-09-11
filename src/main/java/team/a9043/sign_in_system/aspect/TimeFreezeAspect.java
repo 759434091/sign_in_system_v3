@@ -15,7 +15,7 @@ import java.util.stream.IntStream;
 @Aspect
 public class TimeFreezeAspect {
     public static LocalDateTime freezeTime = LocalDateTime
-        .of(2018, Month.MAY, 30, 9, 0, 0);
+        .of(2018, Month.MAY, 30, 14, 35, 0);
 
     @Around(value = "execution(* team.a9043.sign_in_system.service.*.*" +
         "(..,java.time.LocalDateTime,..)))")
