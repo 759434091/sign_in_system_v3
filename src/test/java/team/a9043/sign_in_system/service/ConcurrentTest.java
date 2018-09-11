@@ -1,11 +1,9 @@
 package team.a9043.sign_in_system.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
@@ -13,11 +11,12 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-import team.a9043.sign_in_system.convertor.JsonObjectHttpMessageConverter;
+import team.a9043.sign_in_system.exception.InvalidPermissionException;
 import team.a9043.sign_in_system.mapper.SisJoinCourseMapper;
-import team.a9043.sign_in_system.pojo.SisJoinCourse;
-import team.a9043.sign_in_system.pojo.SisJoinCourseExample;
+import team.a9043.sign_in_system.mapper.SisScheduleMapper;
+import team.a9043.sign_in_system.pojo.*;
 import team.a9043.sign_in_system.util.JwtUtil;
+import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
 
 import javax.annotation.Resource;
 import javax.crypto.BadPaddingException;
@@ -27,10 +26,8 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.LocalDateTime;
+import java.util.*;
 
 /**
  * @author a9043
@@ -41,6 +38,10 @@ import java.util.Map;
 public class ConcurrentTest {
     @Resource
     private SisJoinCourseMapper sisJoinCourseMapper;
+    @Resource
+    private SisScheduleMapper sisScheduleMapper;
+    @Resource
+    private SignInService signInService;
     private RestTemplate restTemplate;
 
     public ConcurrentTest() {
@@ -51,12 +52,34 @@ public class ConcurrentTest {
 
     @Test
     public void test() {
-        String scId = "B1701920.16";
-        int ssId = 426;
+        List<String> scIdList = Arrays.asList(
+            "E0911835.01", "E0911835.02", "E0911835.03", "E0911835.04",
+            "E0911835.05", "E0911835.06", "E0911835.07"
+        );
+        SisScheduleExample sisScheduleExample = new SisScheduleExample();
+        sisScheduleExample.createCriteria().andScIdIn(scIdList);
+        List<SisSchedule> sisScheduleList =
+            sisScheduleMapper.selectByExample(sisScheduleExample);
+
+        LocalDateTime localDateTime = LocalDateTime.now();
+        SisUser sisUser = new SisUser();
+        sisUser.setSuId("2016220401000");
+        sisUser.setSuAuthoritiesStr("ADMINISTRATOR");
+        sisScheduleList.parallelStream()
+            .forEach(s -> {
+                try {
+                    signInService.createSignIn(sisUser, s.getSsId(),
+                        localDateTime);
+                } catch (InvalidTimeParameterException |
+                InvalidPermissionException e) {
+                    e.printStackTrace();
+                }
+            });
+
         SisJoinCourseExample sisJoinCourseExample = new
             SisJoinCourseExample();
         sisJoinCourseExample.createCriteria()
-            .andScIdEqualTo(scId)
+            .andScIdIn(scIdList)
             .andJoinCourseTypeEqualTo(SisJoinCourse.JoinCourseType.ATTENDANCE
                 .ordinal());
         List<SisJoinCourse> sisJoinCourseList =
@@ -64,15 +87,13 @@ public class ConcurrentTest {
 
         sisJoinCourseList
             .parallelStream()
-            .map(sjc -> {
+            .forEach(sjc -> {
                 Map<String, Object> claimsMap = new HashMap<>();
                 claimsMap.put("suId", sjc.getSuId());
                 claimsMap.put("suName", "");
                 claimsMap.put("suAuthoritiesStr", "STUDENT");
                 claimsMap.put("type", "code");
-                return JwtUtil.createJWT(claimsMap);
-            })
-            .map(token -> {
+
                 HttpHeaders httpHeaders = new HttpHeaders();
                 try {
                     httpHeaders.add("Access-Token", getAccessToken());
@@ -80,21 +101,25 @@ public class ConcurrentTest {
                     e.printStackTrace();
                 }
                 httpHeaders.add("Authorization",
-                    "Bearer " + token);
-                return httpHeaders;
-            })
-            .forEach(headers -> {
-                try {
-                    String jsonObject1 =
-                        restTemplate.postForObject(String.format(
-                            "https://api.xsix103.cn/sign_in_system/v3" +
-                                "/schedules/%d/signIns/doSignIn", ssId),
-                            new HttpEntity<String>(headers),
-                            String.class);
-                    log.info(jsonObject1);
-                } catch (HttpClientErrorException e) {
-                    log.error(new String(e.getResponseBodyAsByteArray()));
-                }
+                    "Bearer " + JwtUtil.createJWT(claimsMap));
+
+                sisScheduleList
+                    .stream()
+                    .filter(s -> s.getScId().equals(sjc.getScId()))
+                    .forEach(s -> {
+                        try {
+                            String jsonObject1 =
+                                restTemplate.postForObject(String.format(
+                                    "https://api.xsix103.cn/sign_in_system/v3" +
+                                        "/schedules/%s/signIns/doSignIn",
+                                    s.getSsId()),
+                                    new HttpEntity<String>(httpHeaders),
+                                    String.class);
+                            log.info(jsonObject1);
+                        } catch (HttpClientErrorException e) {
+                            log.error(new String(e.getResponseBodyAsByteArray()));
+                        }
+                    });
             });
 
     }
