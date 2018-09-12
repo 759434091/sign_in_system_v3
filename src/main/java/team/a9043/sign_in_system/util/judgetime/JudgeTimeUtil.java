@@ -11,7 +11,7 @@ import java.util.Optional;
  */
 @SuppressWarnings({"WeakerAccess", "unused"})
 public class JudgeTimeUtil {
-    private static Month splitMonth = Month.NOVEMBER;
+    private static Month splitMonth = Month.SEPTEMBER;
     private static LocalDate startDate = LocalDate.of(2018, Month.SEPTEMBER, 3);
     private static int classDuration = 45;
     private static LocalTime firstClass = LocalTime.of(8, 30);

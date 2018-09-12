@@ -8,6 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
+import team.a9043.sign_in_system.mapper.SisScheduleMapper;
 import team.a9043.sign_in_system.pojo.SisMonitorTrans;
 import team.a9043.sign_in_system.pojo.SisSchedule;
 import team.a9043.sign_in_system.pojo.SisSupervision;
@@ -33,6 +34,8 @@ import java.util.concurrent.ExecutionException;
 public class MonitorServiceTest {
     @Resource
     private MonitorService monitorService;
+    @Resource
+    private SisScheduleMapper sisScheduleMapper;
 
     @Test
     public void getCourses() throws ExecutionException, InterruptedException {
@@ -106,5 +109,11 @@ public class MonitorServiceTest {
     public void getMonitors() throws IncorrectParameterException {
         JSONObject jsonObject = monitorService.getMonitors(1, 10, "2016220401001", null, true);
         log.info(jsonObject.toString(2));
+    }
+
+    @Test
+    public void isCourseTime() throws InvalidTimeParameterException, ScheduleParserException {
+        SisSchedule sisSchedule = sisScheduleMapper.selectByPrimaryKey(4);
+        JudgeTimeUtil.isCourseTime(sisSchedule, 2, LocalDateTime.now());
     }
 }
