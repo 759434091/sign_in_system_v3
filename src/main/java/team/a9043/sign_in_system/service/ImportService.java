@@ -553,12 +553,6 @@ public class ImportService {
                             .findAny()
                             .map(SisLocation::getSlId)
                             .orElse(null);
-                        if (null == slId) {
-                            logger.error(String.format(
-                                "row err: slId in %s, %d slId = %s",
-                                scId, i, null));
-                            return null;
-                        }
 
                         //开始匹配
                         Matcher matcher;

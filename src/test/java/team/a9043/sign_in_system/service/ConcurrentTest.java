@@ -54,25 +54,42 @@ public class ConcurrentTest {
     public void test() {
         List<String> scIdList = Arrays.asList(
             "E0911835.01", "E0911835.02", "E0911835.03", "E0911835.04",
-            "E0911835.05", "E0911835.06", "E0911835.07"
+            "E0911835.05", "E0911835.06", "E0911835.07", "E0901040.01",
+            "E0901040.02", "E0901040.03", "E0901040.04", "E0901040.05",
+            "E0901040.06", "E0901040.07"
         );
         SisScheduleExample sisScheduleExample = new SisScheduleExample();
         sisScheduleExample.createCriteria().andScIdIn(scIdList);
         List<SisSchedule> sisScheduleList =
             sisScheduleMapper.selectByExample(sisScheduleExample);
 
-        LocalDateTime localDateTime = LocalDateTime.now();
-        SisUser sisUser = new SisUser();
-        sisUser.setSuId("2016220401000");
-        sisUser.setSuAuthoritiesStr("ADMINISTRATOR");
-        sisScheduleList.parallelStream()
+        Map<String, Object> claimsMap = new HashMap<>();
+        claimsMap.put("suId", "2016220401000");
+        claimsMap.put("suName", "");
+        claimsMap.put("suAuthoritiesStr", "ADMINISTRATOR, TEACHER");
+        claimsMap.put("type", "code");
+        HttpHeaders httpHeaders = new HttpHeaders();
+        try {
+            httpHeaders.add("Access-Token", getAccessToken());
+        } catch (NoSuchPaddingException | NoSuchAlgorithmException | BadPaddingException | InvalidKeyException | IllegalBlockSizeException e) {
+            e.printStackTrace();
+        }
+        httpHeaders.add("Authorization",
+            "Bearer " + JwtUtil.createJWT(claimsMap));
+
+        sisScheduleList
             .forEach(s -> {
                 try {
-                    signInService.createSignIn(sisUser, s.getSsId(),
-                        localDateTime);
-                } catch (InvalidTimeParameterException |
-                InvalidPermissionException e) {
-                    e.printStackTrace();
+                    String jsonObject1 =
+                        restTemplate.postForObject(String.format(
+                            "https://api.xsix103.cn/sign_in_system/v3" +
+                                "/schedules/%s/signIns",
+                            s.getSsId()),
+                            new HttpEntity<String>(httpHeaders),
+                            String.class);
+                    log.info(jsonObject1);
+                } catch (HttpClientErrorException e) {
+                    log.error(new String(e.getResponseBodyAsByteArray()));
                 }
             });
 
@@ -85,23 +102,28 @@ public class ConcurrentTest {
         List<SisJoinCourse> sisJoinCourseList =
             sisJoinCourseMapper.selectByExample(sisJoinCourseExample);
 
+        log.info("total: " + sisJoinCourseList
+            .parallelStream().count());
         sisJoinCourseList
             .parallelStream()
-            .forEach(sjc -> {
-                Map<String, Object> claimsMap = new HashMap<>();
-                claimsMap.put("suId", sjc.getSuId());
-                claimsMap.put("suName", "");
-                claimsMap.put("suAuthoritiesStr", "STUDENT");
-                claimsMap.put("type", "code");
 
-                HttpHeaders httpHeaders = new HttpHeaders();
+            .forEach(sjc -> {
+                Map<String, Object> map = new HashMap<>();
+                map.put("suId", sjc.getSuId());
+                map.put("suName", "");
+                map.put("suAuthoritiesStr", "STUDENT");
+                map.put("type", "code");
+
+                HttpHeaders headers = new HttpHeaders();
                 try {
-                    httpHeaders.add("Access-Token", getAccessToken());
-                } catch (NoSuchPaddingException | NoSuchAlgorithmException | BadPaddingException | InvalidKeyException | IllegalBlockSizeException e) {
+                    headers.add("Access-Token", getAccessToken());
+                } catch (NoSuchPaddingException | NoSuchAlgorithmException |
+                    BadPaddingException | InvalidKeyException |
+                    IllegalBlockSizeException e) {
                     e.printStackTrace();
                 }
-                httpHeaders.add("Authorization",
-                    "Bearer " + JwtUtil.createJWT(claimsMap));
+                headers.add("Authorization",
+                    "Bearer " + JwtUtil.createJWT(map));
 
                 sisScheduleList
                     .stream()
@@ -113,11 +135,12 @@ public class ConcurrentTest {
                                     "https://api.xsix103.cn/sign_in_system/v3" +
                                         "/schedules/%s/signIns/doSignIn",
                                     s.getSsId()),
-                                    new HttpEntity<String>(httpHeaders),
+                                    new HttpEntity<String>(headers),
                                     String.class);
                             log.info(jsonObject1);
                         } catch (HttpClientErrorException e) {
-                            log.error(new String(e.getResponseBodyAsByteArray()));
+                            log.error(new String(e.getResponseBodyAsByteArray
+                                ()));
                         }
                     });
             });
