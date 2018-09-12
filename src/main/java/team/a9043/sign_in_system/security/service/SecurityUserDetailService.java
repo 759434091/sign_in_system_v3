@@ -5,8 +5,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import team.a9043.sign_in_system.mapper.SisUserMapper;
-import team.a9043.sign_in_system.pojo.SisUserExample;
-import team.a9043.sign_in_system.repository.SisUserRepository;
 import team.a9043.sign_in_system.security.entity.SecurityUserDetails;
 
 import javax.annotation.Resource;

@@ -8,6 +8,7 @@ import org.json.JSONObject;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import team.a9043.sign_in_system.async.AsyncJoinService;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
@@ -19,7 +20,6 @@ import team.a9043.sign_in_system.util.judgetime.ScheduleParserException;
 
 import javax.annotation.Nullable;
 import javax.annotation.Resource;
-import javax.transaction.Transactional;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.ArrayList;

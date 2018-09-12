@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import team.a9043.sign_in_system.async.AsyncJoinService;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.mapper.*;
@@ -16,7 +17,6 @@ import team.a9043.sign_in_system.pojo.*;
 import team.a9043.sign_in_system.security.tokenuser.TokenUser;
 
 import javax.annotation.Resource;
-import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
