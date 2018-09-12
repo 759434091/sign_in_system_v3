@@ -57,7 +57,7 @@ public class MonitorController {
     }
 
     @GetMapping("/courses/{scId}/supervisions")
-    @PreAuthorize("hasAnyAuthority('MONITOR','ADMINISTRAOTR','TEACHER')")
+    @PreAuthorize("hasAnyAuthority('MONITOR','ADMINISTRATOR','TEACHER')")
     @ApiOperation(value = "获取督导记录", notes = "根据课程序号获取督导记录")
     public JSONObject getSupervisions(@TokenUser @ApiIgnore SisUser sisUser,
                                       @PathVariable @ApiParam(value = "课程序号") String scId) throws InvalidPermissionException, IncorrectParameterException {
