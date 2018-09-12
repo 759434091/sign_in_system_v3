@@ -410,44 +410,50 @@ public class SignInService {
             sisScheduleMapper.selectByExample(sisScheduleExample);
 
         //join SignIn
-        List<Integer> ssIdList = sisScheduleList.stream()
-            .map(SisSchedule::getSsId)
-            .collect(Collectors.toList());
-        List<SisSignIn> sisSignInList;
-        if (ssIdList.isEmpty()) {
-            sisSignInList = new ArrayList<>();
-        } else {
-            SisSignInExample sisSignInExample = new SisSignInExample();
-            sisSignInExample.createCriteria().andSsIdIn(ssIdList);
-            sisSignInList = sisSignInMapper.selectByExample(sisSignInExample);
-        }
+        List<SisSignIn> sisSignInList = Optional
+            .of(sisScheduleList.stream()
+                .map(SisSchedule::getSsId)
+                .collect(Collectors.toList()))
+            .filter(l -> !l.isEmpty())
+            .map(l -> {
+                SisSignInExample sisSignInExample = new SisSignInExample();
+                sisSignInExample.createCriteria().andSsIdIn(l);
+                return sisSignInMapper.selectByExample(sisSignInExample);
+            })
+            .orElse(new ArrayList<>());
 
         //join SignInDetail
-        List<Integer> ssiIdList = sisSignInList.stream()
-            .map(SisSignIn::getSsiId)
-            .collect(Collectors.toList());
-        List<SisSignInDetail> sisSignInDetailList;
-        if (ssiIdList.isEmpty()) {
-            sisSignInDetailList = new ArrayList<>();
-        } else {
-            SisSignInDetailExample sisSignInDetailExample =
-                new SisSignInDetailExample();
-            SisSignInDetailExample.Criteria criteria =
-                sisSignInDetailExample.createCriteria();
-            criteria.andSsiIdIn(ssiIdList);
-            if (null != sisUser) {
-                criteria.andSuIdEqualTo(sisUser.getSuId());
-            }
-            sisSignInDetailList =
-                sisSignInDetailMapper.selectByExample(sisSignInDetailExample);
-        }
+        List<SisSignInDetail> sisSignInDetailList = Optional
+            .of(sisSignInList.stream()
+                .map(SisSignIn::getSsiId)
+                .collect(Collectors.toList()))
+            .filter(l -> !l.isEmpty())
+            .map(l -> {
+                SisSignInDetailExample sisSignInDetailExample =
+                    new SisSignInDetailExample();
+                SisSignInDetailExample.Criteria criteria =
+                    sisSignInDetailExample.createCriteria();
+                criteria.andSsiIdIn(l);
+                if (null != sisUser) {
+                    criteria.andSuIdEqualTo(sisUser.getSuId());
+                }
+                return sisSignInDetailMapper.selectByExample(sisSignInDetailExample);
+            })
+            .orElse(new ArrayList<>());
 
         //join student
-        List<String> suIdList = sisSignInDetailList.parallelStream()
-            .map(SisSignInDetail::getSuId)
-            .collect(Collectors.toList());
-        List<SisUser> sisUserList =
-            CourseService.getSisUserBySuIdList(suIdList, sisUserMapper);
+        List<SisUser> sisUserList = Optional
+            .of(sisSignInDetailList.parallelStream()
+                .map(SisSignInDetail::getSuId)
+                .collect(Collectors.toList()))
+            .filter(l -> !l.isEmpty())
+            .map(l -> {
+                SisUserExample sisUserExample =
+                    new SisUserExample();
+                sisUserExample.createCriteria().andSuIdIn(l);
+                return sisUserMapper.selectByExample(sisUserExample);
+            })
+            .orElse(new ArrayList<>());
 
         //merge student
         JSONArray sisSignInDetailJsonArray = new JSONArray(sisSignInDetailList);
@@ -603,28 +609,38 @@ public class SignInService {
         }
 
         //join sisSignIn
-        List<Integer> ssiIdList =
-            sisSignInDetailList.parallelStream().map(SisSignInDetail::getSsiId).distinct().collect(Collectors.toList());
-        SisSignInExample sisSignInExample = new SisSignInExample();
-        sisSignInExample.createCriteria().andSsiIdIn(ssiIdList);
-        List<SisSignIn> sisSignInList =
-            sisSignInMapper.selectByExample(sisSignInExample);
+        List<SisSignIn> sisSignInList = Optional
+            .of(sisSignInDetailList.parallelStream().map(SisSignInDetail::getSsiId).distinct().collect(Collectors.toList()))
+            .filter(l -> !l.isEmpty())
+            .map(l -> {
+                SisSignInExample sisSignInExample = new SisSignInExample();
+                sisSignInExample.createCriteria().andSsiIdIn(l);
+                return sisSignInMapper.selectByExample(sisSignInExample);
+            })
+            .orElse(new ArrayList<>());
+
 
         //join schedule
-        List<Integer> ssIdList =
-            sisSignInList.stream().map(SisSignIn::getSsId).distinct().collect(Collectors.toList());
-        SisScheduleExample sisScheduleExample = new SisScheduleExample();
-        sisScheduleExample.createCriteria().andSsIdIn(ssIdList);
-        List<SisSchedule> sisScheduleList =
-            sisScheduleMapper.selectByExample(sisScheduleExample);
+        List<SisSchedule> sisScheduleList = Optional
+            .of(sisSignInList.stream().map(SisSignIn::getSsId).distinct().collect(Collectors.toList()))
+            .filter(l -> !l.isEmpty())
+            .map(l -> {
+                SisScheduleExample sisScheduleExample = new SisScheduleExample();
+                sisScheduleExample.createCriteria().andSsIdIn(l);
+                return sisScheduleMapper.selectByExample(sisScheduleExample);
+            })
+            .orElse(new ArrayList<>());
 
         //join course
-        List<String> scIdList =
-            sisScheduleList.stream().map(SisSchedule::getScId).distinct().collect(Collectors.toList());
-        SisCourseExample sisCourseExample = new SisCourseExample();
-        sisCourseExample.createCriteria().andScIdIn(scIdList);
-        List<SisCourse> sisCourseList =
-            sisCourseMapper.selectByExample(sisCourseExample);
+        List<SisCourse> sisCourseList = Optional
+            .of(sisScheduleList.stream().map(SisSchedule::getScId).distinct().collect(Collectors.toList()))
+            .filter(l -> !l.isEmpty())
+            .map(l -> {
+                SisCourseExample sisCourseExample = new SisCourseExample();
+                sisCourseExample.createCriteria().andScIdIn(l);
+                return sisCourseMapper.selectByExample(sisCourseExample);
+            })
+            .orElse(new ArrayList<>());
 
         JSONArray signInDetailJsonArray = new JSONArray(sisSignInDetailList);
         signInDetailJsonArray.forEach(signInDetailObj -> {
