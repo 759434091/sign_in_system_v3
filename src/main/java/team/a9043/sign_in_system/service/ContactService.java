@@ -1,7 +1,6 @@
 package team.a9043.sign_in_system.service;
 
 import org.json.JSONObject;
-import org.springframework.mail.MailMessage;
 import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.stereotype.Service;
