@@ -9,7 +9,6 @@ import team.a9043.sign_in_system.pojo.*;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.Future;
 
 /**
@@ -30,13 +29,13 @@ public class AsyncJoinService {
 
     @Async
     public Future<List<SisUser>> joinSisUserById(List<String> suIdList) {
-        return Optional.of(suIdList).filter(l -> !l.isEmpty())
-            .map(l -> {
-                SisUserExample sisUserExample = new SisUserExample();
-                sisUserExample.createCriteria().andSuIdIn(l);
-                return new AsyncResult<>(sisUserMapper.selectByExample(sisUserExample));
-            })
-            .orElse(new AsyncResult<>(new ArrayList<>()));
+        if (suIdList.isEmpty()) {
+            return new AsyncResult<>(new ArrayList<>());
+        } else {
+            SisUserExample sisUserExample = new SisUserExample();
+            sisUserExample.createCriteria().andSuIdIn(suIdList);
+            return new AsyncResult<>(sisUserMapper.selectByExample(sisUserExample));
+        }
     }
 
     @Async
