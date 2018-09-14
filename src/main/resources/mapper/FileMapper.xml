@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="team.a9043.sign_in_system_version_2.mapper.FileMapper">
+    <select id="checkTchExist" resultType="String">
+        SELECT usr_id
+        FROM user
+        WHERE usr_id = #{usrId}
+    </select>
+    <select id="checkNewTeacher" resultType="String">
+        SELECT usr_id
+        FROM user
+        WHERE usr_id IN
+        <foreach collection="teacherSet" item="user" index="index" open="(" separator="," close=")">
+            #{user.usrId}
+        </foreach>
+    </select>
+    <select id="checkNewLocation" resultType="String">
+        SELECT loc_name
+        FROM location
+        WHERE loc_name IN
+        <foreach collection="locStrSet" item="locStr" index="index" open="(" separator="," close=")">
+            #{locStr}
+        </foreach>
+    </select>
+    <select id="checkNewCourse" resultType="String">
+        SELECT coz_id
+        FROM course
+        WHERE coz_id IN
+        <foreach collection="courseList" item="course" index="index" open="(" separator="," close=")">
+            #{course.cozId}
+        </foreach>
+    </select>
+    <select id="checkNewDepartment" resultType="String">
+        SELECT dep_name
+        FROM department
+        WHERE dep_name IN
+        <foreach collection="depStrSet" item="depStr" index="index" open="(" separator="," close=")">
+            #{depStr}
+        </foreach>
+    </select>
+    <select id="checkNewAttendance" resultType="java.util.Map">
+        SELECT course_coz_id, user_usr_id
+        FROM attendance
+        WHERE user_usr_id IN
+        <foreach collection="usrIdSet" item="usrId" index="index" open="(" separator="," close=")">
+            #{usrId}
+        </foreach>
+    </select>
+    <select id="checkNewStudent" resultType="String">
+        SELECT usr_id
+        FROM user
+        WHERE usr_id IN
+        <foreach collection="usrIdSet" item="usrId" index="index" open="(" separator="," close=")">
+            #{usrId}
+        </foreach>
+    </select>
+    <insert id="addTeacher">
+        INSERT INTO user (usr_id, usr_name, usr_permit, open_id) VALUES
+        <foreach collection="teacherList" item="user" separator="," open="" close="">
+            (#{user.usrId}, #{user.usrName}, 4, NULL)
+        </foreach>
+    </insert>
+    <insert id="addLocation">
+        INSERT INTO location (loc_name) VALUES
+        <foreach collection="locStrSet" item="locStr" separator="," open="" close="">
+            (#{locStr})
+        </foreach>
+    </insert>
+    <insert id="addCourse">
+        INSERT INTO course (coz_id, coz_name, coz_size, coz_act_size, coz_grade) VALUES
+        <foreach collection="courseList" item="course" separator="," open="" close="">
+            (#{course.cozId}, #{course.cozName}, #{course.cozSize}, #{course.cozActSize}, #{course.cozGrade})
+        </foreach>
+    </insert>
+    <insert id="addDepartment">
+        INSERT INTO department (dep_name) VALUES
+        <foreach collection="depStrSet" item="depStr" separator="," open="" close="">
+            (#{depStr})
+        </foreach>
+    </insert>
+    <insert id="addCozTch">
+        INSERT INTO teaching (course_coz_id,user_usr_id) VALUES
+        <foreach collection="cozTeaMapSet" item="cozTeaMap" separator="," open="" close="">
+            (#{cozTeaMap.cozId}, #{cozTeaMap.usrId})
+        </foreach>
+    </insert>
+    <insert id="addCozDep">
+        INSERT INTO coz_depart (coz_id, dep_id) VALUES
+        <foreach collection="cozDepMapSet" item="cozDepMap" separator="," open="" close="">
+            (#{cozDepMap.cozId},
+                (SELECT dep_id FROM department WHERE dep_name = #{cozDepMap.depName}))
+        </foreach>
+    </insert>
+    <insert id="addSchedule">
+        INSERT INTO schedule (sch_year, sch_term, sch_start_week, sch_end_week, sch_fortnight, sch_day, sch_start_time, sch_end_time, course_coz_id, location_loc_id) VALUES
+        <foreach collection="scheduleList" item="schedule" separator="," open="" close="">
+            (#{schedule.schYear}, #{schedule.schTerm}, #{schedule.schStartWeek}, #{schedule.schEndWeek}, #{schedule.schFortnight}, #{schedule.schDay}, #{schedule.schStartTime}, #{schedule.schEndTime}, #{schedule.courseCozId},
+                (SELECT loc_id FROM location WHERE loc_name = #{schedule.location.locName}))
+        </foreach>
+    </insert>
+    <insert id="addStudent">
+        INSERT INTO user (usr_id, usr_name, usr_permit, open_id) VALUES
+        <foreach collection="studentList" item="student" separator="," open="" close="">
+            (#{student.usrId}, #{student.usrName}, 1, NULL )
+        </foreach>
+    </insert>
+    <insert id="addAttendance">
+        INSERT INTO attendance (course_coz_id, user_usr_id) VALUES
+        <foreach collection="attList" item="att" separator="," open="" close="">
+            (#{att.cozId}, #{att.usrId})
+        </foreach>
+    </insert>
+</mapper>

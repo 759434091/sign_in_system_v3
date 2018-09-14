@@ -1,0 +1,324 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="team.a9043.sign_in_system_version_2.mapper.AdmMapper">
+    <resultMap id="user" type="team.a9043.sign_in_system_version_2.pojo.User">
+        <id column="usr_id" jdbcType="VARCHAR" property="usrId"/>
+        <result column="usr_name" jdbcType="VARCHAR" property="usrName"/>
+        <result column="usr_pwd" jdbcType="VARCHAR" property="usrPwd"/>
+        <result column="usr_permit" jdbcType="TINYINT" property="usrPermit"/>
+        <result column="open_id" jdbcType="VARCHAR" property="openId"/>
+    </resultMap>
+    <resultMap id="teacher" type="team.a9043.sign_in_system_version_2.pojo.User">
+        <id column="tch_id" jdbcType="VARCHAR" javaType="String" property="usrId"/>
+        <id column="tch_name" jdbcType="VARCHAR" javaType="String" property="usrName"/>
+    </resultMap>
+    <resultMap id="location" type="team.a9043.sign_in_system_version_2.pojo.Location">
+        <id column="loc_id" jdbcType="INTEGER" property="locId"/>
+        <result column="loc_name" jdbcType="VARCHAR" javaType="String" property="locName"/>
+        <result column="loc_long" jdbcType="DOUBLE" property="locLong"/>
+        <result column="loc_lat" jdbcType="DOUBLE" property="locLat"/>
+    </resultMap>
+    <resultMap id="suspension" type="team.a9043.sign_in_system_version_2.pojo.Suspension">
+        <id column="sus_id" property="susId"/>
+        <result column="sch_id" property="scheduleSchId"/>
+        <result column="sus_week" property="susWeek"/>
+    </resultMap>
+    <resultMap id="schedule" type="team.a9043.sign_in_system_version_2.pojo.Schedule">
+        <id column="sch_id" jdbcType="INTEGER" property="schId"/>
+        <result column="sch_year" jdbcType="INTEGER" property="schYear"/>
+        <result column="sch_term" jdbcType="BIT" property="schTerm"/>
+        <result column="sch_start_week" jdbcType="INTEGER" property="schStartWeek"/>
+        <result column="sch_end_week" jdbcType="INTEGER" property="schEndWeek"/>
+        <result column="sch_fortnight" jdbcType="TINYINT" property="schFortnight"/>
+        <result column="sch_day" jdbcType="INTEGER" property="schDay"/>
+        <result column="sch_start_time" jdbcType="INTEGER" property="schStartTime"/>
+        <result column="sch_end_time" jdbcType="INTEGER" property="schEndTime"/>
+        <result column="course_coz_id" jdbcType="VARCHAR" javaType="String" property="courseCozId"/>
+        <association property="location" resultMap="location"/>
+        <collection property="suspensionList" resultMap="suspension"/>
+    </resultMap>
+    <resultMap id="course" type="team.a9043.sign_in_system_version_2.pojo.Course">
+        <id column="coz_id" jdbcType="VARCHAR" javaType="String" property="cozId"/>
+        <result column="coz_name" jdbcType="VARCHAR" javaType="String" property="cozName"/>
+        <result column="coz_size" jdbcType="INTEGER" property="cozSize"/>
+        <result column="coz_act_size" jdbcType="INTEGER" property="cozActSize"/>
+        <result column="coz_att_rate" jdbcType="DECIMAL" property="cozAttRate"/>
+        <collection property="teacherList" resultMap="teacher"/>
+        <collection property="scheduleList" resultMap="schedule"/>
+    </resultMap>
+    <resultMap id="suv_student" type="team.a9043.sign_in_system_version_2.pojo.User">
+        <id column="suv_user_usr_id" property="usrId"/>
+        <result column="suv_user_usr_name" property="usrName"/>
+    </resultMap>
+    <resultMap id="sch_location" type="team.a9043.sign_in_system_version_2.pojo.Location">
+        <id column="loc_id" jdbcType="INTEGER" property="locId"/>
+        <result column="loc_name" jdbcType="VARCHAR" javaType="String" property="locName"/>
+    </resultMap>
+    <resultMap id="scheduleWithCozDtl" type="team.a9043.sign_in_system_version_2.pojo.extend.ScheduleWithCozDtl">
+        <id column="sch_id" jdbcType="INTEGER" property="schId"/>
+        <result column="sch_year" jdbcType="INTEGER" property="schYear"/>
+        <result column="sch_term" jdbcType="BIT" property="schTerm"/>
+        <result column="sch_start_week" jdbcType="INTEGER" property="schStartWeek"/>
+        <result column="sch_end_week" jdbcType="INTEGER" property="schEndWeek"/>
+        <result column="sch_fortnight" jdbcType="TINYINT" property="schFortnight"/>
+        <result column="sch_day" jdbcType="INTEGER" property="schDay"/>
+        <result column="sch_start_time" jdbcType="INTEGER" property="schStartTime"/>
+        <result column="sch_end_time" jdbcType="INTEGER" property="schEndTime"/>
+        <result column="course_coz_id" property="courseCozId"/>
+        <association property="course" resultMap="course"/>
+        <association property="location" resultMap="sch_location"/>
+    </resultMap>
+    <resultMap id="supervision" type="team.a9043.sign_in_system_version_2.pojo.Supervision">
+        <id column="suv_id" jdbcType="INTEGER" property="suvId"/>
+        <result column="suv_week" jdbcType="INTEGER" property="suvWeek"/>
+        <result column="suv_leave" jdbcType="BIT" property="suvLeave"/>
+        <association property="student" resultMap="suv_student"/>
+        <association property="scheduleWithCozDtl" resultMap="scheduleWithCozDtl"/>
+    </resultMap>
+    <resultMap id="suvRecWithSuv" type="team.a9043.sign_in_system_version_2.pojo.extend.SuvRecWithSuv">
+        <id property="suvRecNum" column="suv_rec_num"/>
+        <result property="suvRecBadNum" column="suv_rec_bad_num"/>
+        <result property="suvRecName" column="suv_rec_name"/>
+        <result property="suvRecInfo" column="suv_rec_info"/>
+        <result property="supervisionSuvId" column="supervision_suv_id"/>
+        <association property="supervision" resultMap="supervision"/>
+    </resultMap>
+    <resultMap id="signInRaw" type="team.a9043.sign_in_system_version_2.pojo.SignIn">
+        <id column="si_id" property="siId"/>
+        <result column="si_week" property="siWeek"/>
+        <result column="si_time" property="siTime"/>
+        <result column="si_auto" property="siAuto"/>
+        <result column="schedule_sch_id" property="scheduleSchId"/>
+    </resultMap>
+    <resultMap id="signInRec" type="team.a9043.sign_in_system_version_2.pojo.SignInRec">
+        <id column="sir_id" property="sirId"/>
+        <result column="sir_time" property="sirTime"/>
+        <result column="sir_leave" property="sirLeave"/>
+        <result column="sir_approve" property="sirApprove"/>
+        <result column="sir_voucher" property="sirVoucher"/>
+        <result column="sign_in_si_id" property="signInSiId"/>
+        <result column="user_usr_id" property="userUsrId"/>
+    </resultMap>
+    <resultMap id="attendance" type="team.a9043.sign_in_system_version_2.pojo.Attendance">
+        <id column="course_coz_id" property="courseCozId"/>
+        <collection property="userList" resultMap="user"/>
+    </resultMap>
+    <resultMap id="supervisionRaw" type="team.a9043.sign_in_system_version_2.pojo.Supervision">
+        <id column="suv_id" jdbcType="INTEGER" property="suvId"/>
+        <result column="suv_week" jdbcType="INTEGER" property="suvWeek"/>
+        <result column="suv_leave" jdbcType="BIT" property="suvLeave"/>
+        <result column="schedule_sch_id" property="scheduleSchId"/>
+        <result column="user_usr_id" property="userUsrId"/>
+    </resultMap>
+    <select id="getStaAttRate" resultType="java.util.Map">
+        SELECT ROUND(AVG(coz_att_rate), 3) avgAttRate
+        FROM course
+    </select>
+    <select id="getAbsRankList" resultType="java.util.Map">
+        SELECT
+          a.user_usr_id usrId, u.usr_name usrName, COUNT(a.user_usr_id) absTimes
+        FROM course c
+        JOIN attendance a on c.coz_id = a.course_coz_id
+        JOIN user u on a.user_usr_id = u.usr_id
+        JOIN schedule s on c.coz_id = s.course_coz_id
+        JOIN sign_in_2017_true true2 on s.sch_id = true2.schedule_sch_id
+        LEFT OUTER JOIN sign_in_rec_2017_true sir on true2.si_id = sir.sign_in_2017_true_si_id AND a.user_usr_id = sir.user_usr_id
+        WHERE sir_id IS NULL
+        GROUP BY a.user_usr_id
+        ORDER BY AbsTimes DESC
+        LIMIT #{limitNum}
+    </select>
+    <select id="getSignInRaw" resultMap="signInRaw">
+        SELECT si_id, si_week, si_time, si_auto, schedule_sch_id
+        FROM sign_in_${curYear}_${curTerm} si
+        <where>
+            <if test="siWeek != null and siWeek != ''">
+                si.si_week = #{siWeek}
+            </if>
+        </where>
+    </select>
+    <select id="getSignInAttendance" resultMap="attendance">
+        SELECT usr.usr_id, usr.usr_name, course_coz_id
+        FROM attendance att
+        JOIN user usr ON usr.usr_id = att.user_usr_id
+        <where>
+            att.course_coz_id IN
+            <foreach collection="cozIdSet" item="cozId" index="index" open="(" separator="," close=")">
+                #{cozId}
+            </foreach>
+        </where>
+    </select>
+    <select id="getSignInRecRaw" resultMap="signInRec">
+        SELECT sir_id, sir_time, sir_leave, sir_approve, sir_voucher, sign_in_${curYear}_${curTerm}_si_id sign_in_si_id, user_usr_id
+        FROM sign_in_rec_${curYear}_${curTerm} sir
+        <where>
+            sign_in_${curYear}_${curTerm}_si_id IN
+            <foreach collection="siIdSet" item="siId" index="index" open="(" separator="," close=")">
+                #{siId}
+            </foreach>
+        </where>
+    </select>
+    <select id="getScheduleWithCozDtl" resultMap="scheduleWithCozDtl">
+        SELECT
+        sch.sch_id, sch.sch_year, sch.sch_term, sch.sch_start_week, sch.sch_end_week, sch.sch_fortnight,
+        sch.sch_day, sch.sch_start_time, sch.sch_end_time, sch.course_coz_id, sch.location_loc_id ,
+        loc.loc_id, loc.loc_name,
+        coz.coz_id, coz.coz_name, coz.coz_size, coz.coz_act_size, coz.coz_att_rate,
+        tea.user_usr_id tch_id, tea.course_coz_id,
+        tch.usr_name tch_name
+        FROM schedule sch
+        LEFT OUTER JOIN location loc ON sch.location_loc_id = loc.loc_id
+        JOIN course coz ON sch.course_coz_id = coz.coz_id
+        LEFT OUTER JOIN teaching tea ON coz.coz_id = tea.course_coz_id
+        LEFT OUTER JOIN user tch ON tea.user_usr_id = tch.usr_id
+        <where>
+            sch.sch_id IN
+            <foreach collection="schIdSet" item="schId" index="index" open="(" separator="," close=")">
+                #{schId}
+            </foreach>
+        </where>
+    </select>
+    <select id="getSupervisor" resultMap="user">
+        SELECT usr_id, usr_name, usr_permit
+        FROM user
+        WHERE usr_permit &amp; 2 = 2
+    </select>
+    <select id="getCozSuvRec" resultMap="suvRecWithSuv">
+        SELECT
+        suv_rec_num, suv_rec_bad_num, suv_rec_name, suv_rec_info, suvr.supervision_${curYear}_${curTerm}_suv_id supervision_suv_id,
+        suv.suv_id, suv.suv_week, suv.suv_leave, suv.schedule_sch_id, suv.user_usr_id suv_user_usr_id,
+        stu.usr_name suv_user_usr_name,
+        sch.sch_id, sch.sch_year, sch.sch_term, sch.sch_start_week, sch.sch_end_week, sch.sch_fortnight,
+        sch.sch_day, sch.sch_start_time, sch.sch_end_time, sch.course_coz_id, sch.location_loc_id ,
+        loc.loc_id, loc.loc_name,
+        coz.coz_id, coz.coz_name, coz.coz_size, coz.coz_act_size, coz.coz_att_rate
+        FROM suv_rec_${curYear}_${curTerm} suvr
+        JOIN supervision_${curYear}_${curTerm} suv ON suvr.supervision_${curYear}_${curTerm}_suv_id = suv.suv_id
+        LEFT OUTER JOIN user stu ON suv.user_usr_id = stu.usr_id
+        JOIN schedule sch ON suv.schedule_sch_id = sch.sch_id
+        LEFT OUTER JOIN location loc ON sch.location_loc_id = loc.loc_id
+        JOIN course coz ON sch.course_coz_id = coz.coz_id
+        WHERE coz.coz_id = #{cozId}
+    </select>
+    <select id="getCourseCount" resultType="Integer">
+        SELECT
+        count(COZ.coz_id)
+        FROM course AS COZ
+        LEFT OUTER JOIN coz_depart cozdep ON cozdep.coz_id = COZ.coz_id
+        LEFT OUTER JOIN department dep ON dep.dep_id = cozdep.dep_id
+        <where>
+            <if test="cozName != null and cozName != ''">
+               coz_name LIKE #{cozName}
+            </if>
+            <if test="grade != null and grade != ''">
+                AND coz_grade = #{grade}
+            </if>
+            <if test="depName != null and depName != ''">
+                AND dep.dep_name LIKE #{depName}
+            </if>
+        </where>
+    </select>
+    <select id="getCourse" resultMap="course">
+        SELECT
+        coz.coz_id, coz.coz_name, coz.coz_size, coz.coz_act_size ,coz.coz_att_rate,
+        tea.user_usr_id tch_id,
+        tch.usr_name tch_name,
+        sch.sch_id, sch.sch_year, sch.sch_term , sch.sch_start_week, sch.sch_end_week, sch.sch_fortnight,
+        sch.sch_day, sch.sch_start_time, sch.sch_end_time, sch.location_loc_id,
+        loc.loc_name, loc.loc_long, loc.loc_lat,
+        sus_id, sus_week
+        FROM course coz
+        LEFT OUTER JOIN teaching tea ON coz.coz_id = tea.course_coz_id
+        LEFT OUTER JOIN user tch ON tea.user_usr_id = tch.usr_id
+        LEFT OUTER JOIN schedule sch ON coz.coz_id = sch.course_coz_id
+        LEFT OUTER JOIN location loc ON sch.location_loc_id = loc.loc_id
+        LEFT OUTER JOIN sch_suspension sch_sus on sch.sch_id = sch_sus.schedule_sch_id
+        WHERE coz.coz_id IN (
+            SELECT coz_id
+            FROM (
+                SELECT COZ.coz_id
+                FROM course COZ
+                LEFT OUTER JOIN coz_depart cozdep ON cozdep.coz_id = COZ.coz_id
+                LEFT OUTER JOIN department dep ON dep.dep_id = cozdep.dep_id
+                <where>
+                    <if test="cozName != null and cozName !=''">
+                        coz_name LIKE #{cozName}
+                    </if>
+                    <if test="grade != null and grade != ''">
+                        AND coz_grade = #{grade}
+                    </if>
+                    <if test="depName != null and depName != ''">
+                        AND dep.dep_name LIKE #{depName}
+                    </if>
+                </where>
+                <if test="sortStr != null and sortStr != ''">
+                    order by `${sortStr}`
+                    <if test="isAsc != false">
+                        ASC
+                    </if>
+                    <if test="isAsc == false">
+                        DESC
+                    </if>
+                </if>
+                limit #{pageStep},#{pageSize}
+            ) AS temp
+        )
+    </select>
+    <select id="getCozStudent" resultMap="user">
+        SELECT user_usr_id, course_coz_id, usr_id, usr_name
+        FROM attendance att
+            JOIN user usr ON att.user_usr_id = usr.usr_id
+        WHERE
+            att.course_coz_id = #{cozId}
+    </select>
+    <select id="getCourseSupervision" resultType="Integer">
+        SELECT sch_id
+        FROM supervision_${curYear}_${curTerm} suv
+        JOIN schedule sch ON suv.schedule_sch_id = sch.sch_id
+        WHERE suv_week = #{week} AND sch.course_coz_id = #{cozId}
+    </select>
+    <select id="searchDepartment" resultType="String">
+        SELECT dep_name
+        FROM department
+        <where>
+            <if test="depStr != null and depStr != ''">
+                dep_name LIKE #{depStr}
+            </if>
+        </where>
+    </select>
+    <select id="selectSupervision" resultMap="supervisionRaw">
+        SELECT suv_id, suv_week, suv_leave, schedule_sch_id, user_usr_id
+        FROM supervision_${curYear}_${curTerm}
+        WHERE (schedule_sch_id, suv_week) IN
+        <foreach collection="supervisionList" item="supervision" separator="," open="(" close=")">
+            (#{supervision.scheduleWithCozDtl.schId}, #{supervision.suvWeek})
+        </foreach>
+    </select>
+    <insert id="insertSupervision">
+        INSERT INTO supervision_${curYear}_${curTerm}
+            (suv_week, suv_leave, schedule_sch_id, user_usr_id)
+        VALUES
+        <foreach collection="supervisionList" item="supervision" separator="," open="" close="">
+            (#{supervision.suvWeek}, FALSE , #{supervision.scheduleWithCozDtl.schId}, NULL )
+        </foreach>
+    </insert>
+    <delete id="deleteSupervision">
+        DELETE FROM supervision_${curYear}_${curTerm} WHERE suv_id = #{suvId}
+    </delete>
+    <update id="modifySupervisor">
+        UPDATE user
+        <if test="set == true">
+            SET usr_permit = usr_permit + 2
+        </if>
+        <if test="set != true">
+            SET usr_permit = usr_permit - 2
+        </if>
+        WHERE usr_id = #{usrId} AND
+        <if test="set == true">
+            usr_permit &amp; 2 != 2
+        </if>
+        <if test="set != true">
+            usr_permit &amp; 2 = 2
+        </if>
+    </update>
+</mapper>

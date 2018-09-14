@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="team.a9043.sign_in_system_version_2.mapper.TchMapper">
+    <resultMap id="teacher2" type="team.a9043.sign_in_system_version_2.pojo.User">
+        <id column="tea2UsrId" jdbcType="VARCHAR" javaType="String" property="usrId"/>
+        <id column="tea2UsrName" jdbcType="VARCHAR" javaType="String" property="usrName"/>
+    </resultMap>
+    <resultMap id="location" type="team.a9043.sign_in_system_version_2.pojo.Location">
+        <id column="loc_id" jdbcType="INTEGER" property="locId"/>
+        <result column="loc_name" jdbcType="VARCHAR" javaType="String" property="locName"/>
+        <result column="loc_long" jdbcType="DOUBLE" property="locLong"/>
+        <result column="loc_lat" jdbcType="DOUBLE" property="locLat"/>
+    </resultMap>
+    <resultMap id="suspension" type="team.a9043.sign_in_system_version_2.pojo.Suspension">
+        <id column="sus_id" property="susId"/>
+        <result column="sch_id" property="scheduleSchId"/>
+        <result column="sus_week" property="susWeek"/>
+    </resultMap>
+    <resultMap id="schedule" type="team.a9043.sign_in_system_version_2.pojo.Schedule">
+        <id column="sch_id" jdbcType="INTEGER" property="schId"/>
+        <result column="sch_year" jdbcType="INTEGER" property="schYear"/>
+        <result column="sch_term" jdbcType="BIT" property="schTerm"/>
+        <result column="sch_start_week" jdbcType="INTEGER" property="schStartWeek"/>
+        <result column="sch_end_week" jdbcType="INTEGER" property="schEndWeek"/>
+        <result column="sch_fortnight" jdbcType="TINYINT" property="schFortnight"/>
+        <result column="sch_day" jdbcType="INTEGER" property="schDay"/>
+        <result column="sch_start_time" jdbcType="INTEGER" property="schStartTime"/>
+        <result column="sch_end_time" jdbcType="INTEGER" property="schEndTime"/>
+        <result column="course_coz_id" jdbcType="VARCHAR" javaType="String" property="courseCozId"/>
+        <association property="location" resultMap="location"/>
+        <collection property="suspensionList" resultMap="suspension"/>
+    </resultMap>
+    <resultMap id="tchCourses" type="team.a9043.sign_in_system_version_2.pojo.Course">
+        <id column="coz_id" jdbcType="VARCHAR" javaType="String" property="cozId"/>
+        <result column="coz_name" jdbcType="VARCHAR" javaType="String" property="cozName"/>
+        <result column="coz_size" jdbcType="INTEGER" property="cozSize"/>
+        <result column="coz_act_size" jdbcType="INTEGER" property="cozActSize"/>
+        <result column="coz_att_rate" jdbcType="DECIMAL" property="cozAttRate"/>
+        <result column="coz_grade" property="cozGrade"/>
+        <collection property="teacherList" resultMap="teacher2"/>
+        <collection property="scheduleList" resultMap="schedule"/>
+    </resultMap>
+    <select id="selectCourseByTch" resultMap="tchCourses">
+        SELECT
+            coz.coz_id, coz.coz_name, coz.coz_size, coz.coz_act_size ,coz.coz_att_rate,coz.coz_grade,
+            tea2.user_usr_id tea2UsrId,
+            tch2.usr_name tea2UsrName,
+            sch.sch_id, sch.sch_year, sch.sch_term , sch.sch_start_week, sch.sch_end_week, sch.sch_fortnight,
+            sch.sch_day, sch.sch_start_time, sch.sch_end_time, sch.course_coz_id,
+            loc.loc_name, loc.loc_long, loc.loc_lat,
+            sus_id, sus_week
+        FROM teaching tea
+            JOIN user tch ON tea.user_usr_id = tch.usr_id
+            JOIN course coz ON tea.course_coz_id = coz.coz_id
+            LEFT OUTER JOIN teaching tea2 ON coz.coz_id = tea2.course_coz_id
+            JOIN user tch2 ON tea.user_usr_id = tch2.usr_id
+            LEFT OUTER JOIN schedule sch ON coz.coz_id = sch.course_coz_id
+            LEFT OUTER JOIN location loc ON sch.location_loc_id = loc.loc_id
+            LEFT OUTER JOIN sch_suspension sch_sus on sch.sch_id = sch_sus.schedule_sch_id
+        WHERE  tea.user_usr_id = #{usrId}
+    </select>
+</mapper>

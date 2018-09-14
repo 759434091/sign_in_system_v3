@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="team.a9043.sign_in_system_version_2.mapper.TaskMapper">
+    <select id="getCozAttRate" resultType="java.util.Map">
+        SELECT
+              coz_id cozId,
+              ROUND(AVG(coz_att_rate_t), 3) cozAttRate
+        FROM (SELECT
+                COZ.coz_id,
+                si_id,
+                COUNT(sir.sign_in_${curYear}_${curTerm}_si_id) / COUNT(si.si_id) coz_att_rate_t
+              FROM course COZ
+                JOIN schedule SCH ON COZ.coz_id = SCH.course_coz_id
+                JOIN attendance ATT ON ATT.course_coz_id = COZ.coz_id
+                JOIN sign_in_${curYear}_${curTerm} si ON SCH.sch_id = si.schedule_sch_id
+                LEFT OUTER JOIN sign_in_rec_${curYear}_${curTerm} sir
+                  ON si.si_id = sir.sign_in_${curYear}_${curTerm}_si_id AND sir.user_usr_id = ATT.user_usr_id
+              GROUP BY si_id) t
+        GROUP BY coz_id
+    </select>
+    <update id="updateCozAttRate">
+        UPDATE course
+        SET coz_att_rate = CASE coz_id
+            <foreach collection="cozAttRateList" item="cozAttRate" close="" open="" separator=" ">
+                WHEN #{cozAttRate.cozId} THEN #{cozAttRate.cozAttRate}
+            </foreach>
+        END
+        WHERE coz_id IN
+        <foreach collection="cozAttRateList" item="cozAttRate" close=")" open="(" separator=",">
+            #{cozAttRate.cozId}
+        </foreach>
+    </update>
+</mapper>

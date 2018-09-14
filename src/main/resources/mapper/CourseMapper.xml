@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="team.a9043.sign_in_system_version_2.mapper.CourseMapper">
+    <resultMap id="student" type="team.a9043.sign_in_system_version_2.pojo.User">
+        <id column="stu_id" jdbcType="VARCHAR" javaType="String" property="usrId"/>
+        <id column="stu_name" jdbcType="VARCHAR" javaType="String" property="usrName"/>
+    </resultMap>
+    <resultMap id="teacher" type="team.a9043.sign_in_system_version_2.pojo.User">
+        <id column="tch_id" jdbcType="VARCHAR" javaType="String" property="usrId"/>
+        <id column="tch_name" jdbcType="VARCHAR" javaType="String" property="usrName"/>
+    </resultMap>
+    <resultMap id="location" type="team.a9043.sign_in_system_version_2.pojo.Location">
+        <id column="loc_id" jdbcType="INTEGER" property="locId"/>
+        <result column="loc_name" jdbcType="VARCHAR" javaType="String" property="locName"/>
+        <result column="loc_long" jdbcType="DOUBLE" property="locLong"/>
+        <result column="loc_lat" jdbcType="DOUBLE" property="locLat"/>
+    </resultMap>
+    <resultMap id="suspension" type="team.a9043.sign_in_system_version_2.pojo.Suspension">
+        <id column="sus_id" property="susId"/>
+        <result column="sch_id" property="scheduleSchId"/>
+        <result column="sus_week" property="susWeek"/>
+    </resultMap>
+    <resultMap id="schedule" type="team.a9043.sign_in_system_version_2.pojo.Schedule">
+        <id column="sch_id" jdbcType="INTEGER" property="schId"/>
+        <result column="sch_year" jdbcType="INTEGER" property="schYear"/>
+        <result column="sch_term" jdbcType="BIT" property="schTerm"/>
+        <result column="sch_start_week" jdbcType="INTEGER" property="schStartWeek"/>
+        <result column="sch_end_week" jdbcType="INTEGER" property="schEndWeek"/>
+        <result column="sch_fortnight" jdbcType="TINYINT" property="schFortnight"/>
+        <result column="sch_day" jdbcType="INTEGER" property="schDay"/>
+        <result column="sch_start_time" jdbcType="INTEGER" property="schStartTime"/>
+        <result column="sch_end_time" jdbcType="INTEGER" property="schEndTime"/>
+        <result column="course_coz_id" jdbcType="VARCHAR" javaType="String" property="courseCozId"/>
+        <association property="location" resultMap="location"/>
+        <collection property="suspensionList" resultMap="suspension"/>
+    </resultMap>
+    <resultMap id="course" type="team.a9043.sign_in_system_version_2.pojo.Course">
+        <id column="coz_id" jdbcType="VARCHAR" javaType="String" property="cozId"/>
+        <result column="coz_name" jdbcType="VARCHAR" javaType="String" property="cozName"/>
+        <result column="coz_size" jdbcType="INTEGER" property="cozSize"/>
+        <result column="coz_act_size" jdbcType="INTEGER" property="cozActSize"/>
+        <result column="coz_att_rate" jdbcType="DECIMAL" property="cozAttRate"/>
+        <collection property="teacherList" resultMap="teacher"/>
+        <collection property="scheduleList" resultMap="schedule"/>
+    </resultMap>
+    <resultMap id="stuTimetable" type="team.a9043.sign_in_system_version_2.pojo.extend.StuTimetable">
+        <id property="usrId" jdbcType="VARCHAR" javaType="String" column="stu_id"/>
+        <association property="student" resultMap="student"/>
+        <collection property="courseList" resultMap="course"/>
+    </resultMap>
+    <resultMap id="signInRec" type="team.a9043.sign_in_system_version_2.pojo.SignInRec">
+        <id property="sirId" column="sir_id"/>
+        <result property="sirTime" column="sir_time"/>
+        <result property="sirLeave" column="sir_leave"/>
+        <result property="sirApprove" column="sir_approve"/>
+        <result property="sirVoucher" column="sir_voucher"/>
+        <result property="signInSiId" column="sir_si_id"/>
+        <result property="userUsrId" column="sir_user_usr_id"/>
+    </resultMap>
+    <resultMap id="signIn" type="team.a9043.sign_in_system_version_2.pojo.SignIn">
+        <id column="si_id" jdbcType="INTEGER" property="siId"/>
+        <result column="si_week" jdbcType="INTEGER" property="siWeek"/>
+        <result column="si_time" property="siTime"/>
+        <result column="si_auto" jdbcType="BIT" property="siAuto"/>
+        <result column="schedule_sch_id" jdbcType="INTEGER" property="scheduleSchId"/>
+        <collection property="signInRecList" resultMap="signInRec"/>
+    </resultMap>
+    <resultMap id="marDtl" type="team.a9043.sign_in_system_version_2.pojo.MarDtl">
+        <id column="mard_id" property="mardId"/>
+        <result column="mard_mar_id" property="manAbsRecMarId"/>
+        <association property="user" javaType="team.a9043.sign_in_system_version_2.pojo.User">
+            <id column="mar_dtl_user_usr_id" jdbcType="VARCHAR" javaType="String" property="usrId"/>
+            <result column="mar_dtl_user_usr_name" jdbcType="VARCHAR" javaType="String" property="usrName"/>
+        </association>
+    </resultMap>
+    <resultMap id="manAbsRec" type="team.a9043.sign_in_system_version_2.pojo.ManAbsRec">
+        <id property="marId" column="mar_id"/>
+        <result property="scheduleSchId" column="schedule_sch_id"/>
+        <result property="marWeek" column="mar_week"/>
+        <collection property="marDtlList" resultMap="marDtl"/>
+    </resultMap>
+    <resultMap id="scheduleWithHistorySignIn"
+               type="team.a9043.sign_in_system_version_2.pojo.extend.ScheduleWithHistorySignIn">
+        <id column="sch_id" jdbcType="INTEGER" property="schId"/>
+        <result column="sch_year" jdbcType="INTEGER" property="schYear"/>
+        <result column="sch_term" jdbcType="BIT" property="schTerm"/>
+        <result column="sch_start_week" jdbcType="INTEGER" property="schStartWeek"/>
+        <result column="sch_end_week" jdbcType="INTEGER" property="schEndWeek"/>
+        <result column="sch_fortnight" jdbcType="TINYINT" property="schFortnight"/>
+        <result column="sch_day" jdbcType="INTEGER" property="schDay"/>
+        <result column="sch_start_time" jdbcType="INTEGER" property="schStartTime"/>
+        <result column="sch_end_time" jdbcType="INTEGER" property="schEndTime"/>
+        <result column="course_coz_id" jdbcType="VARCHAR" javaType="String" property="courseCozId"/>
+        <association property="location" resultMap="location"/>
+        <collection property="signInList" resultMap="signIn"/>
+        <collection property="manAbsRecList" resultMap="manAbsRec"/>
+    </resultMap>
+    <resultMap id="coz_sch_loc" type="team.a9043.sign_in_system_version_2.pojo.Location">
+        <id column="coz_sch_loc_id" jdbcType="INTEGER" property="locId"/>
+        <result column="coz_sch_loc_name" jdbcType="VARCHAR" javaType="String" property="locName"/>
+    </resultMap>
+    <resultMap id="coz_sch" type="team.a9043.sign_in_system_version_2.pojo.Schedule">
+        <id column="coz_sch_id" jdbcType="INTEGER" property="schId"/>
+        <result column="coz_sch_year" jdbcType="INTEGER" property="schYear"/>
+        <result column="coz_sch_term" jdbcType="BIT" property="schTerm"/>
+        <result column="coz_sch_start_week" jdbcType="INTEGER" property="schStartWeek"/>
+        <result column="coz_sch_end_week" jdbcType="INTEGER" property="schEndWeek"/>
+        <result column="coz_sch_fortnight" jdbcType="TINYINT" property="schFortnight"/>
+        <result column="coz_sch_day" jdbcType="INTEGER" property="schDay"/>
+        <result column="coz_sch_start_time" jdbcType="INTEGER" property="schStartTime"/>
+        <result column="coz_sch_end_time" jdbcType="INTEGER" property="schEndTime"/>
+        <result column="coz_sch_course_coz_id" jdbcType="VARCHAR" javaType="String" property="courseCozId"/>
+        <association property="location" resultMap="coz_sch_loc"/>
+    </resultMap>
+    <resultMap id="sch_coz" type="team.a9043.sign_in_system_version_2.pojo.Course">
+        <id column="coz_id" jdbcType="VARCHAR" javaType="String" property="cozId"/>
+        <result column="coz_name" jdbcType="VARCHAR" javaType="String" property="cozName"/>
+        <result column="coz_size" jdbcType="INTEGER" property="cozSize"/>
+        <result column="coz_act_size" jdbcType="INTEGER" property="cozActSize"/>
+        <result column="coz_att_rate" jdbcType="DECIMAL" property="cozAttRate"/>
+        <collection property="teacherList" resultMap="teacher"/>
+        <collection property="scheduleList" resultMap="coz_sch"/>
+    </resultMap>
+    <resultMap id="scheduleWithCozDtl" type="team.a9043.sign_in_system_version_2.pojo.extend.ScheduleWithCozDtl">
+        <id column="sch_id" jdbcType="INTEGER" property="schId"/>
+        <result column="sch_year" jdbcType="INTEGER" property="schYear"/>
+        <result column="sch_term" jdbcType="BIT" property="schTerm"/>
+        <result column="sch_start_week" jdbcType="INTEGER" property="schStartWeek"/>
+        <result column="sch_end_week" jdbcType="INTEGER" property="schEndWeek"/>
+        <result column="sch_fortnight" jdbcType="TINYINT" property="schFortnight"/>
+        <result column="sch_day" jdbcType="INTEGER" property="schDay"/>
+        <result column="sch_start_time" jdbcType="INTEGER" property="schStartTime"/>
+        <result column="sch_end_time" jdbcType="INTEGER" property="schEndTime"/>
+        <result column="course_coz_id" property="courseCozId"/>
+        <association property="course" resultMap="sch_coz"/>
+        <association property="location" resultMap="location"/>
+    </resultMap>
+    <resultMap id="signInWithCozDtl" type="team.a9043.sign_in_system_version_2.pojo.extend.SignInWithCozDtl">
+        <id column="si_id" jdbcType="INTEGER" property="siId"/>
+        <result column="si_week" jdbcType="INTEGER" property="siWeek"/>
+        <result column="si_time" property="siTime"/>
+        <result column="si_auto" jdbcType="BIT" property="siAuto"/>
+        <result column="si_schedule_sch_id" jdbcType="INTEGER" property="scheduleSchId"/>
+        <association property="scheduleWithCozDtl" resultMap="scheduleWithCozDtl"/>
+    </resultMap>
+    <select id="getStuTimetable" parameterType="team.a9043.sign_in_system_version_2.pojo.User" resultMap="stuTimetable">
+        SELECT
+            att.course_coz_id coz_id, att.user_usr_id stu_id,
+            stu.usr_name stu_name,
+            coz.coz_name, coz.coz_size, coz.coz_act_size ,coz.coz_att_rate,
+            tea.user_usr_id tch_id,
+            tch.usr_name tch_name,
+            sch.sch_id, sch.sch_year, sch.sch_term , sch.sch_start_week, sch.sch_end_week, sch.sch_fortnight,
+            sch.sch_day, sch.sch_start_time, sch.sch_end_time, sch.location_loc_id,
+            loc.loc_name, loc.loc_long, loc.loc_lat,
+            sus_id, sus_week
+        FROM attendance att
+            JOIN user stu ON att.user_usr_id = stu.usr_id
+            JOIN course coz ON att.course_coz_id = coz.coz_id
+            LEFT OUTER JOIN teaching tea ON coz.coz_id = tea.course_coz_id
+            JOIN user tch ON tea.user_usr_id = tch.usr_id
+            LEFT OUTER JOIN schedule sch ON coz.coz_id = sch.course_coz_id
+            LEFT OUTER JOIN location loc ON sch.location_loc_id = loc.loc_id
+            LEFT OUTER JOIN sch_suspension sch_sus on sch.sch_id = sch_sus.schedule_sch_id
+        WHERE att.user_usr_id = #{usrId}
+    </select>
+    <select id="getScheduleByPrimaryKey" parameterType="team.a9043.sign_in_system_version_2.pojo.Schedule"
+            resultMap="schedule">
+        SELECT
+            sch.sch_id, sch.sch_year, sch.sch_term , sch.sch_start_week, sch.sch_end_week, sch.sch_fortnight,
+            sch.sch_day, sch.sch_start_time, sch.sch_end_time, sch.location_loc_id,
+            sch.course_coz_id,
+            loc_name, loc_long, loc_lat
+        FROM schedule sch
+            LEFT OUTER JOIN location loc on sch.location_loc_id = loc.loc_id
+        WHERE sch_id = #{schId}
+    </select>
+    <select id="getSignInByWeekAndSch" resultMap="signIn">
+        SELECT
+            si_id, si_week, si_time, si_auto, schedule_sch_id
+        FROM sign_in_${curYear}_${curTerm} si
+        WHERE
+            si_week = #{siWeek} AND
+            schedule_sch_id = #{schId}
+    </select>
+    <select id="getHistorySignIn" resultMap="scheduleWithHistorySignIn">
+        SELECT
+        att.user_usr_id, att.course_coz_id,
+        sch.sch_id, sch.sch_year, sch.sch_term, sch.sch_start_week, sch.sch_end_week,
+        sch.sch_fortnight, sch.sch_day, sch.sch_start_time, sch.sch_end_time, sch.course_coz_id, sch.location_loc_id,
+        loc.loc_id, loc_name,
+        si_id, si_week, si_time, si_auto,
+        sir_id, sir_time, sir_leave, sir_approve, sir_voucher, sir.sign_in_${curYear}_${curTerm}_si_id sir_id,
+        sir.user_usr_id sir_user_usr_id,
+        mar_id, mar_week,
+        mard_id, mar_dtl.user_usr_id mar_dtl_user_usr_id, man_abs_rec_${curYear}_${curTerm}_mar_id mard_mar_id,
+        usr.usr_name mar_dtl_user_usr_name
+        FROM attendance att
+        JOIN schedule sch ON att.course_coz_id = sch.course_coz_id
+        LEFT OUTER JOIN location loc ON loc.loc_id = sch.location_loc_id
+        <!-- history sign in -->
+        LEFT OUTER JOIN sign_in_${curYear}_${curTerm} si ON sch.sch_id = si.schedule_sch_id
+        LEFT OUTER JOIN sign_in_rec_${curYear}_${curTerm} sir ON si.si_id = sir.sign_in_${curYear}_${curTerm}_si_id AND
+        att.user_usr_id = sir.user_usr_id
+        <!-- teacher record absent -->
+        LEFT OUTER JOIN man_abs_rec_${curYear}_${curTerm} mar ON sch.sch_id = mar.schedule_sch_id
+        LEFT OUTER JOIN mar_dtl_${curYear}_${curTerm} mar_dtl
+            ON mar.mar_id = mar_dtl.man_abs_rec_${curYear}_${curTerm}_mar_id
+                AND att.user_usr_id = mar_dtl.user_usr_id
+                AND (mar_week = si_week OR si_week IS NULL)
+        LEFT OUTER JOIN user usr ON usr.usr_id = mar_dtl.user_usr_id
+        WHERE att.course_coz_id = #{cozId}
+        <if test="usrId != null">
+            AND att.user_usr_id = #{usrId}
+        </if>
+    </select>
+    <select id="getNeedSignInByUser" resultMap="signInWithCozDtl">
+        SELECT
+        att.user_usr_id, att.course_coz_id,
+        sch.sch_id, sch.sch_year, sch.sch_term, sch.sch_start_week, sch.sch_end_week,
+        sch.sch_fortnight, sch.sch_day, sch.sch_start_time, sch.sch_end_time, sch.course_coz_id, sch.location_loc_id,
+        loc.loc_id, loc.loc_name,
+        coz.coz_id, coz.coz_name, coz.coz_size, coz.coz_act_size, coz.coz_att_rate,
+        tea.user_usr_id tea_user_usr_id, tea.course_coz_id,
+        tch.usr_name tea_user_usr_name,
+        coz_sch.sch_id coz_sch_id, coz_sch.sch_year coz_sch_year, coz_sch.sch_term coz_sch_term,
+        coz_sch.sch_start_week coz_sch_start_week, coz_sch.sch_end_week coz_sch_end_week, coz_sch.sch_fortnight
+        coz_sch_fortnight,
+        coz_sch.sch_day coz_sch_day, coz_sch.sch_start_time coz_sch_start_time, coz_sch.sch_end_time coz_sch_end_time,
+        coz_sch.course_coz_id coz_sch_course_coz_id, coz_sch.location_loc_id,
+        coz_sch_loc.loc_id coz_sch_loc_id, coz_sch_loc.loc_name coz_sch_loc_name,
+        si_id, si_week, si_time, si_auto,
+        sir_id, sir_time, sir_leave, sir_approve, sir_voucher, sir.sign_in_${curYear}_${curTerm}_si_id sir_id,
+        sir.user_usr_id sir_user_usr_id
+        FROM attendance att
+        JOIN schedule sch ON att.course_coz_id = sch.course_coz_id
+        LEFT OUTER JOIN location loc ON loc.loc_id = sch.location_loc_id
+        <!-- sch coz -->
+        JOIN course coz ON sch.course_coz_id = coz.coz_id
+        LEFT OUTER JOIN teaching tea ON coz.coz_id = tea.course_coz_id
+        LEFT OUTER JOIN schedule coz_sch ON coz.coz_id = coz_sch.course_coz_id
+        LEFT OUTER JOIN location coz_sch_loc ON coz_sch.location_loc_id = coz_sch_loc.loc_id
+        JOIN user tch ON tea.user_usr_id = tch.usr_id
+        <!-- history sign in -->
+        JOIN sign_in_${curYear}_${curTerm} si ON sch.sch_id = si.schedule_sch_id
+        LEFT OUTER JOIN sign_in_rec_${curYear}_${curTerm} sir ON
+        si.si_id = sir.sign_in_${curYear}_${curTerm}_si_id AND
+        att.user_usr_id = sir.user_usr_id
+        <where>
+            sir.sir_id IS NULL
+            <if test="usrId != null">
+                AND att.user_usr_id = #{usrId}
+            </if>
+        </where>
+    </select>
+    <insert id="signInInDatabase">
+        INSERT INTO sign_in_rec_${curYear}_${curTerm}
+            (sir_time, sign_in_${curYear}_${curTerm}_si_id, user_usr_id)
+        VALUES
+        (#{sirTime}, #{siId}, #{usrId})
+    </insert>
+    <insert id="stuLeave">
+        INSERT INTO
+        sign_in_rec_${curYear}_${curTerm}
+        (sir_time, sir_leave, sir_voucher, sign_in_${curYear}_${curTerm}_si_id, user_usr_id)
+        VALUES
+        (#{sirTime}, TRUE, #{sirVoucher}, #{siId}, #{usrId})
+    </insert>
+</mapper>
