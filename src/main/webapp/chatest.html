@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>Title</title>
+    <link href="./public/stylesheets/style.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdn.bootcss.com/jquery.serializeJSON/2.9.0/jquery.serializejson.min.js"></script
+</head>
+<body>
+<button id="submit">测试</button>
+<p id="code"></p>
+<script src="https://pv.sohu.com/cityjson?ie=utf-8"></script>
+<script src="./public/javascript/gt.js"></script>
+<script>
+    let token = null;
+    let handler = function (captchaObj) {
+        $('#submit').click(function () {
+            // 调用之前先通过前端表单校验
+            captchaObj.verify();
+        }).attr("disabled", false);
+        captchaObj.onReady(function () {
+            $("#wait").hide();
+        }).onSuccess(function () {
+            let result = captchaObj.getValidate();
+            if (!result) {
+                return alert('请完成验证');
+            }
+            $.ajax({
+                url: './verifyCaptchaCode.do?time=' + (new Date()).getTime(),
+                type: 'POST',
+                headers: {
+                    'Access-Token': localStorage.getItem("token")
+                },
+                dataType: 'json',
+                data: {
+                    client_type: "web",
+                    ip_address: returnCitySN.cip,
+                    geetest_challenge: result.geetest_challenge,
+                    geetest_validate: result.geetest_validate,
+                    geetest_seccode: result.geetest_seccode
+                },
+                success: function (data) {
+                    if (data.status === 'success') {
+                        $('#code').text(localStorage.getItem("token"));
+                    } else if (data.status === 'failure') {
+                        setTimeout(function () {
+                            alert('登录失败，请完成验证');
+                            captchaObj.reset();
+                        }, 1500);
+                    }
+                }
+            });
+        });
+    };
+    $.ajax({
+        url: "./startCaptcha.do?time=" + (new Date()).getTime(), // 加随机数防止缓存
+        type: "get",
+        data: {
+            client_type: "web",
+            ip_address: returnCitySN.cip
+        },
+        dataType: "json",
+        success: function (data) {
+            if (data != null) {
+                localStorage.setItem("token", data.token);
+                initGeetest({
+                    gt: data.gt,
+                    challenge: data.challenge,
+                    new_captcha: data.new_captcha,
+                    offline: !data.success,
+                    product: "bind",
+                    https: true,
+                    width: "300px"
+                }, handler);
+            }
+        }
+    });
+</script>
+</body>
+</html>

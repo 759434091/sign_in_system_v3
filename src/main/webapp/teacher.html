@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Teacher</title>
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.js"></script>
+</head>
+<body>
+<a href="./Teacher/showTchCourses.do">查看课表</a><br/>
+<a href="javascript:void(0)" onclick="fSuvRecByCoz()">到勤情况 测试（测试）</a><br/>
+<a href="javascript:void(0)" onclick="fSchAbsRecByCoz()">缺勤情况 测试（测试）</a><br/>
+<a href="javascript:void(0)" onclick="approveLeave()">批准一条请假 测试（测试）</a><br/>
+<script>
+    function fSuvRecByCoz() {
+        var course = {
+            cozId: "1",
+            cozName: "计组",
+            teacher: {
+                userId: "1",
+                userPwd: null,
+                userPermit: null,
+                userName: "吴正华"
+            }
+        };
+
+        $.ajax(
+            {
+                type: "post",
+                url: "./Teacher/fSuvRecByCoz.do",
+                data: JSON.stringify(course),
+                contentType: "application/json;charset=utf-8",
+                async: false,
+                dataType: "json",
+                success: function (data) {
+                    alert(JSON.stringify(data));
+                },
+                error: function (data) {
+                    alert(JSON.stringify(data));
+                }
+            }
+        );
+    }
+
+    function fSchAbsRecByCoz() {
+        var course = {
+            cozId: "1",
+            cozName: "计组",
+            teacher: {
+                userId: "1",
+                userPwd: null,
+                userPermit: null,
+                userName: "吴正华"
+            }
+        };
+
+        $.ajax(
+            {
+                type: "post",
+                url: "./Teacher/fSchAbsRecByCoz.do",
+                data: JSON.stringify(course),
+                contentType: "application/json;charset=utf-8",
+                async: false,
+                dataType: "json",
+                success: function (data) {
+                    alert(JSON.stringify(data));
+                },
+                error: function (data) {
+                    alert(JSON.stringify(data));
+                }
+            }
+        );
+    }
+
+    function approveLeave() {
+
+        var data = '{"siId":1,"student":{"userId":"2016220401001","userPwd":null,"userPermit":null,"userName":"卢学能"},"oneCozAndSch":{"schedule":{"cozId":"1","schTime":1,"schDay":1,"schWeek":19,"schYear":2017,"schFortnight":0,"schId":1,"schTerm":false,"cozSuspendList":[]},"course":{"cozId":"1","cozName":"计组","teacher":{"userId":"1","userPwd":null,"userPermit":null,"userName":"吴正华"},"schedules":[{"cozId":"1","schTime":1,"schDay":1,"schWeek":19,"schYear":2017,"schFortnight":0,"schId":1,"schTerm":false,"cozSuspendList":[]}]},"location":{"locId":1,"locLat":30.6746726871,"locLon":104.1027921438,"locAcc":0.0,"locVAcc":0.0,"locHAcc":0.0,"locName":"sec_tch"}},"dateTimeJSON":{"month":"JANUARY","year":2018,"dayOfMonth":31,"hour":19,"minute":36,"monthValue":1,"nano":0,"second":8,"dayOfWeek":"WEDNESDAY","dayOfYear":31,"chronology":{"id":"ISO","calendarType":"iso8601"}},"siWeek":5,"siLeave":true,"siApprove":false}';
+
+        $.ajax(
+            {
+                type: "post",
+                url: "./Teacher/approveLeave.do",
+                data: data,
+                contentType: "application/json;charset=utf-8",
+                async: false,
+                dataType: "json",
+                success: function (data) {
+                    alert(JSON.stringify(data));
+                },
+                error: function (data) {
+                    alert(JSON.stringify(data));
+                }
+            }
+        );
+    }
+</script>
+</body>
+</html>

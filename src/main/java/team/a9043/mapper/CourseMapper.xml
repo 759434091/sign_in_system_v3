@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="team.a9043.mapper.CourseMapper">
+    <resultMap id="teacher" type="User">
+        <id property="userId" column="tch_id"/>
+        <result property="userName" column="tch_name"/>
+    </resultMap>
+    <resultMap id="cozSuspend" type="CozSuspend">
+        <id property="susId" column="sus_id"/>
+        <result property="susWeek" column="sus_week"/>
+        <result property="schId" column="COZ_SCH_id"/>
+    </resultMap>
+    <resultMap id="location" type="Location">
+        <id property="locId" column="loc_id"/>
+        <result property="locName" column="loc_name"/>
+        <result property="locLat" column="loc_lat"/>
+        <result property="locLon" column="loc_lon"/>
+        <result property="locAcc" column="loc_acc"/>
+        <result property="locHAcc" column="loc_h_acc"/>
+        <result property="locVAcc" column="loc_v_acc"/>
+    </resultMap>
+    <resultMap id="schedule" type="Schedule">
+        <id property="schId" column="sch_id"/>
+        <result property="cozId" column="coz_id"/>
+        <result property="schTime" column="sch_time"/>
+        <result property="schDay" column="sch_day"/>
+        <result property="schWeek" column="sch_week"/>
+        <result property="schYear" column="sch_year"/>
+        <result property="schTerm" column="sch_term" javaType="boolean"/>
+        <result property="schFortnight" column="sch_fortnight"/>
+        <association property="location" resultMap="location"/>
+        <collection property="cozSuspendList" resultMap="cozSuspend"/>
+    </resultMap>
+    <resultMap id="course" type="Course">
+        <id property="cozId" column="coz_id"/>
+        <result property="cozName" column="coz_name"/>
+        <association property="teacher" resultMap="teacher"/>
+        <collection property="schedules" resultMap="schedule"/>
+    </resultMap>
+    <resultMap id="oneStuSchedule" type="OneStuSchedule">
+        <constructor>
+            <idArg column="stu_id" javaType="String"/>
+            <arg column="stu_name" javaType="String"/>
+        </constructor>
+        <collection property="courses" resultMap="course"/>
+    </resultMap>
+    <resultMap id="oneCozAndSch" type="OneCozAndSch">
+        <association property="schedule" resultMap="schedule"/>
+        <association property="course" resultMap="course"/>
+    </resultMap>
+    <resultMap id="signInRes" type="SignInRes">
+        <id property="siId" column="si_id"/>
+        <result property="siTime" column="si_time"/>
+        <result property="siWeek" column="si_week"/>
+        <result property="siLeave" column="si_leave"/>
+        <result property="siApprove" column="si_approve"/>
+        <association property="oneCozAndSch" resultMap="oneCozAndSch"/>
+    </resultMap>
+    <resultMap id="suvMan" type="SuvMan">
+        <id property="suvManId" column="suv_man_id"/>
+        <result property="schId" column="sch_id"/>
+        <result property="siWeek" column="si_week"/>
+        <result property="siTime" column="si_time"/>
+        <result property="suvManAutoOpen" column="suv_man_auto_open"/>
+    </resultMap>
+    <select id="showCourses" resultMap="oneStuSchedule">
+    SELECT
+    ATT.coz_id, ATT.stu_id,
+    stu_name,
+    coz_name, COZ.tch_id,
+    tch_name,
+    sch_time, sch_day, sch_week, sch_year, sch_term, sch_fortnight, SCH.sch_id,
+    sus_id, COZS.sch_id AS COZ_SCH_id, sus_week,
+    SCH.loc_id, loc_name, loc_lat, loc_lon, loc_acc, loc_v_acc, loc_h_acc
+    FROM attend AS ATT
+    JOIN student AS STU ON ATT.stu_id = STU.stu_id
+    JOIN course AS COZ ON ATT.coz_id = COZ.coz_id
+    JOIN teacher AS TCH ON COZ.tch_id = TCH.tch_id
+    JOIN schedule AS SCH ON COZ.coz_id = SCH.coz_id
+    LEFT OUTER JOIN location AS LOC ON SCH.loc_id = LOC.loc_id
+    LEFT OUTER JOIN coz_suspend AS COZS ON COZS.sch_id = SCH.sch_id
+    WHERE ATT.stu_id = #{userId};
+</select>
+    <select id="fSchedule" resultMap="oneCozAndSch">
+    SELECT
+    stu_id,
+    SCH.sch_id, SCH.coz_id, sch_time, sch_day, sch_week, sch_year, sch_term, sch_fortnight, coz_name,
+    COZ.tch_id, tch_name,
+    SCH.loc_id, loc_name, loc_lat,
+    loc_lon, loc_acc, loc_v_acc, loc_h_acc,
+    sus_id, COZS.sch_id AS COZ_SCH_id, sus_week
+    FROM schedule AS SCH
+    JOIN course AS COZ ON SCH.coz_id = COZ.coz_id
+    JOIN attend AS ATT ON SCH.coz_id = ATT.coz_id
+    JOIN teacher AS TCH ON COZ.tch_id = TCH.tch_id
+    LEFT OUTER JOIN location AS LOC ON SCH.loc_id = LOC.loc_id
+    LEFT OUTER JOIN coz_suspend AS COZS ON COZS.sch_id = SCH.sch_id
+    WHERE
+    stu_id = #{userId} AND
+    sch_year = #{schedule.schYear} AND
+    sch_term = #{schedule.schTerm} AND
+    sch_week >= #{schedule.schWeek} AND
+    (sch_fortnight = #{schedule.schFortnight} OR sch_fortnight = 0) AND
+    sch_day = #{schedule.schDay} AND
+    sch_time = #{schedule.schTime}
+</select>
+    <select id="fOneCozSignIn" resultMap="signInRes">
+    SELECT
+    si_id, sch_id, stu_id, si_time, si_leave, si_week, si_approve
+    FROM sign_in AS SII
+    WHERE sch_id = #{schId} AND stu_id = #{userId}
+</select>
+    <select id="findSuvMan" resultMap="suvMan">
+    SELECT suv_man_id, sch_id, si_week, si_time,suv_man_auto_open FROM suv_man WHERE sch_id = #{schId}
+</select>
+</mapper>

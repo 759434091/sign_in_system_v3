@@ -1,0 +1,388 @@
+body {
+    overflow-y: hidden;
+}
+
+.index {
+    background-color: #f5f5f5;
+    height: 100%;
+}
+
+.navigation {
+    height: 3rem;
+    box-shadow: 0 0.05rem 0.02rem 0.02rem #1a1a1a;
+}
+
+.navbar-brand {
+    cursor: default;
+    font-size: 1rem;
+    letter-spacing: 0.1rem;
+}
+
+.permit a {
+    display: none;
+}
+
+.loginForm .form-group input[type="text"] {
+    position: relative;
+    margin-top: 1rem;
+    margin-bottom: -0.1rem;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+    padding: 0.5rem;
+}
+
+.loginForm .form-group input[type="password"] {
+    position: relative;
+    margin-top: 0;
+    border-top-right-radius: 0;
+    border-top-left-radius: 0;
+    padding: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.form-group .form-control:focus {
+    z-index: 2;
+}
+
+.pwd-error {
+    display: none;
+    position: absolute;
+    width: 90%;
+}
+
+.confirm-error {
+    display: none;
+}
+
+.operation-container {
+    height: calc(100vh - 3rem);
+    background-color: #575e64;
+    padding-left: 0;
+    padding-right: 0;
+    margin: 0;
+    overflow-y: hidden;
+}
+
+.bg-brand {
+    width: 120%;
+    height: 100%;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.bg-brand h1 {
+    font-size: 10rem;
+    text-shadow: 0.3rem 0.3rem 0.2rem #1a1a1a;
+}
+
+.nav-tab {
+    position: sticky;
+    height: 100%;
+    background-color: #575e64;
+    margin-right: 0;
+    padding-left: 1rem;
+    padding-top: 1rem;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    display: none;
+    box-shadow: -0.01rem 0 0.01rem 0.05rem #1a1a1a inset;
+}
+
+.nav-tab a {
+    padding: 0.5rem 1.5rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.nav-tab .active {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.nav-tab a:hover {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.main {
+    padding: 0;
+    display: none;
+    background-color: rgb(118, 130, 136);
+    height: 100%;
+}
+
+.main iframe {
+    border: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.tch-body, .course-body, .suv-body, .adm-body {
+    overflow-y: auto;
+    background-color: #768288;
+}
+
+.course-table {
+    margin-top: 0;
+    height: 115%
+}
+
+.course-table td, .course-table th {
+    vertical-align: middle;
+    text-align: center;
+}
+
+.course-table tbody tr:nth-of-type(odd) {
+    background-color: rgba(255, 255, 255, 0.075);
+}
+
+.course-table tbody tr:nth-of-type(even) {
+    background-color: rgba(255, 255, 255, 0.075);
+}
+
+.course-table tbody tr:nth-of-type(4n+1) td[rowspan]:nth-of-type(odd) {
+    background-color: #626262;
+}
+
+.course-table tbody tr:nth-of-type(4n+3) td[rowspan]:nth-of-type(even) {
+    background-color: #626262;
+}
+
+.course-table tbody tr:nth-of-type(4n+1) td[rowspan]:nth-of-type(even) {
+    background-color: #292e32;
+}
+
+.course-table tbody tr:nth-of-type(4n+3) td[rowspan]:nth-of-type(odd) {
+    background-color: #292e32;
+}
+
+.course-table.table-hover tbody tr:hover:nth-of-type(odd) {
+    background-color: rgba(255, 255, 255, 0.075);
+}
+
+.course-table.table-hover tbody tr:hover:nth-of-type(even) {
+    background-color: rgba(255, 255, 255, 0.075);
+}
+
+.course-table tbody tr:nth-of-type(4n+1) td[rowspan]:nth-of-type(odd):hover {
+    background-color: rgba(255, 255, 255, 0.075);
+}
+
+.course-table tbody tr:nth-of-type(4n+3) td[rowspan]:nth-of-type(even):hover {
+    background-color: rgba(255, 255, 255, 0.075);
+}
+
+.course-table tbody tr:nth-of-type(4n+1) td[rowspan]:nth-of-type(even):hover {
+    background-color: rgba(255, 255, 255, 0.075);
+}
+
+.course-table tbody tr:nth-of-type(4n+3) td[rowspan]:nth-of-type(odd):hover {
+    background-color: rgba(255, 255, 255, 0.075);
+}
+
+.modal-course-table {
+    height: auto;
+    overflow-y: hidden;
+}
+
+.modal-course-table tbody tr:nth-of-type(4n+1) td[rowspan]:nth-of-type(odd) {
+    background-color: #626262;
+}
+
+.modal-course-table tbody tr:nth-of-type(4n+3) td[rowspan]:nth-of-type(even) {
+    background-color: #626262;
+}
+
+.modal-course-table tbody tr:nth-of-type(4n+1) td[rowspan]:nth-of-type(even) {
+    background-color: #cbcbcb;
+}
+
+.modal-course-table tbody tr:nth-of-type(4n+3) td[rowspan]:nth-of-type(odd) {
+    background-color: #cbcbcb;
+}
+
+.course-form {
+    margin-top: 1rem;
+}
+
+.form-row .col-form-label {
+    padding-left: 0;
+    padding-right: 0;
+    font-weight: 600;
+    font-size: 1.2rem;
+    line-height: 1.3;
+}
+
+.form-row .form-row {
+    margin-top: 1rem;
+}
+
+.form-row .col-select {
+    width: 9rem;
+}
+
+.form-row .btn {
+    margin-left: -1.5rem;
+    font-weight: 600;
+    font-size: 1.2rem;
+    line-height: 1.3;
+}
+
+.tch-table, .tch-coz-table {
+    margin-top: 3rem;
+}
+
+.adm-coz-table-container, .adm-coz-detail {
+    font-size: 0.5rem;
+}
+
+.adm-coz-table td, .adm-coz-table th {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.adm-coz-table .more {
+    opacity: 0.2;
+    width: 6rem;
+    border-left: 1px solid #000000;
+    cursor: pointer;
+}
+
+.adm-coz-table .more:hover, .adm-coz-table .more:focus {
+    opacity: 0.8;
+}
+
+.coz-time {
+    font-size: 0.5rem;
+}
+
+.course-form .btn, .course-select-form .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    border-radius: 0.2rem;
+    font-weight: 400;
+    margin-left: -3rem;
+}
+
+.course-form .btn {
+    margin-left: -1.5rem;
+}
+
+.course-form .input-group-text {
+    height: calc(1.8125rem + 2px);
+}
+
+.coz-order-row a {
+    font-size: 0.8rem;
+}
+
+.coz-order-row .dropdown-menu {
+    margin-top: -2.2rem;
+    border-radius: 0;
+    min-width: 0;
+}
+
+.coz-order-row .dropdown-menu .dropdown-item {
+    padding: 0.46rem 0;
+}
+
+.default-order {
+    cursor: pointer;
+    padding: 0.5rem 1.29rem;
+    margin-right: -1px;
+}
+
+.default-order:hover, .default-order:focus {
+    color: #dae0e5;
+    background-color: #1d2124;
+    text-decoration: none;
+}
+
+.adm-coz-detail {
+    display: none;
+}
+
+.coz-detail-back {
+    opacity: 0.8;
+    cursor: pointer;
+    padding: 0.35rem 0;
+}
+
+.coz-detail-back:hover {
+    background-color: #1d2124;
+}
+
+.suv-coz-table-more, .adm-suv-more {
+    opacity: 0.2;
+    cursor: pointer;
+}
+
+.suv-coz-table-more:hover, .suv-coz-table-more:focus, .adm-suv-more:hover, .adm-suv-more-more:focus {
+    opacity: 0.8;
+}
+
+.his-suv-rec-res {
+    cursor: pointer;
+}
+
+.coz-detail-button {
+    cursor: pointer;
+    padding: 0.5rem 0;
+    vertical-align: middle;
+}
+
+.coz-detail-button:hover, .coz-detail-button:focus {
+    background-color: #1d2124;
+}
+
+.page-item .page-link {
+    border: 0 !important;
+}
+
+.page-box .page-item .page-link {
+    margin-left: -1px;
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+
+.page-item.disabled .page-link {
+    color: #9B9C9D !important;
+}
+
+.search-content{
+    padding-top: 0.35rem;
+    padding-bottom: 0.35rem;
+    background-color: #1d2124;
+    border-radius: 0;
+}
+
+@media screen and (min-width: 576px) and (max-width: 992px) {
+
+    .form-row .col-form-label {
+        margin-left: -0.5rem;
+        padding-left: 0rem;
+        padding-right: 0;
+        font-weight: 600;
+        font-size: 1rem;
+        line-height: 1.6;
+        width: 2rem;
+    }
+
+    .form-row .col-select {
+        width: 7rem;
+    }
+
+    select.form-control:not([size]):not([multiple]) {
+        height: 90%;
+    }
+}
+
+@media screen and (max-width: 576px) {
+    .course-body .btn {
+        width: 7rem;
+        height: 110%;
+        margin-left: 0;
+        font-weight: 600;
+        font-size: 1.1rem;
+        line-height: 1;
+    }
+}

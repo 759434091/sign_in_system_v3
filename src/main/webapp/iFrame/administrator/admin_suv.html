@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>admin_suv</title>
+    <link href="https://cdn.bootcss.com/bootstrap/4.1.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="../../public/stylesheets/style.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdn.bootcss.com/popper.js/1.14.3/umd/popper.min.js"></script>
+    <script src="https://cdn.bootcss.com/bootstrap/4.1.0/js/bootstrap.min.js"></script>
+    <script src="../../public/javascript/administrator.js"></script>
+    <script>
+        $(findSuv);
+    </script>
+</head>
+<body class="adm-body">
+<div class="container">
+    <div class="row mt-5">
+        <div class="col-12">
+            <button class="btn btn-sm btn-light" onclick="modalAddSuv()">新增督导员</button>
+            <button class="btn btn-sm btn-light" onclick="modalRevokeSuv()">取消督导员</button>
+        </div>
+    </div>
+    <div class="row mt-1">
+        <div class="col-12">
+            <table class="table table-dark table-striped table-hover adm-suv-table text-center">
+                <thead>
+                <tr>
+                    <th>学号</th>
+                    <th>姓名</th>
+                    <th>&nbsp;</th>
+                </tr>
+                </thead>
+                <tbody id="adm_suv_leave"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>

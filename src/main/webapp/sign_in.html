@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>sign_in</title>
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.js"></script>
+</head>
+<body>
+<div id="result"></div>
+<br/>
+<button id="signIn" onclick="signIn()">签到</button>
+<br/>
+<button id="leave" onclick="leave()">请假</button>
+<input type="file" name="voucher" id="voucher" accept="image/png,image/gif,image/jpg,image/jpeg"/>
+<br/>
+<script>
+    function signIn() {
+        var data1 = {
+            locLat: 30.6748157153,
+            locLon: 104.1024059057,
+            locAcc: 0,
+            locVAcc: 0,
+            locHAcc: 0,
+            locName: "sec_tch"
+        };
+        var schedule = {
+            schId: 21,
+            cozId: 0,
+            schTime: 9,
+            schDay: 6,
+            schWeek: 7,
+            schYear: 2017,
+            schTerm: true,
+            schFortnight: 0,
+            location: data1,
+            cozSuspendList: null
+        };
+        $.ajax(
+            {
+                type: "post",
+                url: "./Student/signIn.do",
+                headers:{
+                    "Access-Token":localStorage.getItem("token")
+                },
+                data: JSON.stringify(schedule),
+                contentType: "application/json;charset=utf-8",
+                async: false,
+                dataType: "json",
+                success: function (data) {
+                    alert(JSON.stringify(data));
+                },
+                error: function (data) {
+                    alert(JSON.stringify(data));
+                }
+            }
+        );
+
+    }
+
+    function leave() {
+        var schedule = {
+            schId: 17,
+            cozId: "E0911835.02",
+            schTime: 5,
+            schDay: 1,
+            schWeek: 1,
+            schYear: 2017,
+            schTerm: true,
+            schFortnight: 0,
+            location: null,
+            cozSuspendList: null
+        };
+        let formData = new FormData();
+        formData.append("schedule", JSON.stringify(schedule));
+        formData.append("voucher", document.getElementById("voucher").files[0]);
+        $.ajax(
+            {
+                type: "post",
+                url: "./Student/leave.do",
+                data: formData,
+                cache: false,
+                contentType: false,
+                processData: false,
+                success: function (data) {
+                    alert(JSON.stringify(data));
+                },
+                error: function (data) {
+                    alert(JSON.stringify(data));
+                }
+            }
+        )
+    }
+
+    /*    $(function () {
+            $.ajax(
+                {
+                    type: "post",
+                    url: "./Student/checkCourse.do",
+                    contentType: "application/json;charset=utf-8",
+                    async: false,
+                    dataType: "json",
+                    success: function (data) {
+                        $("#result").text(JSON.stringify(data));
+                    },
+                    error: function (data) {
+                        alert(JSON.stringify(data));
+                    }
+                }
+            );
+            $(function () {
+                var schedule = {
+                    schId: 1,
+                    cozId: 1,
+                    schTime: 1,
+                    schDay: 1,
+                    schWeek: 5,
+                    schYear: 2017,
+                    schTerm: false,
+                    schFortnight: 0,
+                    location: null,
+                    cozSuspendList: null
+                };
+                $.ajax(
+                    {
+                        type: "post",
+                        url: "./Student/checkSignIn.do",
+                        data: JSON.stringify(schedule),
+                        contentType: "application/json;charset=utf-8",
+                        async: false,
+                        dataType: "json",
+                        success: function (data) {
+                            if (data == true) {
+                                $("#result").append("<p>已签到</p>")
+                                $("#signIn").hide();
+                                $("#leave").hide();
+                            }
+                        },
+                        error: function (data) {
+                            alert(JSON.stringify(data));
+                        }
+                    }
+                )
+            })
+        });*/
+
+</script>
+</body>
+</html>

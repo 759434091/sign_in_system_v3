@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student</title>
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.js"></script>
+</head>
+<body>
+<a href="./Student/showCourses.do">查看课表</a><br/>
+<a href="javascript:void(0)" onclick="fOneCozSignIn()">查看历史签到</a><br/>
+<a href="javascript:void(0)" onclick="fOneCozAbsent()">查看历史缺勤</a><br/>
+<a href="javascript:void(0)" onclick="sinIn()">签到</a><br/>
+<a href="javascript:void(0)" onclick="logout()">退出</a><br/>
+</body>
+<script>
+
+    function sinIn() {
+        window.location.href = "./sign_in.html";
+    }
+
+    function logout() {
+        $.ajax(
+            {
+                url: "./logout.do",
+                async: false,
+                dataType: "json",
+                success: function (data) {
+                    alert(JSON.stringify(data));
+                    window.location.href = "login.html";
+                },
+                error: function (data) {
+                    alert(JSON.stringify(data));
+                }
+            }
+        )
+    }
+
+    function fOneCozSignIn() {
+        var schedule = {
+            "cozId": "1",
+            "schTime": 1,
+            "schDay": 1,
+            "schWeek": 19,
+            "schYear": 2017,
+            "schFortnight": 0,
+            "schId": 1,
+            "schTerm": false,
+            "location": {
+                "locId": 1,
+                "locLat": 30.6746726871,
+                "locLon": 104.1027921438,
+                "locAcc": 0,
+                "locVAcc": 0,
+                "locHAcc": 0,
+                "locName": "sec_tch"
+            },
+            "cozSuspendList": []
+        };
+        $.ajax(
+            {
+                type: "post",
+                url: "./Student/fOneCozSignIn.do",
+                data: JSON.stringify(schedule),
+                contentType: "application/json;charset=utf-8",
+                async: false,
+                dataType: "json",
+                success: function (data) {
+                    alert(JSON.stringify(data));
+                },
+                error: function (data) {
+                    alert(JSON.stringify(data));
+                }
+            }
+        );
+    }
+
+    function fOneCozAbsent() {
+        var schedule = {
+            "cozId": "1",
+            "schTime": 1,
+            "schDay": 1,
+            "schWeek": 19,
+            "schYear": 2017,
+            "schFortnight": 0,
+            "schId": 1,
+            "schTerm": false,
+            "location": {
+                "locId": 1,
+                "locLat": 30.6746726871,
+                "locLon": 104.1027921438,
+                "locAcc": 0,
+                "locVAcc": 0,
+                "locHAcc": 0,
+                "locName": "sec_tch"
+            },
+            "cozSuspendList": []
+        };
+        $.ajax(
+            {
+                type: "post",
+                url: "./Student/fOneCozAbsent.do",
+                data: JSON.stringify(schedule),
+                contentType: "application/json;charset=utf-8",
+                async: false,
+                dataType: "json",
+                success: function (data) {
+                    alert(JSON.stringify(data));
+                },
+                error: function (data) {
+                    alert(JSON.stringify(data));
+                }
+            }
+        );
+    }
+</script>
+</html>

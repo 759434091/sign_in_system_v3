@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>adm_import</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>tch_import</title>
+    <link href="https://cdn.bootcss.com/bootstrap/4.1.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../../public/stylesheets/style.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdn.bootcss.com/popper.js/1.14.3/umd/popper.min.js"></script>
+    <script src="https://cdn.bootcss.com/bootstrap/4.1.0/js/bootstrap.min.js"></script>
+    <script src="https://cdn.bootcss.com/jquery.serializeJSON/2.9.0/jquery.serializejson.min.js"></script>
+    <script src="../../public/javascript/administrator.js"></script>
+    <script>
+        $(function () {
+            $("#cozInfo").bind("change", function () {
+                let path = document.getElementById("cozInfo").value;
+                if (path !== "") {
+                    let name = path.replace(/^.+?\\([^\\]+?)(\.[^.\\]*?)?$/gi, "$1");
+                    let ext = path.replace(/.+\./, "");
+                    if (ext != path) {
+                        $("#forCozInfo").text(name + "." + ext);
+                    } else {
+                        $("#forCozInfo").text(name);
+                    }
+                } else {
+                    $("#forCozInfo").text("上传课程信息");
+                }
+            });
+            $("#stuInfo").bind("change", function () {
+                let path = document.getElementById("stuInfo").value;
+                if (path !== "") {
+                    let name = path.replace(/^.+?\\([^\\]+?)(\.[^.\\]*?)?$/gi, "$1");
+                    let ext = path.replace(/.+\./, "");
+                    if (ext != path) {
+                        $("#forStuInfo").text(name + "." + ext);
+                    } else {
+                        $("#forStuInfo").text(name);
+                    }
+                } else {
+                    $("#forStuInfo").text("上传学生信息");
+                }
+            })
+            $("#uploadCozInfoButton").click(function () {
+                let formData = new FormData();
+                formData.append("cozInfo", document.getElementById("cozInfo").files[0]);
+                $.ajax(
+                    {
+                        url: "../../File/uploadCozInfo.do",
+                        type: "post",
+                        data: formData,
+                        timeout: 9999,
+                        cache: false,
+                        contentType: false,
+                        processData: false,
+                        success: function (data) {
+                            alert(data);
+                        },
+                        error: function (data) {
+                            alert(data);
+                        }
+                    }
+                )
+            });
+            $("#uploadStuInfoButton").click(function () {
+                let formData = new FormData();
+                formData.append("stuInfo", document.getElementById("stuInfo").files[0]);
+                $.ajax(
+                    {
+                        url: "../../File/uploadStuInfo.do",
+                        type: "post",
+                        timeout: 9999,
+                        data: formData,
+                        cache: false,
+                        contentType: false,
+                        processData: false,
+                        success: function (data) {
+                            alert(data);
+                        },
+                        error: function (data) {
+                            alert(data);
+                        }
+                    }
+                )
+            });
+        })
+    </script>
+</head>
+<body class="adm-body">
+<div class="container-fluid">
+    <h1 class="mt-4 ml-5 display-4 text-white">导入信息</h1>
+    <div class="row mt-2">
+        <div class="col-lg-4 col-md-7">
+            <form id="uploadCozInfo" name="uploadCozInfo"
+                  class="pt-4 pb-4 pl-5 pr-5 text-white uploadCozInfo form-inline"
+                  action="javascript:void(0)">
+                <div class="input-group">
+                    <div class="custom-file">
+                        <input type="file" class="custom-file-input" id="cozInfo" name="cozInfo">
+                        <label class="custom-file-label d-inline-block text-truncate text-right" for="cozInfo" id="forCozInfo"
+                               style="padding-right: 6rem">上传课程信息</label>
+                    </div>
+                    <div class="input-group-append">
+                        <button id="uploadCozInfoButton" type="button" class="btn btn-dark">提交</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <form id="insertCozInfo" name="insertCozInfo"
+          class="ml-5 mr-5 text-white"
+          action="javascript:void(0)">
+        <div class="row mt-2">
+            <div class="form-group col-3">
+                <label for="cozId">课程代号</label>
+                <input type="text" class="form-control" id="cozId" name="cozId" placeholder="课程代号">
+            </div>
+            <div class="form-group col-3">
+                <label for="cozName">课程名称</label>
+                <input type="text" class="form-control" id="cozName" name="cozName" placeholder="课程名称">
+            </div>
+            <div class="form-group col-3">
+                <label for="tchId">教师工号</label>
+                <input type="text" class="form-control" id="tchId" name="tchId" placeholder="教师工号">
+            </div>
+            <div class="form-group col-3">
+                <label for="tchName">教师名称</label>
+                <input type="text" class="form-control" id="tchName" name="tchName" placeholder="教师名称">
+            </div>
+        </div>
+        <div class="row">
+            <div class="form-group col-2">
+                <label for="cozYear">年度</label>
+                <input type="number" class="form-control" id="cozYear" name="cozYear" placeholder="年度">
+            </div>
+            <div class="form-group col-2">
+                <label for="cozTerm">学期</label>
+                <div class="input-group">
+                    <select class="custom-select form-control" id="cozTerm" name="cozTerm">
+                        <option selected>请选择</option>
+                        <option value="false">上学期</option>
+                        <option value="true">下学期</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group col-2">
+                <label for="cozFortnight">单双周</label>
+                <div class="input-group">
+                    <select class="custom-select form-control" id="cozFortnight" name="cozFortnight">
+                        <option selected>请选择</option>
+                        <option value="0">全周</option>
+                        <option value="1">单周</option>
+                        <option value="2">双周</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group col-auto">
+                <label for="cozTime">上课时间 ( 星期一1-2[1-16] )</label>
+                <input type="text" class="form-control" id="cozTime" name="cozTime" placeholder="星期/课时起止/周数起止">
+            </div>
+            <div class="form-group col-2">
+                <label for="locId">地点编号</label>
+                <input type="text" class="form-control" id="locId" name="locId" placeholder="地点编号">
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-auto">
+                <button type="submit" class="btn btn-dark" onclick="submitCozForm()">提交课程信息</button>
+            </div>
+        </div>
+    </form>
+    <hr class="my-5">
+    <div class="row mt-2">
+        <div class="col-lg-4 col-md-7">
+            <form id="uploadStuInfo" name="uploadCozInfo"
+                  class="pt-2 pb-4 pl-5 pr-5 text-white uploadCozInfo form-inline"
+                  action="javascript:void(0)">
+                <div class="input-group">
+                    <div class="custom-file">
+                        <input type="file" class="custom-file-input" id="stuInfo" name="stuInfo">
+                        <label class="custom-file-label d-inline-block text-truncate text-right" for="stuInfo" id="forStuInfo"
+                               style="padding-right: 6rem">上传学生信息</label>
+                    </div>
+                    <div class="input-group-append">
+                        <button id="uploadStuInfoButton" type="button" class="btn btn-dark">提交</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <form id="insertStuAtt" name="insertStuAtt"
+          class="ml-5 mr-5 text-white"
+          action="javascript:void(0)">
+        <div class="row mt-2">
+            <div class="form-group col-4">
+                <label for="cozId">学号</label>
+                <input type="text" class="form-control" id="userId" name="userId" placeholder="课程代号">
+            </div>
+            <div class="form-group col-4">
+                <label for="cozName">姓名</label>
+                <input type="text" class="form-control" id="userName" name="userName" placeholder="课程名称">
+            </div>
+            <div class="form-group col-4">
+                <label for="tchId">课程序号</label>
+                <input type="text" class="form-control" id="cozIdAtt" name="cozId" placeholder="课程序号">
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-auto">
+                <button type="submit" class="btn btn-dark" onclick="submitStuForm()">提交课程信息</button>
+            </div>
+        </div>
+    </form>
+</div>
+</body>
+</html>

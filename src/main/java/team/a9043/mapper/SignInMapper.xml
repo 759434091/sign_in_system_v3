@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="team.a9043.mapper.SignInMapper">
+    <resultMap id="suvMan" type="SuvMan">
+        <id property="suvManId" column="suv_man_id"/>
+        <result property="schId" column="sch_id"/>
+        <result property="siWeek" column="si_week"/>
+        <result property="siTime" column="si_time"/>
+        <result property="suvManAutoOpen" column="suv_man_auto_open"/>
+    </resultMap>
+    <resultMap id="cozSuspend" type="CozSuspend">
+        <id property="susId" column="sus_id"/>
+        <result property="susWeek" column="sus_week"/>
+        <result property="schId" column="COZ_SCH_id"/>
+    </resultMap>
+    <resultMap id="location" type="Location">
+        <id property="locId" column="loc_id"/>
+        <result property="locName" column="loc_name"/>
+        <result property="locLat" column="loc_lat"/>
+        <result property="locLon" column="loc_lon"/>
+        <result property="locAcc" column="loc_acc"/>
+        <result property="locHAcc" column="loc_h_acc"/>
+        <result property="locVAcc" column="loc_v_acc"/>
+    </resultMap>
+    <resultMap id="schedule" type="Schedule">
+        <id property="schId" column="sch_id"/>
+        <result property="cozId" column="coz_id"/>
+        <result property="schTime" column="sch_time"/>
+        <result property="schDay" column="sch_day"/>
+        <result property="schWeek" column="sch_week"/>
+        <result property="schYear" column="sch_year"/>
+        <result property="schTerm" column="sch_term" javaType="boolean"/>
+        <result property="schFortnight" column="sch_fortnight"/>
+        <association property="location" resultMap="location"/>
+        <collection property="cozSuspendList" resultMap="cozSuspend"/>
+    </resultMap>
+    <select id="fOneLocation"
+            resultType="Location">SELECT loc_id AS locId, loc_name AS locName, loc_lat AS locLat, loc_lon AS locLon, loc_acc AS locAcc, loc_v_acc AS locVAcc, loc_h_acc AS locHAcc FROM location WHERE loc_name = #{locName}</select>
+    <select id="isSignIn" resultType="int">
+        SELECT COUNT(si_id) FROM sign_in WHERE sch_id = #{schId} AND si_week = #{siWeek} AND stu_id = #{userId}
+    </select>
+    <select id="findSchedule" resultMap="schedule">
+        SELECT SCH.sch_id, coz_id, sch_time, sch_day, sch_week, sch_year, sch_term, sch_fortnight,
+        SCH.loc_id, loc_name, loc_lat, loc_lon, loc_acc, loc_v_acc, loc_h_acc
+        sus_id, COZS.sch_id AS COZ_SCH_id, sus_week
+        FROM schedule AS SCH
+        LEFT OUTER JOIN location AS LOC ON SCH.loc_id = LOC.loc_id
+        LEFT OUTER JOIN coz_suspend AS COZS on SCH.sch_id = COZS.sch_id
+        WHERE SCH.sch_id = #{schId}
+    </select>
+    <select id="findSuvMan" resultMap="suvMan">
+        SELECT suv_man_id, sch_id, si_week, si_time,suv_man_auto_open  FROM suv_man WHERE sch_id = #{schId} AND si_week = #{siWeek}
+    </select>
+    <insert id="insertSignIn">
+        INSERT INTO sign_in (stu_id, sch_id,si_time,si_leave,si_week) VALUES (#{userId},#{schId},#{siTime},FALSE ,#{siWeek})
+    </insert>
+    <insert id="insertLeave">
+        INSERT INTO sign_in (stu_id, sch_id,si_time,si_leave,si_week,si_approve,si_voucher) VALUES (#{userId},#{schId},#{siTime},TRUE ,#{siWeek},0 ,#{siVoucher});
+    </insert>
+</mapper>

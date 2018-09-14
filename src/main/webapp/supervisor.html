@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Supervisor</title>
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.js"></script>
+    <script src="https://cdn.bootcss.com/jquery.serializeJSON/2.9.0/jquery.serializejson.js"></script>
+</head>
+<body>
+<div id="result"></div>
+<a href="javascript:void(0)" onclick="suvLeave()">请假一次督导课程(测试)</a><br/>
+<a href="javascript:void(0)" onclick="showSuvCourses()">显示所有督导课程</a><br/>
+<a href="javascript:void(0)" onclick="findHisSuvRecRes()">查看所有督导记录</a><br/>
+<a href="javascript:void(0)" onclick="getLeaves()">审批请假</a><br/>
+<a href="javascript:void(0)" onclick="approveLeave()">通过一条请假（测试）</a><br/>
+<a href="javascript:void(0)" onclick="showForm()">督导情况记录</a><br/>
+<a id="initSignIn" href="javascript:void(0)" onclick="initSignIn()">发起签到</a><br/>
+<a id="closeAutoSignIn" href="javascript:void(0)" onclick="closeAutoSignIn()">关闭某次课堂自动签到</a><br/>
+<a id="openAutoSignIn" href="javascript:void(0)" onclick="openAutoSignIn()">开启某次课堂自动签到</a><br/>
+<a id="isAutoSignIn" href="javascript:void(0)" onclick="isAutoSignIn()">查看某次课堂自动签到</a><br/>
+<form id="recForm" name="recForm" action="javascript:void(0)" style="display: none">
+    <p>实到人数</p>
+    <input name="suvRecNum" type="text"/>
+    <p>差况人数</p>
+    <input name="suvRecBadNum" type="text"/>
+    <p>备注信息</p>
+    <input name="suvRecInfo" type="text"/>
+    <p>记录人</p>
+    <input name="suvRecName" type="text"/>
+    <button id="submit" name="submit" onclick="submitForm()">Submit</button>
+</form>
+<script>
+    function showForm() {
+        $("#recForm").show();
+    }
+
+    function submitForm() {
+        var params = JSON.stringify($("#recForm").serializeJSON());
+        $.ajax(
+            {
+                type: "post",
+                url: "./Supervisor/insertSuvRec.do",
+                data: params,
+                contentType: "application/json;charset=utf-8",
+                async: false,
+                dataType: "json",
+                success: function (data) {
+                    alert(JSON.stringify(data));
+                    window.location.href = "options.html";
+                },
+                error: function (data) {
+                    alert(JSON.stringify(data));
+                }
+            }
+        );
+    }
+
+    function initSignIn() {
+        var dateTime=[2017,10,2,9,1,0];
+
+        $.ajax(
+            {
+                type: "post",
+                url: "./Supervisor/initSignIn.do",
+                data: JSON.stringify(dateTime),
+                contentType: "application/json;charset=utf-8",
+                async: false,
+                dataType: "json",
+                success: function (data) {
+                    alert(JSON.stringify(data));
+                },
+                error: function (data) {
+                    alert(JSON.stringify(data));
+                }
+            }
+        );
+    }
+
+    function getLeaves() {
+        $.ajax(
+            {
+                type: "post",
+                url: "./Supervisor/getLeaves.do",
+                contentType: "application/json;charset=utf-8",
+                async: false,
+                dataType: "json",
+                success: function (data) {
+                    $("#result").text(JSON.stringify(data));
+                },
+                error: function (data) {
+                    alert(JSON.stringify(data));
+                }
+            }
+        )
+    }
+
+    function approveLeave() {
+        var signInRes = {
+            "siId": 1,
+            "student": {
+                "userId": "2016220401001",
+                "userPwd": null,
+                "userPermit": null,
+                "userName": "卢学能"
+            },
+            "oneCozAndSch": {
+                "schedule": {
+                    "cozId": "1",
+                    "schTime": 1,
+                    "schDay": 1,
+                    "schWeek": 19,
+                    "schYear": 2017,
+                    "schFortnight": 0,
+                    "schId": 1,
+                    "schTerm": false,
+                    "location": {
+                        "locId": 1,
+                        "locLat": 30.6746726871,
+                        "locLon": 104.1027921438,
+                        "locAcc": 0,
+                        "locVAcc": 0,
+                        "locHAcc": 0,
+                        "locName": "sec_tch"
+                    },
+                    "cozSuspendList": []
+                },
+                "course": {
+                    "cozId": "1",
+                    "cozName": "计组",
+                    "teacher": {
+                        "userId": "1",
+                        "userPwd": null,
+                        "userPermit": null,
+                        "userName": "吴正华"
+                    },
+                    "schedules": null
+                }
+            },
+            "siTime": [2017,10,2,9,1,0],
+            "siWeek": 5,
+            "siLeave": true,
+            "siApprove": false
+        };
+
+        $.ajax(
+            {
+                type: "post",
+                url: "./Supervisor/approveLeave.do",
+                data: JSON.stringify(signInRes),
+                contentType: "application/json;charset=utf-8",
+                async: false,
+                dataType: "json",
+                success: function (data) {
+                    alert(JSON.stringify(data));
+                },
+                error: function (data) {
+                    alert(JSON.stringify(data));
+                }
+            }
+        );
+    }
+
+    function suvLeave() {
+        var suvSch = {
+            "suvId": 2,
+            "student": {"userId": "2016220401001", "userPwd": null, "userPermit": null, "userName": "卢学能"},
+            "schedule": {
+                "cozId": "1",
+                "schTime": 1,
+                "schDay": 1,
+                "schWeek": 19,
+                "schYear": 2017,
+                "schFortnight": 0,
+                "schId": 1,
+                "schTerm": false,
+                "location": {
+                    "locId": 1,
+                    "locLat": 30.6746726871,
+                    "locLon": 104.1027921438,
+                    "locAcc": 0,
+                    "locVAcc": 0,
+                    "locHAcc": 0,
+                    "locName": "sec_tch"
+                },
+                "cozSuspendList": []
+            },
+            "suvWeek": 5,
+            "suvLeave": false
+        };
+        $.ajax(
+            {
+                type: "post",
+                url: "./Supervisor/suvLeave.do",
+                data: JSON.stringify(suvSch),
+                contentType: "application/json;charset=utf-8",
+                async: false,
+                dataType: "json",
+                success: function (data) {
+                    alert(JSON.stringify(data));
+                },
+                error: function (data) {
+                    alert(JSON.stringify(data));
+                }
+            }
+        );
+    }
+
+    function showSuvCourses() {
+        $.ajax(
+            {
+                type: "post",
+                url: "./Supervisor/showSuvCourses.do",
+                contentType: "application/json;charset=utf-8",
+                async: false,
+                dataType: "json",
+                success: function (data) {
+                    $("#result").text(JSON.stringify(data));
+                },
+                error: function (data) {
+                    alert(JSON.stringify(data));
+                }
+            }
+        )
+    }
+
+    function findHisSuvRecRes() {
+        $.ajax(
+            {
+                type: "post",
+                url: "./Supervisor/findHisSuvRecRes.do",
+                contentType: "application/json;charset=utf-8",
+                async: false,
+                dataType: "json",
+                success: function (data) {
+                    $("#result").text(JSON.stringify(data));
+                },
+                error: function (data) {
+                    alert(JSON.stringify(data));
+                }
+            }
+        )
+    }
+
+    function closeAutoSignIn() {
+        var dateTime=[2017,10,2,9,1,0];
+        var params = {
+            "localDateTime": dateTime,
+            "suvSch": {
+                "suvId": 2,
+                "student": {"userId": "2016220401001", "userPwd": null, "userPermit": null, "userName": "卢学能"},
+                "schedule": {
+                    "cozId": "1",
+                    "schTime": 1,
+                    "schDay": 1,
+                    "schWeek": 19,
+                    "schYear": 2017,
+                    "schFortnight": 0,
+                    "schId": 1,
+                    "schTerm": false,
+                    "location": {
+                        "locId": 1,
+                        "locLat": 30.6746726871,
+                        "locLon": 104.1027921438,
+                        "locAcc": 0,
+                        "locVAcc": 0,
+                        "locHAcc": 0,
+                        "locName": "sec_tch"
+                    },
+                    "cozSuspendList": []
+                },
+                "suvWeek": 5,
+                "suvLeave": false
+            }
+        };
+
+        $.ajax(
+            {
+                type: "post",
+                url: "./Supervisor/closeAutoSignIn.do",
+                data: JSON.stringify(params),
+                contentType: "application/json;charset=utf-8",
+                async: false,
+                dataType: "json",
+                success: function (data) {
+                    alert(JSON.stringify(data));
+                },
+                error: function (data) {
+                    alert(JSON.stringify(data));
+                }
+            }
+        );
+    }
+
+    function openAutoSignIn() {
+        var dateTime=[2017,10,2,9,1,0];
+        var params = {
+            "localDateTime": dateTime,
+            "suvSch": {
+                "suvId": 2,
+                "student": {"userId": "2016220401001", "userPwd": null, "userPermit": null, "userName": "卢学能"},
+                "schedule": {
+                    "cozId": "1",
+                    "schTime": 1,
+                    "schDay": 1,
+                    "schWeek": 19,
+                    "schYear": 2017,
+                    "schFortnight": 0,
+                    "schId": 1,
+                    "schTerm": false,
+                    "location": {
+                        "locId": 1,
+                        "locLat": 30.6746726871,
+                        "locLon": 104.1027921438,
+                        "locAcc": 0,
+                        "locVAcc": 0,
+                        "locHAcc": 0,
+                        "locName": "sec_tch"
+                    },
+                    "cozSuspendList": []
+                },
+                "suvWeek": 5,
+                "suvLeave": false
+            }
+        };
+
+        $.ajax(
+            {
+                type: "post",
+                url: "./Supervisor/openAutoSignIn.do",
+                data: JSON.stringify(params),
+                contentType: "application/json;charset=utf-8",
+                async: false,
+                dataType: "json",
+                success: function (data) {
+                    alert(JSON.stringify(data));
+                },
+                error: function (data) {
+                    alert(JSON.stringify(data));
+                }
+            }
+        );
+    }
+
+    function isAutoSignIn() {
+        var params = {
+            "suvId": 2,
+            "student": {"userId": "2016220401001", "userPwd": null, "userPermit": null, "userName": "卢学能"},
+            "schedule": {
+                "cozId": "1",
+                "schTime": 1,
+                "schDay": 1,
+                "schWeek": 19,
+                "schYear": 2017,
+                "schFortnight": 0,
+                "schId": 1,
+                "schTerm": false,
+                "location": {
+                    "locId": 1,
+                    "locLat": 30.6746726871,
+                    "locLon": 104.1027921438,
+                    "locAcc": 0,
+                    "locVAcc": 0,
+                    "locHAcc": 0,
+                    "locName": "sec_tch"
+                },
+                "cozSuspendList": []
+            },
+            "suvWeek": 5,
+            "suvLeave": false
+        };
+
+        $.ajax(
+            {
+                type: "post",
+                url: "./Supervisor/isAutoSignIn.do",
+                data: JSON.stringify(params),
+                contentType: "application/json;charset=utf-8",
+                async: false,
+                dataType: "json",
+                success: function (data) {
+                    alert(JSON.stringify(data));
+                },
+                error: function (data) {
+                    alert(JSON.stringify(data));
+                }
+            }
+        );
+    }
+
+    $(function () {
+        $.ajax({
+                type: "post",
+                url: "./Supervisor/showOneSuvCoz.do",
+                contentType: "application/json;charset=utf-8",
+                async: false,
+                dataType: "json",
+                success: function (data) {
+                    $("#result").text(JSON.stringify(data));
+                },
+                error: function (data) {
+                    alert(JSON.stringify(data));
+                }
+            }
+        );
+        $.ajax({
+                type: "post",
+                url: "./Supervisor/isSucRec.do",
+                contentType: "application/json;charset=utf-8",
+                async: false,
+                dataType: "json",
+                success: function (data) {
+                    if (data) {
+                        $("#submit").text("已提交").attr("disabled", "disabled");
+                    }
+                },
+                error: function (data) {
+                    alert(JSON.stringify(data));
+                }
+            }
+        );
+        $.ajax({
+                type: "post",
+                url: "./Supervisor/isSuvMan.do",
+                contentType: "application/json;charset=utf-8",
+                async: false,
+                dataType: "json",
+                success: function (data) {
+                    if (data) {
+                        $("#initSignIn").text("已提交签到").attr("onclick", "javascript:void(0)");
+                    }
+                },
+                error: function (data) {
+                    alert(JSON.stringify(data));
+                }
+            }
+        );
+    })
+</script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+{
+  "查看督导课程": "./iFrame/supervisor/suv_table.html",
+  "查看待领督导池": "./iFrame/supervisor/suv_pool.html",
+  "查看历史督导记录": "./iFrame/supervisor/suv_rec_table.html",
+  "审批请假": "./iFrame/supervisor/suv_leave.html",
+  "督导转接": "./iFrame/supervisor/suv_trans.html"
+}

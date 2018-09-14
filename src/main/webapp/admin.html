@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin</title>
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.js"></script>
+</head>
+<body>
+<a href="javascript:void(0)" onclick="findSuv()">查看所有督导员 测试（测试）</a><br/>
+<a href="javascript:void(0)" onclick="findSuvSch()">查看一个督导员督导排课 测试（测试）</a><br/>
+<a href="javascript:void(0)" onclick="showCourses()">查看一个督导员上课排课 测试（测试）</a><br/>
+<a href="javascript:void(0)" onclick="grantSuv()">赋予督导员权限 测试（测试）</a><br/>
+<a href="javascript:void(0)" onclick="revokeSuv()">撤回督导员权限 测试（测试）</a><br/><br/>
+<a href="javascript:void(0)" onclick="showAllCourses()">查看所有课程</a><br/>
+<a href="javascript:void(0)" onclick="showOneCozStuList()">查看一个课程所有学生</a><br/>
+<a href="javascript:void(0)" onclick="showOneSchRec()">查看一个排课督导记录</a><br/><br/><br/>
+<form action="./File/uploadCozInfo.do" enctype="multipart/form-data" method="post">
+    <tr>
+        <td>请选择文件:</td>
+        <td><input type="file" name="multipartFile"></td>
+    </tr>
+    <tr>
+        <td><input type="submit" value="submit"></td>
+    </tr>
+</form>
+<script>
+    function grantSuv() {
+        var user = {
+            "userId": "2016220401001",
+            "userPwd": null,
+            "userPermit": null,
+            "userName": "卢学能"
+        };
+        $.ajax(
+            {
+                type: "post",
+                url: "./Administrator/grantSuv.do",
+                data: JSON.stringify(user),
+                contentType: "application/json;charset=utf-8",
+                async: false,
+                dataType: "json",
+                success: function (data) {
+                    alert(JSON.stringify(data));
+                },
+                error: function (data) {
+                    alert(JSON.stringify(data));
+                }
+            }
+        );
+    }
+
+    function revokeSuv() {
+        var user = {
+            "userId": "2016220401001",
+            "userPwd": null,
+            "userPermit": null,
+            "userName": "卢学能"
+        };
+        $.ajax(
+            {
+                type: "post",
+                url: "./Administrator/revokeSuv.do",
+                data: JSON.stringify(user),
+                contentType: "application/json;charset=utf-8",
+                async: false,
+                dataType: "json",
+                success: function (data) {
+                    alert(JSON.stringify(data));
+                },
+                error: function (data) {
+                    alert(JSON.stringify(data));
+                }
+            }
+        );
+    }
+
+    function findSuv() {
+        $.ajax(
+            {
+                type: "post",
+                url: "./Administrator/findSuv.do",
+                async: false,
+                dataType: "json",
+                success: function (data) {
+                    alert(JSON.stringify(data));
+                },
+                error: function (data) {
+                    alert(JSON.stringify(data));
+                }
+            }
+        );
+    }
+
+    function findSuvSch() {
+        var user = {
+            "userId": "2016220401001",
+            "userPwd": null,
+            "userPermit": null,
+            "userName": "卢学能"
+        };
+        $.ajax(
+            {
+                type: "post",
+                url: "./Administrator/findSuvSch.do",
+                data: JSON.stringify(user),
+                contentType: "application/json;charset=utf-8",
+                async: false,
+                dataType: "json",
+                success: function (data) {
+                    alert(JSON.stringify(data));
+                },
+                error: function (data) {
+                    alert(JSON.stringify(data));
+                }
+            }
+        );
+    }
+
+    function showCourses() {
+        var user = {
+            "userId": "2016220401001",
+            "userPwd": null,
+            "userPermit": null,
+            "userName": "卢学能"
+        };
+        $.ajax(
+            {
+                type: "post",
+                url: "./Administrator/showCourses.do",
+                data: JSON.stringify(user),
+                contentType: "application/json;charset=utf-8",
+                async: false,
+                dataType: "json",
+                success: function (data) {
+                    alert(JSON.stringify(data));
+                },
+                error: function (data) {
+                    alert(JSON.stringify(data));
+                }
+            }
+        );
+    }
+
+    function showAllCourses() {
+        $.ajax(
+            {
+                type: "post",
+                url: "./Administrator/showAllCourses.do",
+                async: false,
+                dataType: "json",
+                success: function (data) {
+                    alert(JSON.stringify(data));
+                },
+                error: function (data) {
+                    alert(JSON.stringify(data));
+                }
+            }
+        );
+    }
+
+    function showOneCozStuList() {
+        var course = {
+            "cozId": "1",
+            "cozName": "计组",
+            "teacher": {
+                "userId": "1",
+                "userPwd": null,
+                "userPermit": null,
+                "userName": null
+            },
+            "schedules": [
+                {
+                    "cozId": "1",
+                    "schTime": 1,
+                    "schDay": 1,
+                    "schWeek": 19,
+                    "schYear": 2017,
+                    "schFortnight": 0,
+                    "schId": 1,
+                    "schTerm": false,
+                    "location": {
+                        "locId": 1,
+                        "locLat": 30.6746726871,
+                        "locLon": 104.1027921438,
+                        "locAcc": 0.0,
+                        "locVAcc": 0.0,
+                        "locHAcc": 0.0,
+                        "locName": "sec_tch"
+                    },
+                    "cozSuspendList": []
+                },
+                {
+                    "cozId": "1",
+                    "schTime": 2,
+                    "schDay": 1,
+                    "schWeek": 19,
+                    "schYear": 2017,
+                    "schFortnight": 0,
+                    "schId": 9,
+                    "schTerm": false,
+                    "location": {
+                        "locId": 1,
+                        "locLat": 30.6746726871,
+                        "locLon": 104.1027921438,
+                        "locAcc": 0.0,
+                        "locVAcc": 0.0,
+                        "locHAcc": 0.0,
+                        "locName": "sec_tch"
+                    },
+                    "cozSuspendList": []
+                },
+                {
+                    "cozId": "1",
+                    "schTime": 3,
+                    "schDay": 3,
+                    "schWeek": 19,
+                    "schYear": 2017,
+                    "schFortnight": 0,
+                    "schId": 20,
+                    "schTerm": false,
+                    "location": {
+                        "locId": 1,
+                        "locLat": 30.6746726871,
+                        "locLon": 104.1027921438,
+                        "locAcc": 0.0,
+                        "locVAcc": 0.0,
+                        "locHAcc": 0.0,
+                        "locName": "sec_tch"
+                    },
+                    "cozSuspendList": []
+                },
+                {
+                    "cozId": "1",
+                    "schTime": 4,
+                    "schDay": 3,
+                    "schWeek": 19,
+                    "schYear": 2017,
+                    "schFortnight": 0,
+                    "schId": 21,
+                    "schTerm": false,
+                    "location": {
+                        "locId": 1,
+                        "locLat": 30.6746726871,
+                        "locLon": 104.1027921438,
+                        "locAcc": 0.0,
+                        "locVAcc": 0.0,
+                        "locHAcc": 0.0,
+                        "locName": "sec_tch"
+                    },
+                    "cozSuspendList": []
+                }
+            ]
+        };
+        $.ajax(
+            {
+                type: "post",
+                url: "./Administrator/showOneCozStuList.do",
+                data: JSON.stringify(course),
+                contentType: "application/json;charset=utf-8",
+                async: false,
+                dataType: "json",
+                success: function (data) {
+                    alert(JSON.stringify(data));
+                },
+                error: function (data) {
+                    alert(JSON.stringify(data));
+                }
+            }
+        );
+    }
+
+    function showOneSchRec() {
+        var schedule = {
+            "cozId": "2",
+            "schTime": 1,
+            "schDay": 2,
+            "schWeek": 19,
+            "schYear": 2017,
+            "schFortnight": 0,
+            "schId": 2,
+            "schTerm": false,
+            "location": {
+                "locId": 1,
+                "locLat": 30.6746726871,
+                "locLon": 104.1027921438,
+                "locAcc": 0.0,
+                "locVAcc": 0.0,
+                "locHAcc": 0.0,
+                "locName": "sec_tch"
+            },
+            "cozSuspendList": []
+        };
+        $.ajax(
+            {
+                type: "post",
+                url: "./Administrator/showOneSchRec.do",
+                data: JSON.stringify(schedule),
+                contentType: "application/json;charset=utf-8",
+                async: false,
+                dataType: "json",
+                success: function (data) {
+                    alert(JSON.stringify(data));
+                },
+                error: function (data) {
+                    alert(JSON.stringify(data));
+                }
+            }
+        );
+    }
+
+</script>
+</body>
+</html>

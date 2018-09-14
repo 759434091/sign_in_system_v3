@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="team.a9043.mapper.UserMapper">
+    <select id="fByStuNameAndPwd"
+            resultType="User">SELECT stu_id AS userId,stu_name AS userName, stu_pwd AS userPwd, bin(stu_permit+0) AS userPermit FROM student WHERE stu_id=#{userId} AND stu_pwd=#{userPwd}</select>
+    <select id="fByTchNameAndPwd"
+            resultType="User">SELECT tch_id AS userId,tch_name AS userName, tch_pwd AS userPwd, bin(tch_permit+0) AS userPermit FROM teacher WHERE tch_id=#{userId} AND tch_pwd=#{userPwd}</select>
+    <select id="fByStuOpenId_stu" resultType="User">
+        SELECT stu_id AS userId,stu_name AS userName, stu_pwd AS userPwd, bin(stu_permit+0) AS userPermit, open_id AS openId FROM student WHERE open_id=#{openId}
+    </select>
+    <select id="fByStuOpenId_tch" resultType="User">
+        SELECT tch_id AS userId,tch_name AS userName, tch_pwd AS userPwd, bin(tch_permit+0) AS userPermit, open_id AS openId FROM teacher WHERE open_id=#{openId}
+    </select>
+    <update id="bindOpenId_stu">
+        UPDATE student SET open_id = #{openId} WHERE stu_id = #{userId}
+    </update>
+    <update id="bindOpenId_tch">
+        UPDATE teacher SET open_id = #{openId} WHERE tch_id = #{userId}
+    </update>
+    <update id="changeStuPassword" parameterType="User">
+        UPDATE student SET stu_pwd = #{userPwd} WHERE stu_id = #{userId}
+    </update>
+    <update id="changeTchPassword" parameterType="User">
+        UPDATE teacher SET tch_pwd = #{userPwd} WHERE tch_id = #{userId}
+    </update>
+</mapper>

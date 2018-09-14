@@ -1,0 +1,500 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="team.a9043.mapper.AdminMapper">
+    <resultMap id="suvStudent" type="User">
+        <id property="userId" column="stu_id"/>
+        <result property="userPermit" column="stu_permit"/>
+        <result property="userName" column="stu_name"/>
+    </resultMap>
+    <resultMap id="cozSuspend" type="CozSuspend">
+        <id property="susId" column="sus_id"/>
+        <result property="susWeek" column="sus_week"/>
+        <result property="schId" column="COZ_SCH_id"/>
+    </resultMap>
+    <resultMap id="suvMan" type="SuvMan">
+        <id property="suvManId" column="suv_man_id"/>
+        <result property="schId" column="sch_id"/>
+        <result property="siWeek" column="si_week"/>
+        <result property="siTime" column="si_time"/>
+        <result property="suvManAutoOpen" column="suv_man_auto_open"/>
+    </resultMap>
+    <resultMap id="schedule" type="Schedule">
+        <id property="schId" column="sch_id"/>
+        <result property="cozId" column="coz_id"/>
+        <result property="schTime" column="sch_time"/>
+        <result property="schDay" column="sch_day"/>
+        <result property="schWeek" column="sch_week"/>
+        <result property="schYear" column="sch_year"/>
+        <result property="schTerm" column="sch_term" javaType="boolean"/>
+        <result property="schFortnight" column="sch_fortnight"/>
+        <association property="location" resultMap="location"/>
+        <collection property="cozSuspendList" resultMap="cozSuspend"/>
+    </resultMap>
+    <resultMap id="location" type="Location">
+        <id property="locId" column="loc_id"/>
+        <result property="locName" column="loc_name"/>
+        <result property="locLat" column="loc_lat"/>
+        <result property="locLon" column="loc_lon"/>
+        <result property="locAcc" column="loc_acc"/>
+        <result property="locHAcc" column="loc_h_acc"/>
+        <result property="locVAcc" column="loc_v_acc"/>
+    </resultMap>
+    <resultMap id="student" type="User">
+        <id property="userId" column="stu_id"/>
+        <result property="userName" column="stu_name"/>
+    </resultMap>
+    <resultMap id="teacher" type="User">
+        <id property="userId" column="tch_id"/>
+        <result property="userName" column="tch_name"/>
+    </resultMap>
+    <resultMap id="suvSch" type="SuvSch">
+        <id property="suvId" column="suv_id"/>
+        <result property="suvLeave" column="suv_leave"/>
+        <result property="suvWeek" column="suv_week"/>
+        <association property="schedule" resultMap="schedule"/>
+        <association property="student" resultMap="student"/>
+    </resultMap>
+    <resultMap id="course" type="Course">
+        <id property="cozId" column="coz_id"/>
+        <result property="cozName" column="coz_name"/>
+        <association property="teacher" resultMap="teacher"/>
+        <collection property="schedules" resultMap="schedule"/>
+    </resultMap>
+    <resultMap id="admCourse" type="AdmCourse">
+        <id property="cozId" column="coz_id"/>
+        <result property="cozName" column="coz_name"/>
+        <result property="cozSize" column="coz_size"/>
+        <result property="cozActSize" column="coz_act_size"/>
+        <result property="cozAttRate" column="coz_attend_rate"/>
+        <result property="cozDepart" column="coz_depart"/>
+        <result property="cozGrade" column="coz_grade"/>
+        <result property="schIdList" column="sch_id_list"/>
+        <association property="teacher" resultMap="teacher"/>
+    </resultMap>
+    <resultMap id="suvRecord" type="SuvRecord">
+        <id property="suvRecId" column="suv_rec_id"/>
+        <result property="suvId" column="suv_id"/>
+        <result property="suvRecNum" column="suv_rec_num"/>
+        <result property="suvRecBadNum" column="suv_rec_bad_num"/>
+        <result property="suvRecInfo" column="suv_rec_info" javaType="String"/>
+        <result property="suvRecName" column="suv_rec_name" javaType="String"/>
+    </resultMap>
+    <resultMap id="oneSchSuvRec" type="OneSchSuvRec">
+        <association property="schedule" resultMap="schedule"/>
+        <association property="suvStudent" resultMap="student"/>
+        <association property="suvRecord" resultMap="suvRecord"/>
+    </resultMap>
+    <resultMap id="oneCozAndSch" type="OneCozAndSch">
+        <association property="schedule" resultMap="schedule"/>
+        <association property="course" resultMap="course"/>
+    </resultMap>
+    <resultMap id="hisSuvRecRes" type="HisSuvRecRes">
+        <id property="suvId" column="suv_id"/>
+        <result property="suvWeek" column="suv_week"/>
+        <association property="student" resultMap="student"/>
+        <association property="oneCozAndSch" resultMap="oneCozAndSch"/>
+        <association property="suvRecord" resultMap="suvRecord"/>
+    </resultMap>
+    <resultMap id="cozAttRate" type="CozAttRate">
+        <id property="cozId" column="coz_id"/>
+        <result property="cozAttRate" column="coz_att_rate"/>
+    </resultMap>
+    <resultMap id="cozNumber" type="CozNumber">
+        <id property="cozId" column="coz_id"/>
+        <result property="cozNumber" column="coz_number"/>
+    </resultMap>
+    <resultMap id="schAbsRec" type="SchAbsRec">
+        <result property="sarWeek" column="sar_week"/>
+        <association property="schedule" resultMap="schedule"/>
+        <collection property="studentList" resultMap="student"/>
+    </resultMap>
+    <resultMap id="signInRes" type="SignInRes">
+        <id property="siId" column="si_id"/>
+        <result property="siTime" column="si_time"/>
+        <result property="siWeek" column="si_week"/>
+        <result property="siLeave" column="si_leave"/>
+        <result property="siApprove" column="si_approve"/>
+        <result property="siVoucher" column="si_voucher"/>
+        <association property="student" resultMap="student"/>
+        <association property="oneCozAndSch" resultMap="oneCozAndSch"/>
+    </resultMap>
+    <resultMap id="absStatistics" type="AbsStatistics">
+        <result property="sarWeek" column="sar_week"/>
+        <association property="course" resultMap="course"/>
+        <association property="schedule" resultMap="schedule"/>
+        <collection property="studentList" resultMap="student"/>
+    </resultMap>
+    <select id="findHisSuvRecRes" resultMap="hisSuvRecRes">
+        SELECT
+        suv_sch.suv_id, suv_sch.stu_id, suv_sch.sch_id,
+        suv_week, stu_name, stu_permit,
+        suv_rec_id, suv_rec_num, suv_rec_name, suv_rec_info, suv_rec_bad_num,
+        `schedule`.coz_id, coz_name,
+        teacher.tch_id, tch_name,
+        sch_time, sch_day, sch_week, sch_year, sch_term, sch_fortnight,
+        location.loc_id, loc_name
+        FROM suv_sch JOIN student ON suv_sch.stu_id = student.stu_id
+        JOIN suv_rec ON suv_sch.suv_id = suv_rec.suv_id
+        JOIN `schedule` ON suv_sch.sch_id = `schedule`.sch_id
+        LEFT OUTER JOIN location ON location.loc_id = `schedule`.loc_id
+        JOIN course ON course.coz_id = `schedule`.coz_id
+        JOIN teacher ON teacher.tch_id =  course.tch_id
+        WHERE suv_sch.stu_id = #{userId}
+    </select>
+    <select id="findHisAllRecRes" resultMap="hisSuvRecRes">
+        SELECT
+        suv_sch.suv_id, suv_sch.stu_id, suv_sch.sch_id,
+        suv_week, stu_name, stu_permit,
+        suv_rec_id, suv_rec_num, suv_rec_name, suv_rec_info, suv_rec_bad_num,
+        `schedule`.coz_id, coz_name,
+        teacher.tch_id, tch_name,
+        sch_time, sch_day, sch_week, sch_year, sch_term, sch_fortnight,
+        location.loc_id, loc_name
+        FROM suv_sch JOIN student ON suv_sch.stu_id = student.stu_id
+        JOIN suv_rec ON suv_sch.suv_id = suv_rec.suv_id
+        JOIN `schedule` ON suv_sch.sch_id = `schedule`.sch_id
+        LEFT OUTER JOIN location ON location.loc_id = `schedule`.loc_id
+        JOIN course ON course.coz_id = `schedule`.coz_id
+        JOIN teacher ON teacher.tch_id =  course.tch_id
+        WHERE `schedule`.coz_id = #{cozId}
+    </select>
+    <select id="fSchAbsRecByCoz" resultMap="schAbsRec">
+    SELECT
+      SAR.stu_id, SAR.sch_id, sar_week,
+      stu_name,
+      sch_time, sch_day, sch_week, sch_year, sch_term, sch_fortnight,
+      COZ.coz_id, coz_name, tch_id, coz_size, coz_act_size, coz_attend_rate,
+      LOC.loc_id, loc_name, loc_lat, loc_lon, loc_acc, loc_v_acc, loc_h_acc,
+      -1 AS si_approve
+    FROM course AS COZ
+      JOIN `schedule` AS SCH ON SCH.coz_id = COZ.coz_id
+      LEFT OUTER JOIN location AS LOC ON LOC.loc_id = SCH.loc_id
+      JOIN sch_abs_rec AS SAR ON SAR.sch_id = SCH.sch_id
+      JOIN student AS STU ON SAR.stu_id = STU.stu_id
+    WHERE COZ.coz_id = 'E0911835.02'
+    UNION ALL
+    SELECT SIGN.stu_id, SIGN.sch_id, si_week AS sar_week,
+      stu_name, sch_time, sch_day, sch_week, sch_year, sch_term, sch_fortnight,
+      COZ.coz_id, coz_name, tch_id, coz_size, coz_act_size, coz_attend_rate,
+      LOC.loc_id, loc_name, loc_lat, loc_lon, loc_acc, loc_v_acc, loc_h_acc,
+      si_approve
+    FROM sign_in AS SIGN
+      JOIN `schedule` AS SCH ON SIGN.sch_id = SCH.sch_id
+      JOIN `course` AS COZ ON SCH.coz_id = COZ.coz_id
+      LEFT OUTER JOIN location AS LOC ON LOC.loc_id = SCH.loc_id
+      JOIN student AS STU ON SIGN.stu_id = STU.stu_id
+    WHERE SIGN.sch_id = 'E0911835.02' AND si_approve != 1
+    </select>
+    <select id="findSuv" resultMap="suvStudent">
+        SELECT stu_id, stu_permit, stu_name FROM student
+        WHERE stu_permit &amp; 2 = 2
+    </select>
+    <select id="findSuvSch" resultMap="suvSch" parameterType="String">
+        SELECT suv_id, SSCH.stu_id, SSCH.sch_id, suv_week, stu_name, coz_id, sch_time, sch_day, sch_week, sch_year, sch_term, sch_fortnight
+        FROM suv_sch AS SSCH
+        JOIN student AS STU ON SSCH.stu_id = STU.stu_id
+        JOIN schedule AS SCH ON SSCH.sch_id = SCH.sch_id
+        WHERE SSCH.stu_id = #{userId}
+    </select>
+    <select id="getAllCourseNumber" resultType="Integer">
+        SELECT
+        count(COZ.coz_id)
+        FROM course AS COZ
+        <where>
+            <if test="cozName != null and cozName !=''">
+                coz_name LIKE "%"#{cozName}"%"
+            </if>
+            <if test="cozDepart != null and cozDepart !=''">
+                AND coz_depart LIKE "%"#{cozDepart}"%"
+            </if>
+            <if test="cozGrade != null and cozGrade !=''">
+                AND coz_grade = #{cozGrade}
+            </if>
+        </where>
+    </select>
+    <select id="showAllCourses" resultMap="admCourse">
+        SELECT
+        COZ.coz_id, coz_name, COZ.tch_id, tch_name, SCH.loc_id, coz_size, coz_act_size, coz_attend_rate, coz_depart,
+        coz_grade,
+        group_concat(sch_id) AS sch_id_list
+        FROM course AS COZ
+        LEFT OUTER JOIN teacher AS TCH ON COZ.tch_id = TCH.tch_id
+        LEFT OUTER JOIN `schedule` AS SCH ON COZ.coz_id = SCH.coz_id
+        LEFT OUTER JOIN location AS LOC ON SCH.loc_id = LOC.loc_id
+        <where>
+            <if test="cozName != null and cozName !=''">
+                coz_name LIKE "%"#{cozName}"%"
+            </if>
+            <if test="cozDepart != null and cozDepart !=''">
+                AND coz_depart LIKE "%"#{cozDepart}"%"
+            </if>
+            <if test="cozGrade != null and cozGrade !=''">
+                AND coz_grade = #{cozGrade}
+            </if>
+        </where>
+        group by coz_id
+        <if test="sortStr != null and sortStr != ''">
+            order by `${sortStr}`
+        </if>
+        <if test="isAsc != false">
+            ASC
+        </if>
+        <if test="isAsc == false">
+            DESC
+        </if>
+        limit #{pageStep},#{pageSize}
+    </select>
+    <select id="showAllCourses_getSch" resultMap="schedule">
+        SELECT
+        SCH.sch_id, coz_id, sch_time, sch_day, sch_week, sch_year, sch_term, sch_fortnight,
+        SCH.loc_id, loc_name, loc_lat, loc_lon, loc_acc, loc_v_acc, loc_h_acc,
+        sus_id, sus_week
+        FROM `schedule` AS SCH
+        LEFT OUTER JOIN location AS LOC ON SCH.loc_id = LOC.loc_id
+        LEFT OUTER JOIN coz_suspend AS COZS ON SCH.sch_id = COZS.sch_id
+        WHERE coz_id IN
+        <if test="cozIdList != null and cozIdList.size() > 0">
+            <foreach collection="cozIdList" item="cozId" index="index" open="(" separator="," close=")">
+                #{cozId}
+            </foreach>
+        </if>
+        <if test="cozIdList == null or cozIdList.size() == 0">
+            ('')
+        </if>
+    </select>
+    <select id="showOneCozStuList" resultMap="student">
+        SELECT
+        coz_id,
+        ATT.stu_id, stu_pwd, stu_permit, stu_name
+        FROM attend AS ATT
+            JOIN student AS STU ON ATT.stu_id = STU.stu_id
+        WHERE ATT.coz_id = #{cozId};
+    </select>
+    <select id="showOneSchRec" resultMap="oneSchSuvRec">
+        SELECT
+        SCH.sch_id, coz_id, sch_time, sch_day, sch_week, sch_year, sch_term, sch_fortnight, loc_id,
+        SUVS.suv_id, suv_week, suv_leave,
+        SUVS.stu_id, stu_name,
+        suv_rec_id, suv_rec_num, suv_rec_name, suv_rec_info, suv_rec_bad_num
+        FROM `schedule` AS SCH
+            JOIN suv_sch AS SUVS ON SCH.sch_id = SUVS.sch_id
+            JOIN student AS STU ON SUVS.stu_id = STU.stu_id
+            JOIN suv_rec AS SUVR ON SUVS.suv_id = SUVR.suv_id
+        WHERE SCH.sch_id = #{schId}
+    </select>
+    <select id="showSuvCourses" resultMap="suvSch">
+        SELECT
+        suv_id, SSCH.stu_id, SSCH.sch_id, suv_week, suv_leave,
+        stu_name,
+        sch_time, sch_day, sch_week, sch_year, sch_term, sch_fortnight, SCH.loc_id,
+        COZ.coz_id, coz_name,
+        COZ.tch_id, tch_name,
+        loc_name, loc_lat, loc_lon, loc_acc, loc_v_acc, loc_h_acc,
+        sus_id, sus_week,
+        suv_man_id, si_week, si_time, suv_man_auto_open
+        FROM suv_sch AS SSCH
+        JOIN student AS STU ON SSCH.stu_id = STU.stu_id
+        JOIN schedule AS SCH ON SSCH.sch_id = SCH.sch_id
+        JOIN course AS COZ ON COZ.coz_id = SCH.coz_id
+        JOIN teacher AS TCH ON TCH.tch_id = COZ.tch_id
+        LEFT OUTER JOIN suv_man AS SUVM ON SCH.sch_id = SUVM.sch_id AND suv_week = si_week
+        LEFT OUTER JOIN location AS LOC ON SCH.loc_id = LOC.loc_id
+        LEFT OUTER JOIN coz_suspend AS COZS ON SCH.sch_id = COZS.sch_id
+        WHERE SSCH.stu_id = #{userId}
+    </select>
+    <select id="getCozAttRate" resultMap="cozAttRate">
+        SELECT
+        COZ.coz_id, coz_name, tch_id, coz_size, coz_act_size, coz_attend_rate,
+        SCH.sch_id, sch_time, sch_day, sch_week, sch_year, sch_term, sch_fortnight, loc_id,
+        suv_man_id, SUVM.si_week, SUVM.si_time, suv_man_auto_open,
+        ATT.stu_id,
+        si_id, SIGN.si_time, si_leave, si_approve,
+        ROUND(COUNT(si_id)/COUNT(COZ.coz_id),3) AS coz_att_rate
+        FROM course AS COZ
+        JOIN `schedule` AS SCH ON COZ.coz_id = SCH.coz_id
+        JOIN suv_man AS SUVM ON SCH.sch_id = SUVM.sch_id
+        JOIN attend AS ATT ON ATT.coz_id = COZ.coz_id
+        LEFT OUTER JOIN sign_in AS SIGN ON SCH.sch_id = SIGN.sch_id AND SUVM.si_week = SIGN.si_week AND ATT.stu_id = SIGN.stu_id
+        GROUP BY coz_name
+        ORDER BY COZ.coz_id
+    </select>
+    <select id="getCozNumber" resultMap="cozNumber">
+        SELECT
+        COZ.coz_id, coz_name, tch_id, coz_size, coz_act_size, coz_attend_rate,
+        ATT.stu_id,
+        COUNT(ATT.stu_id) AS coz_number
+        FROM course AS COZ
+        JOIN attend AS ATT ON ATT.coz_id = COZ.coz_id
+        GROUP BY coz_name
+        ORDER BY COZ.coz_id
+    </select>
+    <update id="insertCozAttRate" parameterType="CozAttRate">
+        UPDATE course SET coz_attend_rate = ${cozAttRate} WHERE coz_id = #{cozId}
+    </update>
+    <update id="insertCozNumber" parameterType="CozNumber">
+        UPDATE course SET coz_act_size = ${cozNumber} WHERE coz_id = #{cozId}
+    </update>
+    <update id="grantSuv" parameterType="String">
+        UPDATE `student`
+        SET `stu_permit`= `stu_permit`+ 2
+        WHERE `stu_id`= #{userId} AND stu_permit &amp; 2 != 2;
+    </update>
+    <update id="revokeSuv" parameterType="String">
+        UPDATE `student`
+        SET `stu_permit`= `stu_permit`- 2
+        WHERE `stu_id`= #{userId} AND stu_permit &amp; 2 = 2;
+    </update>
+    <select id="findScheduleByTime" resultMap="schedule">
+        SELECT
+        SCH.sch_id, coz_id, sch_time, sch_day, sch_week, sch_year, sch_term, sch_fortnight,
+        SCH.loc_id, loc_name, loc_lat, loc_lon, loc_acc, loc_v_acc, loc_h_acc
+        sus_id, COZS.sch_id AS COZ_SCH_id, sus_week
+        FROM schedule AS SCH
+        LEFT OUTER JOIN location AS LOC ON SCH.loc_id = LOC.loc_id
+        LEFT OUTER JOIN coz_suspend AS COZS on SCH.sch_id = COZS.sch_id
+        WHERE sch_time = #{schTime}
+    </select>
+    <select id="findSuvMan" resultMap="suvMan">
+        SELECT suv_man_id, sch_id, si_week, si_time,suv_man_auto_open  FROM suv_man WHERE sch_id = #{schId} AND si_week = #{siWeek}
+    </select>
+    <select id="getLeaves" resultMap="signInRes">
+        SELECT
+        si_id, SI.stu_id, SI.sch_id, si_time, si_leave, si_week, si_approve, si_voucher,
+        SCH.coz_id, sch_time, sch_day, sch_week, sch_year, sch_term, sch_fortnight,
+        coz_name, COZ.tch_id, SCH.loc_id,
+        tch_name,
+        stu_name,
+        loc_name, loc_lat, loc_lon, loc_acc, loc_v_acc, loc_h_acc
+        FROM sign_in AS SI
+        JOIN `schedule` AS SCH ON SI.sch_id = SCH.sch_id
+        JOIN course AS COZ ON SCH.coz_id = COZ.coz_id
+        JOIN teacher AS TCH ON COZ.tch_id = TCH.tch_id
+        JOIN student AS STU ON SI.stu_id = STU.stu_id
+        LEFT OUTER JOIN location AS LOC ON SCH.loc_id = LOC.loc_id
+        WHERE COZ.coz_id = #{cozId}
+            AND si_leave = TRUE
+    </select>
+    <resultMap id="abcStatisticsNeverSignIn" type="AbsStatistics">
+        <result property="sarWeek" column="si_week"/>
+        <association property="course" resultMap="course"/>
+        <association property="schedule" resultMap="schedule"/>
+        <collection property="studentList" ofType="User">
+            <id column="si_stu_id" property="userId"/>
+            <result column="si_stu_name" property="userName"/>
+        </collection>
+    </resultMap>
+    <select id="selectAbcStatisticsNeverSignIn" resultMap="abcStatisticsNeverSignIn">
+        SELECT
+        suv_man_id, suvm.sch_id, suvm.si_week, suvm.si_time, suv_man_auto_open,
+        sch.sch_id, sch.coz_id, sch_time, sch_day, sch_week, sch_year, sch_term, sch_fortnight, sch.loc_id,
+        coz.coz_id, coz_name, coz.tch_id, coz_size, coz_act_size, coz_attend_rate, coz_depart, coz_grade,
+        tch.tch_id, tch_name,
+        loc.loc_id, loc_name, loc_lat, loc_lon, loc_acc, loc_h_acc, loc_v_acc,
+        a.coz_id, a.stu_id,
+        s.stu_id si_stu_id, s.stu_name si_stu_name,
+        si_id, s2.stu_id, s2.sch_id, s2.si_time, si_leave, s2.si_week, si_approve, si_voucher,
+        s3.stu_id, s3.stu_name
+        FROM suv_man suvm
+        JOIN schedule sch on suvm.sch_id = sch.sch_id
+        JOIN course coz on sch.coz_id = coz.coz_id
+        LEFT OUTER JOIN teacher AS tch ON coz.tch_id = tch.tch_id
+        LEFT OUTER JOIN location AS loc ON loc.loc_id = sch.loc_id
+        JOIN attend a on coz.coz_id = a.coz_id
+        JOIN student s on a.stu_id = s.stu_id
+        LEFT OUTER JOIN sign_in s2 on s.stu_id = s2.stu_id
+        LEFT OUTER JOIN student s3 on s2.stu_id = s3.stu_id
+        <where>
+            s3.stu_id IS NULL
+            <if test="week != null and week !=''">
+                AND suvm.si_week = #{week}
+            </if>
+            <if test="cozName != null and cozName !=''">
+                AND coz_name LIKE "%"#{cozName}"%"
+            </if>
+            <if test="cozDepart != null and cozDepart !=''">
+                AND coz_depart LIKE "%"#{cozDepart}"%"
+            </if>
+            <if test="cozGrade != null and cozGrade !=''">
+                AND coz_grade = #{cozGrade}
+            </if>
+            <if test="userName != null and userName !=''">
+                AND s.stu_name = #{userName}
+            </if>
+            <if test="userId != null and userId !=''">
+                AND s.stu_id = #{userId}
+            </if>
+        </where>
+    </select>
+    <select id="selectAbcStatistics" resultMap="absStatistics">
+        SELECT
+        SAR.stu_id, SAR.sch_id, sar_week,
+        tch_name,
+        stu_name,
+        sch_time, sch_day, sch_week, sch_year, sch_term, sch_fortnight,
+        COZ.coz_id, coz_name, COZ.tch_id, coz_size, coz_act_size, coz_attend_rate, coz_depart, coz_grade,
+        LOC.loc_id, loc_name, loc_lat, loc_lon, loc_acc, loc_v_acc, loc_h_acc,
+        -1 AS si_approve
+        FROM course AS COZ
+        LEFT OUTER JOIN teacher AS tch ON COZ.tch_id = tch.tch_id
+        JOIN `schedule` AS SCH ON SCH.coz_id = COZ.coz_id
+        LEFT OUTER JOIN location AS LOC ON LOC.loc_id = SCH.loc_id
+        JOIN sch_abs_rec AS SAR ON SAR.sch_id = SCH.sch_id
+        JOIN student AS STU ON SAR.stu_id = STU.stu_id
+        <where>
+            <if test="week != null and week !=''">
+                sar_week = #{week}
+            </if>
+            <if test="cozName != null and cozName !=''">
+                AND coz_name LIKE "%"#{cozName}"%"
+            </if>
+            <if test="cozDepart != null and cozDepart !=''">
+                AND coz_depart LIKE "%"#{cozDepart}"%"
+            </if>
+            <if test="cozGrade != null and cozGrade !=''">
+                AND coz_grade = #{cozGrade}
+            </if>
+            <if test="userName != null and userName !=''">
+                AND stu_name = #{userName}
+            </if>
+            <if test="userId != null and userId !=''">
+                AND SAR.stu_id = #{userId}
+            </if>
+        </where>
+        UNION ALL
+        SELECT SIGN.stu_id, SIGN.sch_id, si_week AS sar_week,
+        tch_name,
+        stu_name,
+        sch_time, sch_day, sch_week, sch_year, sch_term, sch_fortnight,
+        COZ.coz_id, coz_name, COZ.tch_id, coz_size, coz_act_size, coz_attend_rate, coz_depart, coz_grade,
+        LOC.loc_id, loc_name, loc_lat, loc_lon, loc_acc, loc_v_acc, loc_h_acc,
+        si_approve
+        FROM sign_in AS SIGN
+        JOIN `schedule` AS SCH ON SIGN.sch_id = SCH.sch_id
+        JOIN `course` AS COZ ON SCH.coz_id = COZ.coz_id
+        LEFT OUTER JOIN teacher AS tch ON COZ.tch_id = tch.tch_id
+        LEFT OUTER JOIN location AS LOC ON LOC.loc_id = SCH.loc_id
+        JOIN student AS STU ON SIGN.stu_id = STU.stu_id
+        <where>
+            si_approve != 1
+            <if test="week != null and week !=''">
+                AND si_week = #{week}
+            </if>
+            <if test="cozName != null and cozName !=''">
+                AND coz_name LIKE "%"#{cozName}"%"
+            </if>
+            <if test="cozDepart != null and cozDepart !=''">
+                AND coz_depart LIKE "%"#{cozDepart}"%"
+            </if>
+            <if test="cozGrade != null and cozGrade !=''">
+                AND coz_grade = #{cozGrade}
+            </if>
+            <if test="userName != null and userName !=''">
+                AND stu_name = #{userName}
+            </if>
+            <if test="userId != null and userId !=''">
+                AND SIGN.stu_id = #{userId}
+            </if>
+        </where>
+    </select>
+</mapper>

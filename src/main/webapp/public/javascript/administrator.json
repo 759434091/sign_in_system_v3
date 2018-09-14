@@ -1,0 +1,6 @@
+{
+  "统计信息": "./iFrame/administrator/adm_abs_statistics.html",
+  "管理督导员": "./iFrame/administrator/admin_suv.html",
+  "查看全校课程": "./iFrame/administrator/adm_coz_table.html",
+  "导入信息": "./iFrame/administrator/adm_import.html"
+}

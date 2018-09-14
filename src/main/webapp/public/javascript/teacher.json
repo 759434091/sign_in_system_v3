@@ -1,0 +1,7 @@
+{
+  "查看所有课程": "./iFrame/teacher/course_table.html",
+  "查看历史督导记录": "./iFrame/teacher/his_record.html",
+  "查看历史缺勤记录": "./iFrame/teacher/his_absent.html",
+  "审批请假": "./iFrame/teacher/tch_leave.html",
+  "导入信息":"./iFrame/teacher/tch_import.html"
+}

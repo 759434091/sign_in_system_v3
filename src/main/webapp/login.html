@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en" style="height: 100%">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>Login</title>
+    <link href="https://cdn.bootcss.com/bootstrap/4.1.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="./public/stylesheets/style.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdn.bootcss.com/popper.js/1.14.3/umd/popper.min.js"></script>
+    <script src="https://cdn.bootcss.com/bootstrap/4.1.0/js/bootstrap.min.js"></script>
+    <script src="https://cdn.bootcss.com/jquery.serializeJSON/2.9.0/jquery.serializejson.min.js"></script>
+</head>
+<body class="index d-flex align-items-center text-center">
+<div class="container">
+    <div class="row justify-content-center">
+        <form class="col-md-5 col-lg-3 loginForm" id="loginForm" name="loginForm" action="javascript:void(0)"
+              method="post">
+            <h1>Sign in</h1>
+            <fieldset class="form-group">
+                <input class="form-control" name="userId" id="userId" type="text" placeholder="Enter User Name"/>
+                <input class="form-control" name="userPwd" id="userPwd" autocomplete="userPwd" type="password"
+                       placeholder="Password"/>
+                <button class="btn btn-primary btn-block" id="submit" name="submit" disabled>Submit</button>
+            </fieldset>
+            <div class="row">
+                <div class="alert alert-danger pwd-error" role="alert">
+                    用户名或密码错误
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="row justify-content-center fixed-bottom mb-5">
+    <a class="text-dark" style="font-size: 0.5rem" href="http://www.miitbeian.gov.cn">粤ICP备18035033号-1</a>
+</div>
+<script src="https://pv.sohu.com/cityjson?ie=utf-8"></script>
+<script src="./public/javascript/gt.js"></script>
+<script>
+    let token = null;
+    let handler = function (captchaObj) {
+        $('#submit').click(function () {
+            // 调用之前先通过前端表单校验
+            captchaObj.verify();
+        }).attr("disabled", false);
+        captchaObj.onReady(function () {
+            $("#wait").hide();
+        }).onSuccess(function () {
+            let result = captchaObj.getValidate();
+            if (!result) {
+                return alert('请完成验证');
+            }
+            $.ajax({
+                url: './verifyCaptchaCode.do?time=' + (new Date()).getTime(),
+                type: 'POST',
+                headers: {
+                    'Access-Token': localStorage.getItem("token")
+                },
+                dataType: 'json',
+                data: {
+                    client_type: "web",
+                    ip_address: returnCitySN.cip,
+                    geetest_challenge: result.geetest_challenge,
+                    geetest_validate: result.geetest_validate,
+                    geetest_seccode: result.geetest_seccode
+                },
+                success: function (data) {
+                    if (data.status === 'success') {
+                        //后端取得通行
+                        submitForm();
+                    } else if (data.status === 'failure') {
+                        setTimeout(function () {
+                            alert('登录失败，请完成验证');
+                            captchaObj.reset();
+                        }, 1500);
+                    }
+                }
+            });
+        });
+    };
+    $.ajax({
+        url: "./startCaptcha.do?time=" + (new Date()).getTime(), // 加随机数防止缓存
+        type: "get",
+        data: {
+            client_type: "web",
+            ip_address: returnCitySN.cip
+        },
+        dataType: "json",
+        success: function (data) {
+            if (data != null) {
+                localStorage.setItem("token", data.token);
+                initGeetest({
+                    gt: data.gt,
+                    challenge: data.challenge,
+                    new_captcha: data.new_captcha,
+                    offline: !data.success,
+                    product: "bind",
+                    https: true,
+                    width: "300px"
+                }, handler);
+            }
+        }
+    });
+</script>
+<script>
+    function submitForm() {
+        $("html").css("cursor", "progress");
+        $("#submit").attr("disabled", "disabled");
+        let params = $("#loginForm").serializeJSON();
+        let userBindOpenId = {
+            user: params,
+            code: null
+        };
+        $.ajax(
+            {
+                type: "post",
+                url: "./login.do",
+                async: true,
+                data: JSON.stringify(userBindOpenId),
+                headers: {
+                    "Access-token": localStorage.getItem("token")
+                },
+                contentType: "application/json;charset=utf-8",
+                dataType: "json",
+                success: function (data) {
+                    if (data != null && Object.keys(data).length !== 0) {
+                        let user = data.user;
+                        let token = data.token;
+                        localStorage.setItem("user", JSON.stringify(user));
+                        localStorage.setItem("token", token);
+                        window.location.href = "./index.html";
+                    } else {
+                        $(".pwd-error").show();
+                        $("html").css("cursor", "default");
+                        $("#submit").removeAttr("disabled");
+                        setTimeout(function () {
+                            $(".pwd-error").fadeOut();
+                        }, 3000);
+                    }
+                },
+                error: function (data) {
+                    console.log(data);
+                    alert("登录失败, 请稍后重试");
+                    $("html").css("cursor", "default");
+                    $("#submit").removeAttr("disabled");
+                }
+            }
+        );
+    }
+</script>
+</body>
+</html>

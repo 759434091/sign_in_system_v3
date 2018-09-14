@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="team.a9043.mapper.FileMapper">
+    <resultMap id="teacher" type="User">
+        <id property="userId" column="tch_id"/>
+        <result property="userName" column="tch_name"/>
+    </resultMap>
+    <resultMap id="course" type="Course">
+        <id property="cozId" column="coz_id"/>
+        <result property="cozName" column="coz_name"/>
+        <association property="teacher" resultMap="teacher"/>
+    </resultMap>
+    <resultMap id="student" type="User">
+        <id property="userId" column="stu_id"/>
+        <result property="userName" column="stu_name"/>
+    </resultMap>
+    <resultMap id="cozSuspend" type="CozSuspend">
+        <id property="susId" column="sus_id"/>
+        <result property="susWeek" column="sus_week"/>
+        <result property="schId" column="COZ_SCH_id"/>
+    </resultMap>
+    <resultMap id="location" type="Location">
+        <id property="locId" column="loc_id"/>
+        <result property="locName" column="loc_name"/>
+        <result property="locLat" column="loc_lat"/>
+        <result property="locLon" column="loc_lon"/>
+        <result property="locAcc" column="loc_acc"/>
+        <result property="locHAcc" column="loc_h_acc"/>
+        <result property="locVAcc" column="loc_v_acc"/>
+    </resultMap>
+    <resultMap id="schedule" type="Schedule">
+        <id property="schId" column="sch_id"/>
+        <result property="cozId" column="coz_id"/>
+        <result property="schTime" column="sch_time"/>
+        <result property="schDay" column="sch_day"/>
+        <result property="schWeek" column="sch_week"/>
+        <result property="schYear" column="sch_year"/>
+        <result property="schTerm" column="sch_term" javaType="boolean"/>
+        <result property="schFortnight" column="sch_fortnight"/>
+        <association property="location" resultMap="location"/>
+        <collection property="cozSuspendList" resultMap="cozSuspend"/>
+    </resultMap>
+    <resultMap id="attend" type="Attend">
+        <result property="cozId" column="coz_id"/>
+        <result property="userId" column="stu_id"/>
+    </resultMap>
+    <select id="checkTchExist" resultMap="teacher">
+        SELECT
+        tch_id, tch_pwd, tch_permit, tch_name, open_id
+        FROM teacher
+        WHERE tch_id = #{userId}
+    </select>
+    <select id="checkCozExist" resultMap="course">
+        SELECT
+        coz_id, coz_name, tch_id
+        FROM course
+        WHERE coz_id = #{cozId}
+    </select>
+    <select id="checkStudent" resultMap="student">
+        SELECT
+        stu_id, stu_name
+        FROM student
+        WHERE stu_id = #{userId}
+    </select>
+    <select id="checkSchExist" resultMap="schedule">
+        SELECT sch_id, coz_id, sch_time, sch_day, sch_week, sch_year, sch_term, sch_fortnight, loc_id
+        sch_id
+        FROM `schedule`
+        WHERE coz_id = #{cozId}
+    </select>
+    <select id="findLocation" resultMap="location">
+        SELECT loc_id, loc_name, loc_lat, loc_lon, loc_acc, loc_h_acc, loc_v_acc
+        FROM location
+        WHERE loc_name LIKE "%"#{locName}"%"
+    </select>
+    <insert id="addStudent" parameterType="User">
+        INSERT student(stu_id, stu_pwd, stu_permit, stu_name, open_id) VALUES (#{userId}, '4QrcOUm6Wau+VuBX8g+IPg==', 1, #{userName}, NULL)
+    </insert>
+    <insert id="addTeacher" parameterType="User">
+        INSERT teacher(tch_id, tch_pwd, tch_permit, tch_name, open_id) VALUES (#{userId}, '4QrcOUm6Wau+VuBX8g+IPg==', 4, #{userName}, NULL)
+    </insert>
+    <insert id="addCourse" parameterType="Course">
+        INSERT course(coz_id, coz_name, tch_id, coz_size, coz_act_size, coz_depart, coz_grade )
+        VALUES (#{cozId}, #{cozName}, #{teacher.userId}, #{cozSize}, #{cozActSize}, #{cozDepart}, #{cozGrade})
+    </insert>
+    <insert id="insertSchedule" parameterType="Schedule">
+        INSERT schedule(coz_id, sch_time, sch_day, sch_week, sch_year, sch_term, sch_fortnight, loc_id) VALUES (#{cozId}, #{schTime}, #{schDay}, #{schWeek}, #{schYear}, #{schTerm}, #{schFortnight}, #{location.locId})
+    </insert>
+    <insert id="insertAttend" parameterType="Attend">
+        INSERT attend(coz_id, stu_id) value (#{cozId}, #{userId})
+    </insert>
+</mapper>

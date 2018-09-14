@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="team.a9043.mapper.AspectMapper">
+    <resultMap id="schedule" type="Schedule">
+        <id property="schId" column="sch_id"/>
+        <result property="cozId" column="coz_id"/>
+        <result property="schTime" column="sch_time"/>
+        <result property="schDay" column="sch_day"/>
+        <result property="schWeek" column="sch_week"/>
+        <result property="schYear" column="sch_year"/>
+        <result property="schTerm" column="sch_term" javaType="boolean"/>
+        <result property="schFortnight" column="sch_fortnight"/>
+    </resultMap>
+    <select id="findSchCoz" resultMap="schedule">
+        SELECT sch_id, coz_id, sch_time, sch_day, sch_fortnight, sch_week, sch_term, sch_year, loc_id
+        FROM `schedule`
+        WHERE sch_id = #{schId}
+    </select>
+    <select id="findCozSch" resultMap="schedule">
+        SELECT sch_id, coz_id, sch_time, sch_day, sch_fortnight, sch_week, sch_term, sch_year, loc_id
+        FROM `schedule`
+        WHERE coz_id = #{cozId}
+    </select>
+</mapper>
