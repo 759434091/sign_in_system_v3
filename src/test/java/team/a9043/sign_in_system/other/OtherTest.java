@@ -6,7 +6,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.task.TaskExecutor;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -45,8 +44,6 @@ public class OtherTest {
     private TaskExecutor taskExecutor;
     @Resource
     private ThreadPoolTaskScheduler threadPoolTaskScheduler;
-    @Resource(name = "sisRedisTemplate")
-    private RedisTemplate<String, Object> sisRedisTemplate;
     @Resource
     private BCryptPasswordEncoder bCryptPasswordEncoder;
 

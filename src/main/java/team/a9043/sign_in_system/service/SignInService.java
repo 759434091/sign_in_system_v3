@@ -14,6 +14,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import team.a9043.sign_in_system.aspect.SupervisionAspect;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
@@ -24,7 +25,6 @@ import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
 import team.a9043.sign_in_system.util.judgetime.JudgeTimeUtil;
 
 import javax.annotation.Resource;
-import javax.transaction.Transactional;
 import java.security.InvalidParameterException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -237,7 +237,7 @@ public class SignInService {
             .contains(new SimpleGrantedAuthority("ADMINISTRATOR")))
             sisJoinCourseList.parallelStream()
                 .filter(sisJoinCourse -> sisJoinCourse.getJoinCourseType()
-                    .equals(team.a9043.sign_in_system.entity.SisJoinCourse.JoinCourseType.TEACHING.ordinal()) &&
+                    .equals(SisJoinCourse.JoinCourseType.TEACHING.ordinal()) &&
                     sisJoinCourse.getSuId().equals(sisUser.getSuId()))
                 .findAny()
                 .orElseThrow(() -> new InvalidPermissionException(
@@ -247,7 +247,7 @@ public class SignInService {
         Map<String, Object> hashMap = sisJoinCourseList
             .parallelStream()
             .filter(sisJoinCourse -> sisJoinCourse.getJoinCourseType()
-                .equals(team.a9043.sign_in_system.entity.SisJoinCourse.JoinCourseType.ATTENDANCE.ordinal()))
+                .equals(SisJoinCourse.JoinCourseType.ATTENDANCE.ordinal()))
             .map(SisJoinCourse::getSuId)
             .collect(Collectors.toMap(Function.identity(),
                 (s) -> Boolean.FALSE));

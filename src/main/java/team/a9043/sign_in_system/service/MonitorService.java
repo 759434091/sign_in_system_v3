@@ -8,6 +8,7 @@ import org.json.JSONObject;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import team.a9043.sign_in_system.async.AsyncJoinService;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
@@ -19,7 +20,6 @@ import team.a9043.sign_in_system.util.judgetime.ScheduleParserException;
 
 import javax.annotation.Nullable;
 import javax.annotation.Resource;
-import javax.transaction.Transactional;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -50,6 +51,15 @@ public class MonitorService {
     private SisUserInfoMapper sisUserInfoMapper;
     @Resource
     private AsyncJoinService asyncJoinService;
+    private static final int N = 20;
+    private ReentrantLock[] locks = new ReentrantLock[N];
+
+    {
+        for (int i = 0; i < N; i++) {
+            locks[i] = new ReentrantLock();
+        }
+    }
+
 
     public JSONObject getCourses(@NotNull SisUser sisUser) throws ExecutionException, InterruptedException {
         SisCourseExample sisCourseExample = new SisCourseExample();
@@ -184,9 +194,19 @@ public class MonitorService {
     @Transactional
     public JSONObject drawMonitor(@NotNull SisUser sisUser,
                                   @NotNull String scId) throws IncorrectParameterException, InvalidPermissionException {
+        ReentrantLock lock =
+            locks[String.format("sis_draw_monitor_%s", scId).hashCode() % N];
+        if (!lock.tryLock()) {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("success", false);
+            jsonObject.put("message", "该课已被占, 请稍后再试");
+            return jsonObject;
+        }
+
         SisCourse sisCourse = Optional
             .ofNullable(sisCourseMapper.selectByPrimaryKey(scId))
-            .orElseThrow(() -> new IncorrectParameterException("No course: " + scId));
+            .orElseThrow(() -> new IncorrectParameterException("No course" +
+                ": " + scId));
 
         if (null != sisCourse.getSuId()) {
             throw new InvalidPermissionException("Invalid permission: " + scId);
@@ -201,6 +221,7 @@ public class MonitorService {
             sisCourseMapper.updateByPrimaryKeySelective(updatedSisCourse) > 0;
         jsonObject.put("success", success);
         log.info("User " + sisUser.getSuId() + " has draw course: " + scId);
+        lock.unlock();
         return jsonObject;
     }
 

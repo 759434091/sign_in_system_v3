@@ -8,8 +8,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.pojo.SisUser;
-import team.a9043.sign_in_system.repository.SisSignInDetailRepository;
-import team.a9043.sign_in_system.repository.SisSignInRepository;
 
 import javax.annotation.Resource;
 
@@ -20,10 +18,6 @@ import javax.annotation.Resource;
 @SpringBootTest
 @Slf4j
 public class SignInServiceTest {
-    @Resource
-    private SisSignInRepository sisSignInRepository;
-    @Resource
-    private SisSignInDetailRepository sisSignInDetailRepository;
     @Resource
     private SignInService signInService;
 

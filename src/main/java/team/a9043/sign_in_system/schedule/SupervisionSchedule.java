@@ -74,8 +74,8 @@ public class SupervisionSchedule {
 
                     List<SisSchedule> scheduleList =
                         sisScheduleList.parallelStream()
-                        .filter(sisSchedule -> sisSchedule.getScId().equals(scId))
-                        .collect(Collectors.toList());
+                            .filter(sisSchedule -> sisSchedule.getScId().equals(scId))
+                            .collect(Collectors.toList());
 
                     if (scheduleList.isEmpty())
                         return null;
@@ -84,8 +84,8 @@ public class SupervisionSchedule {
                             Integer ssId = sisSchedule.getSsId();
                             int countNum =
                                 (int) sisSupervisionList.parallelStream()
-                                .filter(sisSupervision -> sisSupervision.getSsId().equals(ssId))
-                                .count();
+                                    .filter(sisSupervision -> sisSupervision.getSsId().equals(ssId))
+                                    .count();
 
                             int lackNum = week - countNum;
                             lackNum = lackNum < 0 ? 0 : lackNum;
@@ -120,8 +120,11 @@ public class SupervisionSchedule {
                     }));
 
             boolean res = sisUserInfoMapper.insertList(sisUserInfoList) > 0;
+
             if (!res)
                 log.error("insert sisUserInfo error: " + new JSONArray(sisUserInfoList));
+            else
+                log.info("insert sisUserInfo success: " + new JSONArray(sisUserInfoList));
         } catch (InvalidTimeParameterException e) {
             e.printStackTrace();
         }
