@@ -1,5 +1,8 @@
 package team.a9043.sign_in_system.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.pagehelper.PageInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.junit.Test;
@@ -10,10 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
 import team.a9043.sign_in_system.mapper.SisScheduleMapper;
-import team.a9043.sign_in_system.pojo.SisMonitorTrans;
-import team.a9043.sign_in_system.pojo.SisSchedule;
-import team.a9043.sign_in_system.pojo.SisSupervision;
-import team.a9043.sign_in_system.pojo.SisUser;
+import team.a9043.sign_in_system.pojo.*;
 import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
 import team.a9043.sign_in_system.util.judgetime.JudgeTimeUtil;
 import team.a9043.sign_in_system.util.judgetime.ScheduleParserException;
@@ -32,17 +32,18 @@ import java.util.concurrent.ExecutionException;
 @SpringBootTest
 @Slf4j
 public class MonitorServiceTest {
+    private ObjectMapper objectMapper = new ObjectMapper();
     @Resource
     private MonitorService monitorService;
     @Resource
     private SisScheduleMapper sisScheduleMapper;
 
     @Test
-    public void getCourses() throws ExecutionException, InterruptedException {
+    public void getCourses() throws ExecutionException, InterruptedException, JsonProcessingException {
         SisUser sisUser = new SisUser();
         sisUser.setSuId("2016220401001");
-        JSONObject jsonObject = monitorService.getCourses(sisUser);
-        log.info(jsonObject.toString(2));
+        PageInfo<SisCourse> pageInfo = monitorService.getCourses(sisUser);
+        log.info(objectMapper.writeValueAsString(pageInfo));
     }
 
     @Test
@@ -107,12 +108,14 @@ public class MonitorServiceTest {
 
     @Test
     public void getMonitors() throws IncorrectParameterException {
-        JSONObject jsonObject = monitorService.getMonitors(1, 10, "2016220401001", null, true);
+        JSONObject jsonObject = monitorService.getMonitors(1, 10,
+            "2016220401001", null, true);
         log.info(jsonObject.toString(2));
     }
 
     @Test
-    public void isCourseTime() throws InvalidTimeParameterException, ScheduleParserException {
+    public void isCourseTime() throws InvalidTimeParameterException,
+        ScheduleParserException {
         SisSchedule sisSchedule = sisScheduleMapper.selectByPrimaryKey(4);
         JudgeTimeUtil.isCourseTime(sisSchedule, 2, LocalDateTime.now());
     }

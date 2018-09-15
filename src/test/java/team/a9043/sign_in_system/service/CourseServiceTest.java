@@ -1,5 +1,8 @@
 package team.a9043.sign_in_system.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.pagehelper.PageInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.junit.Test;
@@ -23,27 +26,36 @@ import java.util.concurrent.ExecutionException;
 @SpringBootTest
 @Slf4j
 public class CourseServiceTest {
+    private ObjectMapper objectMapper = new ObjectMapper();
     @Resource
     private CourseService courseService;
 
     @Test
     public void getCourses() throws
-        ExecutionException, InterruptedException, IncorrectParameterException {
+        ExecutionException, InterruptedException, IncorrectParameterException
+        , JsonProcessingException {
         LocalDateTime localDateTime = LocalDateTime.now();
-        JSONObject jsonObject = courseService.getCourses(1, 10, true, null, null
-            , null, null, null);
+        PageInfo<SisCourse> pageInfo = courseService.getCourses(1,
+            10,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null);
         LocalDateTime localDateTime2 = LocalDateTime.now();
-        log.info(jsonObject.toString(2));
+        log.info(objectMapper.writeValueAsString(pageInfo));
         log.info("until: " + localDateTime.until(localDateTime2,
             ChronoUnit.MILLIS));
     }
 
     @Test
-    public void getCourses1() throws ExecutionException, InterruptedException {
+    public void getCourses1() throws ExecutionException, InterruptedException, JsonProcessingException {
         SisUser sisUser = new SisUser();
         sisUser.setSuId("3203604");
-        JSONObject jsonObject = courseService.getCourses(sisUser, SisJoinCourse.JoinCourseType.TEACHING);
-        log.info(jsonObject.toString(2));
+        PageInfo<SisJoinCourse> pageInfo = courseService.getCourses(sisUser,
+            SisJoinCourse.JoinCourseType.TEACHING);
+        log.info(objectMapper.writeValueAsString(pageInfo));
     }
 
     @Test

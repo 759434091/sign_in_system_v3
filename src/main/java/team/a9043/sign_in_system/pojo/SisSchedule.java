@@ -1,5 +1,6 @@
 package team.a9043.sign_in_system.pojo;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -82,5 +83,6 @@ public class SisSchedule {
 
     private Integer slId;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<SisSupervision> sisSupervisionList;
 }
