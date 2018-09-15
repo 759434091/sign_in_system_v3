@@ -86,17 +86,15 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler({
-
         HttpMediaTypeNotSupportedException.class
     })
     @ResponseStatus(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
-    public JSONObject handleUnsupportedMediaType(Exception e,
-                                                 HttpServletResponse response) {
-        response.setHeader("Access-Control-Allow-Origin", "*");
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("errMsg", e.getMessage());
-        jsonObject.put("err", HttpStatus.UNSUPPORTED_MEDIA_TYPE);
-        return jsonObject;
+    public void handleUnsupportedMediaType(Exception e,
+                                                 HttpServletResponse response) throws IOException {
+        response.setHeader("Content-type",
+            "application/json;charset=utf-8");
+        response.getWriter().write(
+            formatErr(HttpStatus.UNSUPPORTED_MEDIA_TYPE, e.getMessage()));
     }
 
     @ExceptionHandler({

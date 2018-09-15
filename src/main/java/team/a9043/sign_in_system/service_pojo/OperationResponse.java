@@ -10,7 +10,7 @@ import lombok.Setter;
 @Setter
 @Getter
 public class OperationResponse {
-    public static OperationResponse SUCCESS = new OperationResponse(true);
+    public static final OperationResponse SUCCESS = new OperationResponse(true);
 
     private boolean success;
     private String message;

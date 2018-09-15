@@ -1,5 +1,8 @@
 package team.a9043.sign_in_system.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.pagehelper.PageInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.junit.Test;
@@ -10,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.WxServerException;
 import team.a9043.sign_in_system.pojo.SisUser;
+import team.a9043.sign_in_system.service_pojo.OperationResponse;
 import team.a9043.sign_in_system.util.JwtUtil;
 
 import javax.annotation.Resource;
@@ -23,6 +27,7 @@ import java.util.Map;
 @SpringBootTest
 @Slf4j
 public class UserServiceTest {
+    private ObjectMapper objectMapper = new ObjectMapper();
     @Resource
     private UserService userService;
 
@@ -43,15 +48,18 @@ public class UserServiceTest {
     }
 
     @Test
-    public void getTokensByCode() throws WxServerException {
-        JSONObject jsonObject = userService.getTokensByCode("123456");
-        log.info(jsonObject.toString(2));
+    public void getTokensByCode() throws WxServerException,
+        JsonProcessingException {
+        OperationResponse or = userService.getTokensByCode("123456");
+        log.info(objectMapper.writeValueAsString(or));
     }
 
     @Test
-    public void getStudents() throws IncorrectParameterException {
-        JSONObject jsonObject = userService.getStudents(1, 10, null, null,
+    public void getStudents() throws IncorrectParameterException,
+        JsonProcessingException {
+        PageInfo<SisUser> pageInfo = userService.getStudents(1, 10, null,
+            null,
             true);
-        log.info(jsonObject.toString(2));
+        log.info(objectMapper.writeValueAsString(pageInfo));
     }
 }

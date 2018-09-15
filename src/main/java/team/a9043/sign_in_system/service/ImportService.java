@@ -2,8 +2,6 @@ package team.a9043.sign_in_system.service;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -18,6 +16,7 @@ import team.a9043.sign_in_system.exception.InvalidPermissionException;
 import team.a9043.sign_in_system.exception.UnknownServerError;
 import team.a9043.sign_in_system.mapper.*;
 import team.a9043.sign_in_system.pojo.*;
+import team.a9043.sign_in_system.service_pojo.OperationResponse;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Resource;
@@ -57,86 +56,91 @@ public class ImportService {
     @Resource(name = "sisRedisTemplate")
     private RedisTemplate<String, Object> sisRedisTemplate;
 
-    public JSONObject getProgress(String key) {
+    public OperationResponse getProgress(String key) {
         Integer progress = (Integer) sisRedisTemplate.opsForValue().get(key);
-        if (null == progress) {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("success", false);
-            jsonObject.put("message", "No process.");
-            return jsonObject;
-        }
-        if (progress.equals(-1)) {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("success", false);
-            jsonObject.put("message", "Process error");
-            return jsonObject;
-        }
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", true);
-        jsonObject.put("progress", progress);
-        return jsonObject;
+        if (null == progress)
+            return new OperationResponse(false, "No process.");
+        if (progress.equals(-1))
+            return new OperationResponse(false, "Process error");
+
+        OperationResponse operationResponse = new OperationResponse();
+        operationResponse.setSuccess(true);
+        operationResponse.setData(progress);
+        operationResponse.setMessage("data => progress");
+        return operationResponse;
     }
 
     @Transactional
     @Async
-    public void readCozInfo(String key, InputStream inputStream) throws IOException,
-        InvalidFormatException {
+    public void readCozInfo(String key, InputStream inputStream) {
         final String[] rowNameList = {"课程序号", "课程名称", "教师工号", "授课教师", "学年度学期"
             , "上课地点", "上课时间", "年级", "上课院系", "实际人数", "容量"};
 
-        sisRedisTemplate.opsForValue().set(key, 0);
-        List<List<?>> sheetList = readExcel(inputStream);
-        sisRedisTemplate.opsForValue().set(key, 10);
-        Map<String, Integer> cozMap = getMap(sheetList, rowNameList);
-        if (null == cozMap) {
-            logger.error("文件不合法");
+        try {
+            sisRedisTemplate.opsForValue().set(key, 0);
+            List<List<?>> sheetList = readExcel(inputStream);
+            sisRedisTemplate.opsForValue().set(key, 10);
+            Map<String, Integer> cozMap = getMap(sheetList, rowNameList);
+            if (null == cozMap) {
+                logger.error("文件不合法");
+                sisRedisTemplate.opsForValue().set(key, -1, 10,
+                    TimeUnit.MINUTES);
+                return;
+            }
+
+            //first
+            addTeacher(sheetList, cozMap);
+            sisRedisTemplate.opsForValue().set(key, 30);
+            addLocation(sheetList, cozMap);
+            sisRedisTemplate.opsForValue().set(key, 40);
+            addDepartment(sheetList, cozMap);
+            sisRedisTemplate.opsForValue().set(key, 50);
+
+            //second depend on first
+            List<List<?>> newCozSheetList = addCourse(sheetList, cozMap);
+            sisRedisTemplate.opsForValue().set(key, 70);
+
+            //third depend on second
+            addJoinCourseTeaching(newCozSheetList, cozMap);
+            sisRedisTemplate.opsForValue().set(key, 80);
+            addCourseDepart(newCozSheetList, cozMap);
+            sisRedisTemplate.opsForValue().set(key, 90);
+            addCourseSchedule(newCozSheetList, cozMap);
+            sisRedisTemplate.opsForValue().set(key, 100, 10, TimeUnit.MINUTES);
+        } catch (Exception e) {
+            e.printStackTrace();
             sisRedisTemplate.opsForValue().set(key, -1, 10, TimeUnit.MINUTES);
-            return;
         }
-
-        //first
-        addTeacher(sheetList, cozMap);
-        sisRedisTemplate.opsForValue().set(key, 30);
-        addLocation(sheetList, cozMap);
-        sisRedisTemplate.opsForValue().set(key, 40);
-        addDepartment(sheetList, cozMap);
-        sisRedisTemplate.opsForValue().set(key, 50);
-
-        //second depend on first
-        List<List<?>> newCozSheetList = addCourse(sheetList, cozMap);
-        sisRedisTemplate.opsForValue().set(key, 70);
-
-        //third depend on second
-        addJoinCourseTeaching(newCozSheetList, cozMap);
-        sisRedisTemplate.opsForValue().set(key, 80);
-        addCourseDepart(newCozSheetList, cozMap);
-        sisRedisTemplate.opsForValue().set(key, 90);
-        addCourseSchedule(newCozSheetList, cozMap);
-        sisRedisTemplate.opsForValue().set(key, 100, 10, TimeUnit.MINUTES);
     }
 
     @Transactional
     @Async
-    public void readStuInfo(String key, InputStream inputStream) throws IOException,
-        InvalidFormatException {
+    public void readStuInfo(String key, InputStream inputStream) {
         final String[] rowNameList = {"学号", "姓名", "课程序号"};
-        sisRedisTemplate.opsForValue().set(key, 10);
-        List<List<?>> sheetList = readExcel(inputStream);
-        sisRedisTemplate.opsForValue().set(key, 30);
-        Map<String, Integer> stuMap = getMap(sheetList, rowNameList);
-        sisRedisTemplate.opsForValue().set(key, 50);
-        if (null == stuMap) {
-            logger.error("文件不合法");
-            sisRedisTemplate.opsForValue().set(key, -1, 10, TimeUnit.MINUTES);
-            return;
-        }
 
-        //base
-        addStudent(sheetList, stuMap);
-        sisRedisTemplate.opsForValue().set(key, 70);
-        //depend on base
-        addAttendance(sheetList, stuMap);
-        sisRedisTemplate.opsForValue().set(key, 100, 10, TimeUnit.MINUTES);
+        try {
+            sisRedisTemplate.opsForValue().set(key, 10);
+            List<List<?>> sheetList = readExcel(inputStream);
+            sisRedisTemplate.opsForValue().set(key, 30);
+            Map<String, Integer> stuMap = getMap(sheetList, rowNameList);
+            sisRedisTemplate.opsForValue().set(key, 50);
+            if (null == stuMap) {
+                logger.error("文件不合法");
+                sisRedisTemplate.opsForValue().set(key, -1, 10,
+                    TimeUnit.MINUTES);
+                return;
+            }
+
+            //base
+            addStudent(sheetList, stuMap);
+            sisRedisTemplate.opsForValue().set(key, 70);
+            //depend on base
+            addAttendance(sheetList, stuMap);
+            sisRedisTemplate.opsForValue().set(key, 100, 10, TimeUnit.MINUTES);
+        } catch (Exception e) {
+            e.printStackTrace();
+            sisRedisTemplate.opsForValue().set(key, -1, 10, TimeUnit.MINUTES);
+        }
     }
 
     private Map<String, Integer> getMap(@Nonnull List<List<?>> sheetList,
@@ -158,8 +162,8 @@ public class ImportService {
     }
 
     @Transactional
-    boolean addTeacher(List<List<?>> sheetList,
-                       Map<String, Integer> cozMap) {
+    void addTeacher(List<List<?>> sheetList,
+                    Map<String, Integer> cozMap) {
         String encryptPwd = bCryptPasswordEncoder.encode("123456");
         Set<SisUser> sisUserSet = sheetList.stream()
             .skip(1)
@@ -199,7 +203,7 @@ public class ImportService {
         SisUserExample sisUserExample = new SisUserExample();
         sisUserExample.createCriteria().andSuIdIn(suIdList);
         if (suIdList.isEmpty())
-            return true;
+            return;
 
         List<String> oldSuIdList =
             sisUserMapper.selectByExample(sisUserExample)
@@ -214,20 +218,18 @@ public class ImportService {
             .collect(Collectors.toList());
 
         if (insertSisUserList.isEmpty())
-            return true;
+            return;
         int res = sisUserMapper.insertList(insertSisUserList);
         if (res <= 0) {
             logger.error("error insert teachers");
-            return false;
         } else {
             logger.info("success insert teachers: " + res);
-            return true;
         }
     }
 
     @Transactional
-    boolean addLocation(List<List<?>> sheetList,
-                        Map<String, Integer> cozMap) {
+    void addLocation(List<List<?>> sheetList,
+                     Map<String, Integer> cozMap) {
         Set<String> firstLocStrSet = sheetList.stream().skip(1).parallel()
             .map(row -> row.get(cozMap.get("上课地点")).toString().split(","))
             .flatMap(Arrays::stream)
@@ -237,7 +239,7 @@ public class ImportService {
             .filter(locStr -> !locStr.equals("") && locStr.length() > 1)
             .collect(Collectors.toSet());
         if (firstLocStrSet.isEmpty())
-            return true;
+            return;
 
         SisLocationExample sisLocationExample = new SisLocationExample();
         sisLocationExample.createCriteria().andSlNameIn(new ArrayList<>(firstLocStrSet));
@@ -257,20 +259,18 @@ public class ImportService {
             .collect(Collectors.toList());
 
         if (sisLocationList.isEmpty())
-            return true;
+            return;
         int res = sisLocationMapper.insertList(sisLocationList);
         if (res <= 0) {
             logger.error("error insert locations");
-            return false;
         } else {
             logger.info("success insert locations: " + res);
-            return true;
         }
     }
 
     @Transactional
-    boolean addDepartment(List<List<?>> sheetList,
-                          Map<String, Integer> cozMap) {
+    void addDepartment(List<List<?>> sheetList,
+                       Map<String, Integer> cozMap) {
         Set<String> firstDepStrSet = sheetList.stream().skip(1)
             .map(row -> row.get(cozMap.get("上课院系")).toString().split(" "))
             .flatMap(Arrays::stream)
@@ -280,7 +280,7 @@ public class ImportService {
             .filter(depStr -> !depStr.equals("") && depStr.length() > 1)
             .collect(Collectors.toSet());
         if (firstDepStrSet.isEmpty())
-            return true;
+            return;
 
         SisDepartmentExample sisDepartmentExample = new SisDepartmentExample();
         sisDepartmentExample.createCriteria().andSdNameIn(new ArrayList<>(firstDepStrSet));
@@ -300,14 +300,12 @@ public class ImportService {
                 .collect(Collectors.toList());
 
         if (insertSisDepartmentList.isEmpty())
-            return true;
+            return;
         int res = sisDepartmentMapper.insertList(insertSisDepartmentList);
         if (res <= 0) {
             logger.error("error insert departments");
-            return false;
         } else {
             logger.info("success insert departments: " + res);
-            return true;
         }
     }
 
@@ -374,8 +372,8 @@ public class ImportService {
     }
 
     @Transactional
-    boolean addJoinCourseTeaching(List<List<?>> sheetList,
-                                  Map<String, Integer> cozMap) {
+    void addJoinCourseTeaching(List<List<?>> sheetList,
+                               Map<String, Integer> cozMap) {
         List<SisJoinCourse> sisJoinCourseList = sheetList.parallelStream()
             .map(row -> {
                 String scId = row.get(cozMap.get("课程序号")).toString().trim();
@@ -398,20 +396,18 @@ public class ImportService {
             .collect(Collectors.toList());
 
         if (sisJoinCourseList.isEmpty())
-            return true;
+            return;
         int res = sisJoinCourseMapper.insertList(sisJoinCourseList);
         if (res <= 0) {
             logger.error("error insert sisJoinCourses");
-            return false;
         } else {
             logger.info("success insert sisJoinCourses: " + res);
-            return true;
         }
     }
 
     @Transactional
-    boolean addCourseDepart(List<List<?>> sheetList,
-                            Map<String, Integer> cozMap) {
+    void addCourseDepart(List<List<?>> sheetList,
+                         Map<String, Integer> cozMap) {
         List<String> sdNameList = sheetList.parallelStream()
             .map(row -> Arrays.stream(row.get(cozMap.get(
                 "上课院系")).toString().split(
@@ -423,7 +419,7 @@ public class ImportService {
             .collect(Collectors.toList());
 
         if (sdNameList.isEmpty())
-            return true;
+            return;
         SisDepartmentExample sisDepartmentExample = new SisDepartmentExample();
         sisDepartmentExample.createCriteria().andSdNameIn(sdNameList);
         List<SisDepartment> sisDepartmentList =
@@ -462,20 +458,18 @@ public class ImportService {
             .collect(Collectors.toList());
 
         if (sisJoinDepartList.isEmpty())
-            return true;
+            return;
         int res = sisJoinDepartMapper.insertList(sisJoinDepartList);
         if (res <= 0) {
             logger.error("error insert sisJoinDeparts");
-            return false;
         } else {
             logger.info("success insert sisJoinDeparts: " + res);
-            return true;
         }
     }
 
     @Transactional
-    boolean addCourseSchedule(List<List<?>> sheetList,
-                              Map<String, Integer> cozMap) {
+    void addCourseSchedule(List<List<?>> sheetList,
+                           Map<String, Integer> cozMap) {
         final HashMap<String, Integer> dayMap = new HashMap<String, Integer>() {
             private static final long serialVersionUID = 331651763287947723L;
 
@@ -510,7 +504,7 @@ public class ImportService {
             .filter(locStr -> !locStr.equals("") && locStr.length() > 1)
             .collect(Collectors.toSet());
         if (slNameList.isEmpty())
-            return true;
+            return;
 
         SisLocationExample sisLocationExample = new SisLocationExample();
         sisLocationExample.createCriteria().andSlNameIn(new ArrayList<>(slNameList));
@@ -631,20 +625,18 @@ public class ImportService {
             .collect(Collectors.toList());
 
         if (sisScheduleList.isEmpty())
-            return true;
+            return;
         int res = sisScheduleMapper.insertList(sisScheduleList);
         if (res <= 0) {
             logger.error("error insert sisSchedules");
-            return false;
         } else {
             logger.info("success insert sisSchedules: " + res);
-            return true;
         }
     }
 
     @Transactional
-    boolean addStudent(List<List<?>> sheetList,
-                       Map<String, Integer> stuMap) {
+    void addStudent(List<List<?>> sheetList,
+                    Map<String, Integer> stuMap) {
         String encryptPwd = bCryptPasswordEncoder.encode("123456");
         // new student
         Set<SisUser> firstSisUserList = sheetList.stream().skip(1).parallel()
@@ -666,7 +658,7 @@ public class ImportService {
         List<String> suIdList =
             firstSisUserList.parallelStream().map(SisUser::getSuId).collect(Collectors.toList());
         if (suIdList.isEmpty())
-            return true;
+            return;
 
         SisUserExample sisUserExample = new SisUserExample();
         sisUserExample.createCriteria().andSuIdIn(suIdList);
@@ -678,20 +670,18 @@ public class ImportService {
             .collect(Collectors.toList());
 
         if (sisUserList.isEmpty())
-            return true;
+            return;
         int res = sisUserMapper.insertList(sisUserList);
         if (res <= 0) {
             logger.error("error insert students");
-            return false;
         } else {
             logger.info("success insert students: " + res);
-            return true;
         }
     }
 
     @Transactional
-    boolean addAttendance(List<List<?>> sheetList,
-                          Map<String, Integer> stuMap) {
+    void addAttendance(List<List<?>> sheetList,
+                       Map<String, Integer> stuMap) {
         SisJoinCourseExample sisJoinCourseExample = new SisJoinCourseExample();
 
         List<SisJoinCourse> sisJoinCourseList =
@@ -715,7 +705,7 @@ public class ImportService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         if (sisJoinCourseList.isEmpty())
-            return true;
+            return;
 
         //get course
         List<String> scIdList = sisJoinCourseList.parallelStream()
@@ -745,14 +735,12 @@ public class ImportService {
                 .collect(Collectors.toList());
 
         if (insertSisJoinCourse.isEmpty())
-            return true;
+            return;
         int res = sisJoinCourseMapper.insertList(insertSisJoinCourse);
         if (res <= 0) {
             logger.error("error insert student sisJoinCourses");
-            return false;
         } else {
             logger.info("success insert student sisJoinCourses: " + res);
-            return true;
         }
     }
 
@@ -788,74 +776,50 @@ public class ImportService {
     /*------------------------------------------------*/
 
     @Transactional
-    public JSONObject deleteCourse(String scId) throws IncorrectParameterException {
+    public OperationResponse deleteCourse(String scId) throws IncorrectParameterException {
         SisCourse sisCourse = sisCourseMapper.selectByPrimaryKey(scId);
         if (null == sisCourse)
             throw new IncorrectParameterException("Course not found: " + scId);
 
-        boolean success = sisCourseMapper.deleteByPrimaryKey(scId) > 0;
-
-        if (!success)
-            logger.error("Delete course error: " + scId);
-        else
-            logger.error("Delete course success: " + scId);
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", success);
-        return jsonObject;
+        sisCourseMapper.deleteByPrimaryKey(scId);
+        logger.info("Delete course success: " + scId);
+        return OperationResponse.SUCCESS;
     }
 
     @Transactional
-    public JSONObject deleteJoinCourse(Integer sjcId) throws IncorrectParameterException {
+    public OperationResponse deleteJoinCourse(Integer sjcId) throws IncorrectParameterException {
         SisJoinCourse sisJoinCourse =
             sisJoinCourseMapper.selectByPrimaryKey(sjcId);
         if (null == sisJoinCourse)
             throw new IncorrectParameterException("JoinCourse not found: " + sjcId);
 
-        boolean success = sisJoinCourseMapper.deleteByPrimaryKey(sjcId) > 0;
-
-        if (!success)
-            logger.error("Delete joinCourse error: " + sjcId);
-        else
-            logger.error("Delete joinCourse success: " + sjcId);
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", success);
-        return jsonObject;
+        sisJoinCourseMapper.deleteByPrimaryKey(sjcId);
+        logger.info("Delete joinCourse success: " + sjcId);
+        return OperationResponse.SUCCESS;
     }
 
     @Transactional
-    public JSONObject deleteSchedule(Integer ssId) throws IncorrectParameterException {
+    public OperationResponse deleteSchedule(Integer ssId) throws IncorrectParameterException {
         SisSchedule sisSchedule =
             sisScheduleMapper.selectByPrimaryKey(ssId);
         if (null == sisSchedule)
             throw new IncorrectParameterException("Schedule not found: " + ssId);
 
-        boolean success = sisScheduleMapper.deleteByPrimaryKey(ssId) > 0;
-
-        if (!success)
-            logger.error("Delete Schedule error: " + ssId);
-        else
-            logger.error("Delete Schedule success: " + ssId);
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", success);
-        return jsonObject;
+        sisScheduleMapper.deleteByPrimaryKey(ssId);
+        logger.info("Delete Schedule success: " + ssId);
+        return OperationResponse.SUCCESS;
     }
 
     @SuppressWarnings("Duplicates")
     @Transactional
-    public JSONObject modifyStudent(String suId, String suName,
-                                    List<String> scIdList) throws IncorrectParameterException {
+    public OperationResponse modifyStudent(String suId, String suName,
+                                           List<String> scIdList) throws IncorrectParameterException {
         SisUser sisUser = sisUserMapper.selectByPrimaryKey(suId);
         if (null == sisUser)
             throw new IncorrectParameterException("User not found: " + suId);
 
         sisUser.setSuName(suName);
-        boolean res = sisUserMapper.updateByPrimaryKey(sisUser) > 0;
-        if (!res) {
-            logger.error("modify student name error: " + suId);
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("success", false);
-            return jsonObject;
-        }
+        sisUserMapper.updateByPrimaryKey(sisUser);
 
         SisJoinCourseExample sisJoinCourseExample = new SisJoinCourseExample();
         sisJoinCourseExample.createCriteria()
@@ -868,10 +832,9 @@ public class ImportService {
             sisCourseExample.createCriteria().andScIdIn(scIdList);
             List<SisCourse> sisCourseList =
                 sisCourseMapper.selectByExample(sisCourseExample);
-            if (sisCourseList.size() != scIdList.size()) {
+            if (sisCourseList.size() != scIdList.size())
                 throw new IncorrectParameterException(
                     "ScIdList error: found course " + sisCourseList.size());
-            }
 
             List<SisJoinCourse> sisJoinCourseList =
                 sisCourseList.stream()
@@ -884,24 +847,16 @@ public class ImportService {
                     })
                     .collect(Collectors.toList());
 
-            boolean success =
-                sisJoinCourseMapper.insertList(sisJoinCourseList) > 0;
-            if (!success) {
-                logger.error("modify student joinCourses error: " + new JSONArray(scIdList.toString()).toString());
-                JSONObject jsonObject = new JSONObject();
-                jsonObject.put("success", false);
-                return jsonObject;
-            }
+            sisJoinCourseMapper.insertList(sisJoinCourseList);
         }
 
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", true);
-        return jsonObject;
+        return OperationResponse.SUCCESS;
     }
 
     @SuppressWarnings("Duplicates")
-    public JSONObject createStudent(String suId, String suName,
-                                    List<String> scIdList, Boolean force) throws IncorrectParameterException, InvalidPermissionException {
+    public OperationResponse createStudent(String suId, String suName,
+                                           List<String> scIdList,
+                                           Boolean force) throws IncorrectParameterException, InvalidPermissionException {
         SisUser sisUser = sisUserMapper.selectByPrimaryKey(suId);
         if (null != sisUser) {
             if (force)
@@ -916,14 +871,7 @@ public class ImportService {
         newUser.setSuName(suName);
         newUser.setSuAuthoritiesStr("STUDENT");
         newUser.setSuPassword(bCryptPasswordEncoder.encode("123456"));
-        boolean res =
-            sisUserMapper.insert(newUser) > 0;
-        if (!res) {
-            logger.error("insert student error: " + suId);
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("success", false);
-            return jsonObject;
-        }
+        sisUserMapper.insert(newUser);
 
         if (!scIdList.isEmpty()) {
             SisCourseExample sisCourseExample = new SisCourseExample();
@@ -946,25 +894,15 @@ public class ImportService {
                     })
                     .collect(Collectors.toList());
 
-            boolean success =
-                sisJoinCourseMapper.insertList(sisJoinCourseList) > 0;
-            if (!success) {
-                logger.error("modify student joinCourses error: " + new JSONArray(scIdList.toString()).toString());
-                JSONObject jsonObject = new JSONObject();
-                jsonObject.put("success", false);
-                return jsonObject;
-            }
+            sisJoinCourseMapper.insertList(sisJoinCourseList);
         }
 
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", true);
-        return jsonObject;
+        return OperationResponse.SUCCESS;
     }
 
-    public JSONObject createCourse(String scId, SisCourse sisCourse,
-                                   List<SisSchedule> sisScheduleList,
-                                   List<SisDepartment> sisDepartmentList) throws IncorrectParameterException, UnknownServerError {
-        JSONObject jsonObject = new JSONObject();
+    public OperationResponse createCourse(String scId, SisCourse sisCourse,
+                                          List<SisSchedule> sisScheduleList,
+                                          List<SisDepartment> sisDepartmentList) throws IncorrectParameterException, UnknownServerError {
         SisCourse stdSisCourse = sisCourseMapper.selectByPrimaryKey(scId);
         if (null != stdSisCourse)
             throw new IncorrectParameterException("SisCourse exists: " + scId);
@@ -986,31 +924,26 @@ public class ImportService {
         sisCourse.setSuId(null);
         sisCourse.setScId(scId);
         sisCourse.setScAttRate(null);
-        boolean successCoz = sisCourseMapper.insert(sisCourse) > 0;
-        if (!successCoz)
-            throw new UnknownServerError("update course error");
+        sisCourseMapper.insert(sisCourse);
 
         SisJoinDepartExample sisJoinDepartExample =
             new SisJoinDepartExample();
         sisJoinDepartExample.createCriteria().andScIdEqualTo(scId);
-        if (sisJoinDepartMapper.deleteByExample(sisJoinDepartExample) < 0)
-            throw new UnknownServerError("delete joinDepart error");
+        sisJoinDepartMapper.deleteByExample(sisJoinDepartExample);
 
         insertJoinDepart(scId, sisDepartmentList);
 
         if (!insertScheduleList(sisScheduleList, scId))
             throw new UnknownServerError("insert schedule list error.");
 
-        jsonObject.put("success", true);
-        return jsonObject;
+        return OperationResponse.SUCCESS;
     }
 
 
-    public JSONObject modifyCourse(String scId, SisCourse sisCourse,
-                                   List<SisSchedule> mSisScheduleList,
-                                   List<SisSchedule> nSisScheduleList,
-                                   List<SisDepartment> sisDepartmentList) throws IncorrectParameterException, UnknownServerError {
-        JSONObject jsonObject = new JSONObject();
+    public OperationResponse modifyCourse(String scId, SisCourse sisCourse,
+                                          List<SisSchedule> mSisScheduleList,
+                                          List<SisSchedule> nSisScheduleList,
+                                          List<SisDepartment> sisDepartmentList) throws IncorrectParameterException, UnknownServerError {
         SisCourse stdSisCourse = sisCourseMapper.selectByPrimaryKey(scId);
         if (null == stdSisCourse)
             throw new IncorrectParameterException("SisCourse not found: " + scId);
@@ -1036,15 +969,12 @@ public class ImportService {
 
         sisCourse.setScId(stdSisCourse.getScId());
         sisCourse.setScAttRate(stdSisCourse.getScAttRate());
-        boolean successCoz = sisCourseMapper.updateByPrimaryKey(sisCourse) > 0;
-        if (!successCoz)
-            throw new UnknownServerError("update course error");
+        sisCourseMapper.updateByPrimaryKey(sisCourse);
 
         SisJoinDepartExample sisJoinDepartExample =
             new SisJoinDepartExample();
         sisJoinDepartExample.createCriteria().andScIdEqualTo(scId);
-        if (sisJoinDepartMapper.deleteByExample(sisJoinDepartExample) < 0)
-            throw new UnknownServerError("delete joinDepart error");
+        sisJoinDepartMapper.deleteByExample(sisJoinDepartExample);
 
         insertJoinDepart(scId, sisDepartmentList);
 
@@ -1070,8 +1000,7 @@ public class ImportService {
             sisScheduleExample.createCriteria()
                 .andScIdEqualTo(scId);
 
-            if (sisScheduleMapper.deleteByExample(sisScheduleExample) < 0)
-                throw new UnknownServerError("delete schedules error");
+            sisScheduleMapper.deleteByExample(sisScheduleExample);
         } else {
             List<Integer> ssIdList =
                 mSisScheduleList.stream().map(SisSchedule::getSsId).collect(Collectors.toList());
@@ -1081,8 +1010,7 @@ public class ImportService {
             criteria.andScIdEqualTo(scId);
             if (!ssIdList.isEmpty())
                 criteria.andSsIdNotIn(ssIdList);
-            if (sisScheduleMapper.deleteByExample(sisScheduleExample) < 0)
-                throw new UnknownServerError("delete schedules error");
+            sisScheduleMapper.deleteByExample(sisScheduleExample);
         }
 
         if (!modifyScheduleList(mSisScheduleList, stdScheduleList, scId))
@@ -1091,8 +1019,7 @@ public class ImportService {
         if (!insertScheduleList(nSisScheduleList, scId))
             throw new UnknownServerError("insert schedule list error.");
 
-        jsonObject.put("success", true);
-        return jsonObject;
+        return OperationResponse.SUCCESS;
     }
 
     private void insertJoinDepart(String scId,
@@ -1304,7 +1231,7 @@ public class ImportService {
         return sisLocationList;
     }
 
-    public JSONObject modifyDepartment(Integer sdId, String sdName) throws IncorrectParameterException {
+    public OperationResponse modifyDepartment(Integer sdId, String sdName) throws IncorrectParameterException {
         if ("".equals(sdName.trim()))
             throw new IncorrectParameterException("sdName can not be blank");
         SisDepartment sisDepartment =
@@ -1313,36 +1240,30 @@ public class ImportService {
             throw new IncorrectParameterException("department not found: " + sdId);
 
         sisDepartment.setSdName(sdName.trim());
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success",
-            sisDepartmentMapper.updateByPrimaryKey(sisDepartment));
-        return jsonObject;
+        sisDepartmentMapper.updateByPrimaryKey(sisDepartment);
+        return OperationResponse.SUCCESS;
     }
 
-    public JSONObject deleteDepartment(Integer sdId) throws IncorrectParameterException {
+    public OperationResponse deleteDepartment(Integer sdId) throws IncorrectParameterException {
         SisDepartment sisDepartment =
             sisDepartmentMapper.selectByPrimaryKey(sdId);
         if (null == sisDepartment)
             throw new IncorrectParameterException("department not found: " + sdId);
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success",
-            sisDepartmentMapper.deleteByPrimaryKey(sdId));
-        return jsonObject;
+        sisDepartmentMapper.deleteByPrimaryKey(sdId);
+        return OperationResponse.SUCCESS;
     }
 
-    public JSONObject addDepartment(String sdName) throws IncorrectParameterException {
+    public OperationResponse addDepartment(String sdName) throws IncorrectParameterException {
         if ("".equals(sdName.trim()))
             throw new IncorrectParameterException("sdName can not be blank");
         SisDepartment sisDepartment = new SisDepartment();
         sisDepartment.setSdName(sdName);
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success",
-            sisDepartmentMapper.insert(sisDepartment));
-        return jsonObject;
+        sisDepartmentMapper.insert(sisDepartment);
+        return OperationResponse.SUCCESS;
     }
 
-    public JSONObject modifyJoinCourses(String scId,
-                                        List<SisJoinCourse> sisJoinCourseList) throws IncorrectParameterException, UnknownServerError {
+    public OperationResponse modifyJoinCourses(String scId,
+                                               List<SisJoinCourse> sisJoinCourseList) throws IncorrectParameterException, UnknownServerError {
         SisCourse sisCourse = sisCourseMapper.selectByPrimaryKey(scId);
         if (null == sisCourse)
             throw new IncorrectParameterException("course not found: " + scId);
@@ -1402,14 +1323,9 @@ public class ImportService {
                 throw new IncorrectParameterException("found invalid suId");
             }
 
-            boolean res =
-                sisJoinCourseMapper.insertList(nSisJoinCourseList) > 0;
-            if (!res)
-                throw new UnknownServerError("insert join course error");
+            sisJoinCourseMapper.insertList(nSisJoinCourseList);
         }
 
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", true);
-        return jsonObject;
+        return OperationResponse.SUCCESS;
     }
 }
