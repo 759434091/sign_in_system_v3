@@ -1,5 +1,6 @@
 package team.a9043.sign_in_system.pojo;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
@@ -20,12 +21,15 @@ public class SisUser {
 
     private String suOpenid;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String suPassword;
 
     private String type;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private Integer suiLackNum;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private Integer suiCozLackNum;
 
     public List<GrantedAuthority> getSuAuthorities() {

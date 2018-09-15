@@ -2,6 +2,7 @@ package team.a9043.sign_in_system.service;
 
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +15,6 @@ import org.springframework.web.client.RestTemplate;
 import team.a9043.sign_in_system.convertor.JsonObjectHttpMessageConverter;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.WxServerException;
-import team.a9043.sign_in_system.mapper.SisSignInDetailMapper;
 import team.a9043.sign_in_system.mapper.SisUserMapper;
 import team.a9043.sign_in_system.pojo.SisUser;
 import team.a9043.sign_in_system.pojo.SisUserExample;
@@ -27,7 +27,6 @@ import java.security.InvalidParameterException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -58,38 +57,31 @@ public class UserService {
     }
 
     @SuppressWarnings("Duplicates")
-    public JSONObject modifyBindUser(SisUser sisUser, String code) throws InvalidParameterException, WxServerException {
+    //TODO doc data
+    public OperationResponse modifyBindUser(SisUser sisUser, String code) throws InvalidParameterException, WxServerException {
         SisUser stdSisUser =
             sisUserMapper.selectByPrimaryKey(sisUser.getSuId());
-        if (null == stdSisUser) {
-            throw new InvalidParameterException(
-                "Token user not found: " + sisUser.getSuId());
-        }
+        if (null == stdSisUser) throw new InvalidParameterException(
+            "Token user not found: " + sisUser.getSuId());
 
         if (null != stdSisUser.getSuOpenid()) {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("success", false);
-            jsonObject.put("error", true);
-            jsonObject.put("message", "User has bind");
-            jsonObject.put("errCode", 1);
-            jsonObject.put("token_user", new JSONObject(sisUser));
-            return jsonObject;
+            OperationResponse operationResponse = new OperationResponse();
+            operationResponse.setSuccess(false);
+            operationResponse.setCode(1);
+            operationResponse.setMessage("User has bind");
+            return operationResponse;
         }
 
-        JSONObject wxUserInfo = restTemplate.getForObject(String.format(
-            apiurl, appid, secret, code
-        ), JSONObject.class);
+        JSONObject wxUserInfo = restTemplate.getForObject(
+            String.format(apiurl, appid, secret, code), JSONObject.class);
 
-        if (null == wxUserInfo) {
-            throw new WxServerException("WX Server error");
-        }
+        if (null == wxUserInfo) throw new WxServerException("WX Server error");
         if (!wxUserInfo.has("openid")) {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("success", false);
-            jsonObject.put("error", true);
-            jsonObject.put("errCode", 2);
-            jsonObject.put("message", wxUserInfo.toString());
-            return jsonObject;
+            OperationResponse operationResponse = new OperationResponse();
+            operationResponse.setSuccess(false);
+            operationResponse.setData(wxUserInfo.toString());
+            operationResponse.setCode(2);
+            return operationResponse;
         }
 
         String openid = wxUserInfo.getString("openid");
@@ -97,13 +89,11 @@ public class UserService {
         SisUserExample sisUserExample = new SisUserExample();
         sisUserExample.createCriteria().andSuOpenidEqualTo(openid);
         if (!sisUserMapper.selectByExample(sisUserExample).isEmpty()) {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("success", false);
-            jsonObject.put("error", true);
-            jsonObject.put("message", "User has bind");
-            jsonObject.put("errCode", 1);
-            jsonObject.put("token_user", new JSONObject(sisUser));
-            return jsonObject;
+            OperationResponse operationResponse = new OperationResponse();
+            operationResponse.setSuccess(false);
+            operationResponse.setCode(1);
+            operationResponse.setMessage("User has bind");
+            return operationResponse;
         }
 
         SisUser updatedSisUser = new SisUser();
@@ -119,12 +109,12 @@ public class UserService {
             sisUser.getSuAuthoritiesStr());
 
         log.info("User " + sisUser.getSuId() + " successfully bind openId: " + openid);
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", true);
-        jsonObject.put("error", false);
-        jsonObject.put("errCode", 0);
-        jsonObject.put("access_token", JwtUtil.createJWT(claimsMap));
-        return jsonObject;
+        OperationResponse operationResponse = new OperationResponse();
+        operationResponse.setSuccess(true);
+        operationResponse.setData(JwtUtil.createJWT(claimsMap));
+        operationResponse.setCode(0);
+        operationResponse.setMessage("data -> access_token");
+        return operationResponse;
     }
 
     /**
@@ -135,22 +125,13 @@ public class UserService {
      * @return JSON
      * @throws WxServerException 微信服务器错误
      */
-    @SuppressWarnings({"Duplicates", "ConstantConditions"})
-    public JSONObject getTokensByCode(String code) throws WxServerException {
-        JSONObject jsonObject = new JSONObject();
-        JSONObject wxUserInfo = restTemplate.getForObject(String.format(
-            apiurl, appid, secret, code
-        ), JSONObject.class);
+    public OperationResponse getTokensByCode(String code) throws WxServerException {
+        JSONObject wxUserInfo = restTemplate.getForObject(
+            String.format(apiurl, appid, secret, code), JSONObject.class);
 
-        if (null == wxUserInfo) {
-            throw new WxServerException("WX Server error");
-        }
-        if (!wxUserInfo.has("openid")) {
-            jsonObject.put("success", false);
-            jsonObject.put("error", true);
-            jsonObject.put("message", wxUserInfo.toString());
-            return jsonObject;
-        }
+        if (null == wxUserInfo) throw new WxServerException("WX Server error");
+        if (!wxUserInfo.has("openid"))
+            return new OperationResponse(false, wxUserInfo.toString());
 
         String openid = wxUserInfo.getString("openid");
         SisUserExample sisUserExample = new SisUserExample();
@@ -170,55 +151,41 @@ public class UserService {
 
                 sisUser.setSuPassword(null);
 
-                jsonObject.put("user", new JSONObject(sisUser));
-                jsonObject.put("success", true);
-                jsonObject.put("error", false);
-                jsonObject.put("access_token", JwtUtil.createJWT(claimsMap));
-                return jsonObject;
+                OperationResponse operationResponse = new OperationResponse();
+                operationResponse.setSuccess(true);
+                operationResponse.setMessage("data => access_token");
+                operationResponse.setData(JwtUtil.createJWT(claimsMap));
+                return operationResponse;
             })
-            .orElseGet(() -> {
-                String message = String
-                    .format("No user found " + "by openid %s",
-                        openid);
-                jsonObject.put("success", false);
-                jsonObject.put("error", true);
-                jsonObject.put("message", message);
-                return jsonObject;
-            });
+            .orElseGet(() -> new OperationResponse(false,
+                String.format("No user found " + "by openid %s", openid)));
     }
 
 
-    public JSONObject getStudents(@Nullable Integer page,
-                                  @Nullable Integer pageSize,
-                                  @Nullable String suId,
-                                  @Nullable String suName,
-                                  @Nullable Boolean orderByCozLackNum) throws IncorrectParameterException {
-        if (null == page) {
+    public PageInfo<SisUser> getStudents(@NonNull Integer page,
+                                         @NonNull Integer pageSize,
+                                         @Nullable String suId,
+                                         @Nullable String suName,
+                                         @Nullable Boolean orderByCozLackNum) throws IncorrectParameterException {
+        if (null == page)
             throw new IncorrectParameterException("Incorrect page: " + null);
-        }
         if (page < 1)
             throw new IncorrectParameterException("Incorrect page: " + page +
                 " (must equal or bigger than 1)");
-        if (null == pageSize)
-            pageSize = 10;
-        else if (pageSize <= 0 || pageSize > 500) {
+        if (pageSize <= 0 || pageSize > 500)
             throw new IncorrectParameterException(
                 "pageSize must between [1, 500]");
-        }
 
         SisUserExample sisUserExample = new SisUserExample();
         SisUserExample.Criteria criteria = sisUserExample.createCriteria();
         criteria.andSuAuthoritiesStrLike("%STUDENT%");
 
-        if (null != orderByCozLackNum) {
+        if (null != orderByCozLackNum)
             sisUserExample.setOrderByCozLackNum(orderByCozLackNum);
-        }
-        if (null != suId) {
+        if (null != suId)
             criteria.andSuIdLike("%" + suId + "%");
-        }
-        if (null != suName) {
+        if (null != suName)
             criteria.andSuNameLike(CourseService.getFuzzySearch(suName));
-        }
 
         PageHelper.startPage(page, pageSize);
         List<SisUser> sisUserList =
@@ -230,67 +197,40 @@ public class UserService {
             .distinct()
             .collect(Collectors.toList());
 
-        if (suIdList.isEmpty()) {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("success", false);
-            jsonObject.put("page", page);
-            jsonObject.put("message", "No student");
-            return jsonObject;
-        }
+        if (suIdList.isEmpty()) return pageInfo;
 
-        JSONObject pageJson = new JSONObject(pageInfo);
-        pageJson.getJSONArray("list")
-            .forEach(sisUserObj -> {
-                JSONObject sisUserJson = (JSONObject) sisUserObj;
-                sisUserJson.remove("suPassword");
-            });
-
+        pageInfo.getList().forEach(u -> u.setSuPassword(null));
         log.info("UserService.getStudents(..) success");
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", true);
-        jsonObject.put("page", page);
-        jsonObject.put("data", pageJson);
-        return jsonObject;
+        return pageInfo;
     }
 
     @Transactional
-    public JSONObject modifyPassword(String suId,
-                                     String oldPassword,
-                                     String newPassword) throws IncorrectParameterException {
+    public OperationResponse modifyPassword(String suId,
+                                            String oldPassword,
+                                            String newPassword) throws IncorrectParameterException {
         SisUser sisUser = sisUserMapper.selectByPrimaryKey(suId);
         if (null == sisUser)
             throw new IncorrectParameterException("No user found: " + suId);
         if (newPassword.length() < 6 || newPassword.length() > 18)
             throw new IncorrectParameterException("Invalid new password");
 
-        if (!bCryptPasswordEncoder.matches(oldPassword,
-            sisUser.getSuPassword())) {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("success", false);
-            jsonObject.put("message", "Incorrect password");
-            return jsonObject;
-        }
+        if (!bCryptPasswordEncoder
+            .matches(oldPassword, sisUser.getSuPassword()))
+            return new OperationResponse(false, "Incorrect password");
 
         sisUser.setSuPassword(bCryptPasswordEncoder.encode(newPassword));
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success",
-            sisUserMapper.updateByPrimaryKey(sisUser) > 0);
-        return jsonObject;
+        sisUserMapper.updateByPrimaryKey(sisUser);
+        return OperationResponse.SUCCESS;
     }
 
-    public JSONObject deleteUser(String suId) throws IncorrectParameterException {
+    public OperationResponse deleteUser(String suId) throws IncorrectParameterException {
         SisUser sisUser = sisUserMapper.selectByPrimaryKey(suId);
         if (null == sisUser)
             throw new IncorrectParameterException("User not found.");
 
-        boolean success = sisUserMapper.deleteByPrimaryKey(suId) > 0;
-        if (!success)
-            log.error("Delete user Error: " + suId);
-        else if (log.isDebugEnabled())
-            log.debug("User delete success: " + suId);
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", success);
-        return jsonObject;
+        sisUserMapper.deleteByPrimaryKey(suId);
+        log.debug("User delete success: " + suId);
+        return OperationResponse.SUCCESS;
     }
 }
 
