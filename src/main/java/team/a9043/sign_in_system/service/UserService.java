@@ -19,6 +19,7 @@ import team.a9043.sign_in_system.mapper.SisUserMapper;
 import team.a9043.sign_in_system.pojo.SisUser;
 import team.a9043.sign_in_system.pojo.SisUserExample;
 import team.a9043.sign_in_system.service_pojo.OperationResponse;
+import team.a9043.sign_in_system.service_pojo.TokenResult;
 import team.a9043.sign_in_system.util.JwtUtil;
 
 import javax.annotation.Nullable;
@@ -151,10 +152,13 @@ public class UserService {
 
                 sisUser.setSuPassword(null);
 
+                TokenResult tokenResult = new TokenResult();
+                tokenResult.setSisUser(sisUser);
+                tokenResult.setToken(JwtUtil.createJWT(claimsMap));
                 OperationResponse operationResponse = new OperationResponse();
                 operationResponse.setSuccess(true);
                 operationResponse.setMessage("data => access_token");
-                operationResponse.setData(JwtUtil.createJWT(claimsMap));
+                operationResponse.setData(tokenResult);
                 return operationResponse;
             })
             .orElseGet(() -> new OperationResponse(false,

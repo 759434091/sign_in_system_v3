@@ -1,5 +1,7 @@
 package team.a9043.sign_in_system.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.json.JSONArray;
@@ -10,6 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
+import team.a9043.sign_in_system.service_pojo.OperationResponse;
 
 import javax.annotation.Resource;
 import java.io.File;
@@ -24,13 +27,15 @@ import java.util.List;
 @SpringBootTest
 @Slf4j
 public class ImportServiceTest {
+    private ObjectMapper objectMapper = new ObjectMapper();
     @Resource
     private ImportService importService;
 
     @Test
     public void readExcel() throws IOException, InvalidFormatException {
         File file = new File("/media/a9043/Sixth1/上线测试doc/教学任务列表.xls");
-        List<List<?>> listList = importService.readExcel(new FileInputStream(file));
+        List<List<?>> listList =
+            importService.readExcel(new FileInputStream(file));
         log.info(new JSONArray(listList).toString(2));
     }
 
@@ -48,8 +53,8 @@ public class ImportServiceTest {
 
     @Test
     @Transactional
-    public void deleteCourse() throws IncorrectParameterException {
-        JSONObject jsonObject = importService.deleteCourse("A");
-        log.info(jsonObject.toString(2));
+    public void deleteCourse() throws IncorrectParameterException, JsonProcessingException {
+        OperationResponse or = importService.deleteCourse("A");
+        log.info(objectMapper.writeValueAsString(or));
     }
 }

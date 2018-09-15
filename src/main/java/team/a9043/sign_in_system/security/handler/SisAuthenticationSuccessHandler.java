@@ -1,19 +1,26 @@
 package team.a9043.sign_in_system.security.handler;
 
-import org.json.JSONObject;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.stereotype.Component;
 import team.a9043.sign_in_system.pojo.SisUser;
 import team.a9043.sign_in_system.security.entity.SecurityUserDetails;
+import team.a9043.sign_in_system.service_pojo.OperationResponse;
+import team.a9043.sign_in_system.service_pojo.TokenResult;
 import team.a9043.sign_in_system.util.JwtUtil;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+@Component
 public class SisAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
+    @Resource
+    private ObjectMapper objectMapper;
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -32,13 +39,14 @@ public class SisAuthenticationSuccessHandler implements AuthenticationSuccessHan
         String token = JwtUtil.createJWT(claimsMap);
 
         sisUser.setSuPassword(null);
-
+        TokenResult tokenResult = new TokenResult();
+        tokenResult.setSisUser(sisUser);
+        tokenResult.setToken(token);
         response.setHeader("Content-type", "application/json;charset=utf-8");
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", true);
-        jsonObject.put("error", false);
-        jsonObject.put("access_token", token);
-        jsonObject.put("user", new JSONObject(sisUser));
-        response.getWriter().write(jsonObject.toString());
+        OperationResponse operationResponse = new OperationResponse();
+        operationResponse.setSuccess(true);
+        operationResponse.setData(tokenResult);
+        operationResponse.setMessage("data => tokenResult");
+        objectMapper.writeValue(response.getWriter(), operationResponse);
     }
 }

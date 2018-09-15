@@ -27,6 +27,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Resource
     private SecurityUserDetailService securityUserDetailService;
     @Resource
+    private SisAuthenticationSuccessHandler sisAuthenticationSuccessHandler;
+    @Resource
     private BCryptPasswordEncoder bCryptPasswordEncoder;
 
     private DaoAuthenticationProvider getDaoAuthenticationProvider() {
@@ -79,7 +81,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .usernameParameter("suId")
             .passwordParameter("suPassword")
             .loginProcessingUrl("/tokens")
-            .successHandler(new SisAuthenticationSuccessHandler())
+            .successHandler(sisAuthenticationSuccessHandler)
             .failureHandler(new SisAuthenticationFailureHandler())
             .and()
             .exceptionHandling()
