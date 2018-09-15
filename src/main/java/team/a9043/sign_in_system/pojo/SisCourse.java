@@ -31,4 +31,6 @@ public class SisCourse {
     private SisUser monitor;
 
     private List<SisSchedule> sisScheduleList;
+
+    private List<SisJoinCourse> sisJoinCourseList;
 }

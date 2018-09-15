@@ -61,12 +61,14 @@ public class MonitorService {
     }
 
 
-    public JSONObject getCourses(@NotNull SisUser sisUser) throws ExecutionException, InterruptedException {
+    public PageInfo<SisCourse> getCourses(@NotNull SisUser sisUser) throws ExecutionException, InterruptedException {
         SisCourseExample sisCourseExample = new SisCourseExample();
         sisCourseExample.createCriteria().andSuIdEqualTo(sisUser.getSuId());
 
         List<SisCourse> sisCourseList =
             sisCourseMapper.selectByExample(sisCourseExample);
+        PageInfo<SisCourse> sisCoursePageInfo = new PageInfo<>(sisCourseList);
+        if (sisCourseList.isEmpty()) return sisCoursePageInfo;
 
         List<String> scIdList = sisCourseList.stream()
             .map(SisCourse::getScId)
@@ -90,41 +92,27 @@ public class MonitorService {
             CourseService.getSisUserBySuIdList(suIdList, sisUserMapper);
 
         //merge joinCourse
-        JSONArray sisJoinCourseJsonArray = new JSONArray(sisJoinCourseList);
-        CourseService.mergeWithSuIdJsonArrayEtSisUser(sisUserList,
-            sisJoinCourseJsonArray);
+        sisJoinCourseList.forEach(j -> j.setSisUser(sisUserList.parallelStream()
+            .filter(u -> u.getSuId().equals(j.getSuId()))
+            .peek(u -> u.setSuPassword(null))
+            .findAny()
+            .orElse(null)));
 
         //merge sisCourse
-        JSONArray sisCourseJsonArray = new JSONArray(sisCourseList);
-        sisCourseJsonArray.forEach(sisCourseObj -> {
-            JSONObject sisCourseJson = (JSONObject) sisCourseObj;
+        sisCoursePageInfo.getList().forEach(c -> {
+            c.setSisScheduleList(sisScheduleList.stream()
+                .filter(sisSchedule -> sisSchedule.getScId().equals(c.getScId()))
+                .collect(Collectors.toList()));
 
-            String scId = sisCourseJson.getString("scId");
-            List<SisSchedule> tSisScheduleList = sisScheduleList.stream()
-                .filter(sisSchedule -> sisSchedule.getScId().equals(scId))
-                .collect(Collectors.toList());
-            sisCourseJson.put("sisScheduleList",
-                new JSONArray(tSisScheduleList));
-
-            List<JSONObject> sisJoinCourseJsonList =
-                StreamSupport.stream(sisJoinCourseJsonArray.spliterator(), true)
-                    .map(sisJoinCourseObj -> (JSONObject) sisJoinCourseObj)
-                    .filter(sisJoinCourseJson -> sisJoinCourseJson.getString(
-                        "scId").equals(scId))
-                    .collect(Collectors.toList());
-            sisCourseJson.put("sisJoinCourseList",
-                sisJoinCourseJsonList);
+            c.setSisJoinCourseList(sisJoinCourseList.parallelStream()
+                .filter(j -> j.getScId().equals(c.getScId()))
+                .collect(Collectors.toList()));
         });
 
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", true);
-        jsonObject.put("error", false);
-        jsonObject.put("array", sisCourseJsonArray);
-        jsonObject.put("arrSize", sisCourseJsonArray.length());
         if (log.isDebugEnabled()) {
             log.debug("User " + sisUser.getSuId() + " get course. ");
         }
-        return jsonObject;
+        return sisCoursePageInfo;
     }
 
     public JSONObject getSupervisions(@NotNull SisUser sisUser,

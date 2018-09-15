@@ -61,14 +61,14 @@ public class CourseService {
     }
 
     @SuppressWarnings("Duplicates")
-    public JSONObject getCourses(@Nullable Integer page,
-                                 @Nullable Integer pageSize,
-                                 @Nullable Boolean needMonitor,
-                                 @Nullable Boolean hasMonitor,
-                                 @Nullable Integer sdId,
-                                 @Nullable Integer scGrade,
-                                 @Nullable String scId,
-                                 @Nullable String scName) throws IncorrectParameterException, ExecutionException, InterruptedException {
+    public PageInfo<SisCourse> getCourses(@Nullable Integer page,
+                                          @Nullable Integer pageSize,
+                                          @Nullable Boolean needMonitor,
+                                          @Nullable Boolean hasMonitor,
+                                          @Nullable Integer sdId,
+                                          @Nullable Integer scGrade,
+                                          @Nullable String scId,
+                                          @Nullable String scName) throws IncorrectParameterException, ExecutionException, InterruptedException {
         if (null == page) {
             throw new IncorrectParameterException("Incorrect page: " + null);
         }
@@ -92,29 +92,17 @@ public class CourseService {
             else
                 criteria.andScNeedMonitorEqualTo(needMonitor).andSuIdIsNull();
         }
-        if (null != scGrade)
-            criteria.andScGradeEqualTo(scGrade);
-        if (null != scName)
-            criteria.andScNameLike(getFuzzySearch(scName));
-        if (null != scId) {
-            criteria.andScIdLike("%" + scId + "%");
-        }
-        if (null != sdId) {
-            sisCourseExample.setSdId(sdId);
-        }
+        if (null != scGrade) criteria.andScGradeEqualTo(scGrade);
+        if (null != scName) criteria.andScNameLike(getFuzzySearch(scName));
+        if (null != scId) criteria.andScIdLike("%" + scId + "%");
+        if (null != sdId) sisCourseExample.setSdId(sdId);
 
         PageHelper.startPage(page, pageSize);
         List<SisCourse> sisCourseList =
             sisCourseMapper.selectByExample(sisCourseExample);
         PageInfo<SisCourse> pageInfo = new PageInfo<>(sisCourseList);
 
-        if (sisCourseList.isEmpty()) {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("success", false);
-            jsonObject.put("page", page);
-            jsonObject.put("message", "查询结果为空");
-            return jsonObject;
-        }
+        if (sisCourseList.isEmpty()) return pageInfo;
 
         Set<String> suIdSet = new HashSet<>();
         Set<String> scIdSet = new HashSet<>();
@@ -153,7 +141,7 @@ public class CourseService {
                 .map(SisJoinCourse::getSuId)
                 .distinct()
                 .collect(Collectors.toList());
-        Future<List<team.a9043.sign_in_system.pojo.SisUser>> joinCoursesSisUserListFuture =
+        Future<List<SisUser>> joinCoursesSisUserListFuture =
             asyncJoinService.joinSisUserById(joinCoursesSuIdList);
 
         List<SisSupervision> sisSupervisionList =
@@ -161,9 +149,10 @@ public class CourseService {
         List<SisUser> joinCoursesSisUserList
             = joinCoursesSisUserListFuture.get();
 
-        //merge to json
+        //merge
         pageInfo.getList().parallelStream()
             .forEach(c -> {
+                // set monitor
                 c.setMonitor(sisUserList.stream()
                     .filter(sisUser -> sisUser.getSuId().equals(c.getSuId()))
                     .findAny()
@@ -173,6 +162,7 @@ public class CourseService {
                     })
                     .orElse(null));
 
+                // set schedule
                 List<SisSchedule> tSchList = sisScheduleList.stream()
                     .filter(sisSchedule -> sisSchedule.getScId().equals(c.getScId()))
                     .collect(Collectors.toList());
@@ -181,79 +171,45 @@ public class CourseService {
                     sisSupervisionList.stream()
                         .filter(sisSupervision -> sisSupervision.getSsId().equals(s.getSsId()))
                         .collect(Collectors.toList())));
-            });
 
+                c.setSisScheduleList(sisScheduleList);
 
-        JSONObject pageJson = new JSONObject(pageInfo);
-        pageJson.getJSONArray("list")
-            .forEach(sisCourseObj -> {
-                JSONObject sisCourseJson = (JSONObject) sisCourseObj;
-                //merge monitor
-                sisCourseJson.put("monitor", sisUserList.stream()
-                    .filter(sisUser -> sisUser.getSuId().equals(sisCourseJson.optString("suId", null)))
+                // set joinCourse
+                List<SisJoinCourse> tJoinCourseList = sisJoinCourseList
+                    .parallelStream()
+                    .filter(sisJoinCourse -> sisJoinCourse.getScId().equals(c.getScId()))
+                    .collect(Collectors.toList());
+
+                tJoinCourseList.forEach(j -> j.setSisUser(joinCoursesSisUserList.parallelStream()
+                    .filter(u -> u.getSuId().equals(j.getSuId()))
+                    .peek(u -> u.setSuPassword(null))
                     .findAny()
-                    .map(sisUser -> {
-                        sisUser.setSuPassword(null);
-                        return sisUser;
-                    })
-                    .map(JSONObject::new)
-                    .orElse(null));
+                    .orElse(null)));
 
-                //merge schedule
-                JSONArray sisScheduleJsonArray =
-                    new JSONArray(sisScheduleList.stream()
-                        .filter(sisSchedule -> sisSchedule.getScId().equals(sisCourseJson.getString("scId")))
-                        .collect(Collectors.toList()));
-
-                sisScheduleJsonArray.forEach(sisScheduleObj -> {
-                    JSONObject sisScheduleJson = (JSONObject) sisScheduleObj;
-                    List<SisSupervision> tSisSupervisionList =
-                        sisSupervisionList.stream()
-                            .filter(sisSupervision -> sisSupervision.getSsId().equals(sisScheduleJson.getInt("ssId")))
-                            .collect(Collectors.toList());
-                    sisScheduleJson.put("supervisionList",
-                        new JSONArray(tSisSupervisionList));
-                });
-                sisCourseJson.put("sisScheduleList", sisScheduleJsonArray);
-
-                //merge joinCourse
-                JSONArray sisJoinCourseJsonArray = new JSONArray(
-                    sisJoinCourseList.parallelStream()
-                        .filter(sisJoinCourse -> sisJoinCourse.getScId().equals(sisCourseJson.getString("scId")))
-                        .collect(Collectors.toList()));
-                mergeWithSuIdJsonArrayEtSisUser(joinCoursesSisUserList,
-                    sisJoinCourseJsonArray);
-
-                sisCourseJson.put("sisJoinCourseList", sisJoinCourseJsonArray);
+                c.setSisJoinCourseList(tJoinCourseList);
             });
 
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", true);
-        jsonObject.put("page", page);
-        jsonObject.put("data", pageJson);
         if (log.isDebugEnabled()) {
             log.debug("select course: CourseService.getCourses(..)");
         }
-        return jsonObject;
+        return pageInfo;
     }
 
-    public JSONObject getCourses(@TokenUser SisUser sisUser,
-                                 SisJoinCourse.JoinCourseType joinCourseType) throws ExecutionException, InterruptedException {
+    public PageInfo<SisJoinCourse> getCourses(@TokenUser SisUser sisUser,
+                                              SisJoinCourse.JoinCourseType joinCourseType) throws ExecutionException, InterruptedException {
         SisJoinCourseExample sisJoinCourseExample = new SisJoinCourseExample();
         sisJoinCourseExample.createCriteria().andSuIdEqualTo(sisUser.getSuId())
             .andJoinCourseTypeEqualTo(joinCourseType.ordinal());
         List<SisJoinCourse> sisJoinCourseList =
             sisJoinCourseMapper.selectByExample(sisJoinCourseExample);
+        PageInfo<SisJoinCourse> sisJoinCoursePageInfo =
+            new PageInfo<>(sisJoinCourseList);
 
-        if (sisJoinCourseList.size() <= 0) {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("success", false);
-            jsonObject.put("message", "No course");
-            return jsonObject;
-        }
+        if (sisJoinCourseList.isEmpty()) return sisJoinCoursePageInfo;
 
         List<String> scIdList = sisJoinCourseList.stream()
             .map(SisJoinCourse::getScId)
+            .distinct()
             .collect(Collectors.toList());
 
         //join course schedule joinCourse
@@ -266,62 +222,51 @@ public class CourseService {
 
         List<SisCourse> sisCourseList = sisCourseListFuture.get();
         List<SisSchedule> sisScheduleList = sisScheduleListFuture.get();
-        List<SisJoinCourse> sisJoinCourseList1 = sisJoinCourseListFuture.get();
+        List<SisJoinCourse> totalJoinCourseList = sisJoinCourseListFuture.get();
 
-        List<String> suIdList = sisJoinCourseList1.parallelStream()
+        List<String> suIdList = Optional.of(totalJoinCourseList.parallelStream()
             .map(SisJoinCourse::getSuId)
-            .collect(Collectors.toList());
+            .distinct()
+            .collect(Collectors.toList()))
+            .filter(l -> !l.isEmpty())
+            .orElse(new ArrayList<>());
         SisUserExample sisUserExample = new SisUserExample();
         sisUserExample.createCriteria().andSuIdIn(suIdList);
-        List<team.a9043.sign_in_system.pojo.SisUser> sisUserList =
+        List<SisUser> sisUserList =
             sisUserMapper.selectByExample(sisUserExample);
 
         //merge sisJoinCourse
-        JSONArray jsonArray = new JSONArray(sisJoinCourseList);
-        jsonArray.forEach(sisJoinCourseObj -> {
-            JSONObject sisJoinCourseJson = (JSONObject) sisJoinCourseObj;
-
-            String scId = sisJoinCourseJson.getString("scId");
+        sisJoinCoursePageInfo.getList().forEach(j -> {
+            // get course
             SisCourse sisCourse =
                 sisCourseList.stream()
-                    .filter(tSisCourse -> tSisCourse.getScId().equals(scId))
+                    .filter(c -> c.getScId().equals(j.getScId()))
                     .findAny()
                     .orElse(null);
-            if (null == sisCourse)
-                return;
+            if (null == sisCourse) return;
 
-            //merge course
-            JSONObject sisCourseJson = new JSONObject(sisCourse);
+            // merge course -> schedule
+            sisCourse.setSisScheduleList(sisScheduleList.parallelStream()
+                .filter(sisSchedule -> sisSchedule.getScId().equals(j.getScId()))
+                .collect(Collectors.toList()));
 
-            //merge course -> schedule
-            List<SisSchedule> tSisScheduleList =
-                sisScheduleList.parallelStream()
-                    .filter(sisSchedule -> sisSchedule.getScId().equals(scId))
+            // merge course -> joinCourse
+            List<SisJoinCourse> tJoinCourseList =
+                totalJoinCourseList.parallelStream()
+                    .filter(sisJoinCourse -> sisJoinCourse.getScId().equals(j.getScId()))
                     .collect(Collectors.toList());
-            sisCourseJson.put("sisScheduleList",
-                new JSONArray(tSisScheduleList));
+            tJoinCourseList.forEach(tj -> tj.setSisUser(sisUserList.parallelStream()
+                .filter(u -> tj.getSuId().equals(u.getSuId()))
+                .peek(u -> u.setSuPassword(null))
+                .findAny()
+                .orElse(null)));
+            sisCourse.setSisJoinCourseList(tJoinCourseList);
 
-            //merge course -> joinCourse
-            List<SisJoinCourse> tSisJoinCourseList =
-                sisJoinCourseList1.parallelStream()
-                    .filter(sisJoinCourse -> sisJoinCourse.getScId().equals(scId))
-                    .collect(Collectors.toList());
-            JSONArray sisJoinCourseJsonArray =
-                new JSONArray(tSisJoinCourseList);
-            mergeWithSuIdJsonArrayEtSisUser(sisUserList,
-                sisJoinCourseJsonArray);
-            sisCourseJson.put("sisJoinCourseList", sisJoinCourseJsonArray);
-
-            sisJoinCourseJson.put("sisCourse", sisCourseJson);
+            // merge all
+            j.setSisCourse(sisCourse);
         });
 
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", true);
-        jsonObject.put("array", jsonArray);
-        if (log.isDebugEnabled()) {
-            log.debug("User " + sisUser.getSuId() + " get courseTable. ");
-        }
-        return jsonObject;
+        return sisJoinCoursePageInfo;
     }
 
     @Transactional
@@ -519,8 +464,7 @@ public class CourseService {
         if (suIdList.isEmpty()) {
             return new ArrayList<>();
         } else {
-            SisUserExample sisUserExample =
-                new SisUserExample();
+            SisUserExample sisUserExample = new SisUserExample();
             sisUserExample.createCriteria().andSuIdIn(suIdList);
             return sisUserMapper.selectByExample(sisUserExample);
         }

@@ -1,5 +1,6 @@
 package team.a9043.sign_in_system.controller;
 
+import com.github.pagehelper.PageInfo;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.json.JSONArray;
@@ -46,7 +47,8 @@ public class CourseController {
 
     @GetMapping("/departments")
     @ApiOperation(value = "获得学院", notes = "根据sdName获取课程")
-    public List<SisDepartment> getDepartments(@RequestParam @ApiParam(value = "课程名字模糊") String sdName) {
+    public List<SisDepartment> getDepartments(@RequestParam @ApiParam(value =
+        "课程名字模糊") String sdName) {
         return courseService.getDepartments(sdName);
     }
 
@@ -72,20 +74,20 @@ public class CourseController {
     @ApiOperation(value = "获得课程",
         notes = "根据getType获取课程",
         produces = "application/json")
-    public JSONObject getCourses(@TokenUser @ApiIgnore SisUser sisUser,
-                                 @RequestParam(required = false) @ApiParam(value = "分页filter") Integer page,
-                                 @RequestParam(required = false) @ApiParam(value = "分页大小filter") Integer pageSize,
-                                 @RequestParam(required = false) @ApiParam(value = "是否需要督导filter,若该参数为null则忽略hasMonitor") Boolean needMonitor,
-                                 @RequestParam(required = false) @ApiParam(value = "是否已有督导员filter") Boolean hasMonitor,
-                                 @RequestParam(required = false) @ApiParam(value = "学院Id") Integer sdId,
-                                 @RequestParam(required = false) @ApiParam(value = "开课年级") Integer scGrade,
-                                 @RequestParam(required = false) @ApiParam(value = "课程序号模糊") String scId,
-                                 @RequestParam(required = false) @ApiParam(value = "课程名字模糊") String scName,
-                                 @RequestParam
-                                 @ApiParam(value = "获得方式",
-                                     allowableValues = "student,monitor," +
-                                         "administrator,teacher")
-                                     String getType) throws
+    public PageInfo getCourses(@TokenUser @ApiIgnore SisUser sisUser,
+                               @RequestParam(required = false) @ApiParam(value = "分页filter") Integer page,
+                               @RequestParam(required = false) @ApiParam(value = "分页大小filter") Integer pageSize,
+                               @RequestParam(required = false) @ApiParam(value = "是否需要督导filter,若该参数为null则忽略hasMonitor") Boolean needMonitor,
+                               @RequestParam(required = false) @ApiParam(value = "是否已有督导员filter") Boolean hasMonitor,
+                               @RequestParam(required = false) @ApiParam(value = "学院Id") Integer sdId,
+                               @RequestParam(required = false) @ApiParam(value = "开课年级") Integer scGrade,
+                               @RequestParam(required = false) @ApiParam(value = "课程序号模糊") String scId,
+                               @RequestParam(required = false) @ApiParam(value = "课程名字模糊") String scName,
+                               @RequestParam
+                               @ApiParam(value = "获得方式",
+                                   allowableValues = "student,monitor," +
+                                       "administrator,teacher")
+                                   String getType) throws
         IncorrectParameterException, InvalidPermissionException,
         ExecutionException, InterruptedException {
 
