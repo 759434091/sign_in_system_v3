@@ -125,6 +125,19 @@ public class UserService {
         }
 
         String openid = wxUserInfo.getString("openid");
+
+        SisUserExample sisUserExample = new SisUserExample();
+        sisUserExample.createCriteria().andSuOpenidEqualTo(openid);
+        if (!sisUserMapper.selectByExample(sisUserExample).isEmpty()) {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("success", false);
+            jsonObject.put("error", true);
+            jsonObject.put("message", "User has bind");
+            jsonObject.put("errCode", 1);
+            jsonObject.put("token_user", new JSONObject(sisUser));
+            return jsonObject;
+        }
+
         SisUser updatedSisUser = new SisUser();
         updatedSisUser.setSuId(sisUser.getSuId());
         updatedSisUser.setSuOpenid(openid);
