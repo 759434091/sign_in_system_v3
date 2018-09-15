@@ -4,7 +4,6 @@ import com.github.pagehelper.PageInfo;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.json.JSONArray;
-import org.json.JSONObject;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
@@ -19,6 +18,7 @@ import team.a9043.sign_in_system.pojo.SisUser;
 import team.a9043.sign_in_system.security.tokenuser.TokenUser;
 import team.a9043.sign_in_system.service.CourseService;
 import team.a9043.sign_in_system.service.MonitorService;
+import team.a9043.sign_in_system.service_pojo.OperationResponse;
 import team.a9043.sign_in_system.service_pojo.Week;
 import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
 
@@ -145,8 +145,8 @@ public class CourseController {
      * 修改是否需要督导
      *
      * @param sisCourse     课程json
-     * @param scId          课程id
      * @param bindingResult 检验结果
+     * @param scId          课程id
      * @return json
      * @throws IncorrectParameterException 参数非法
      */
@@ -156,10 +156,10 @@ public class CourseController {
         notes = "根据scId修改督导,SisCourse -> {\n  scNeedMonitor: boolean,\n  " +
             "monitor: SisUser - {suId: String}\n}",
         produces = "application/json")
-    public JSONObject modifyScNeedMonitor(@RequestBody @Validated SisCourse sisCourse,
-                                          @ApiIgnore BindingResult bindingResult,
-                                          @PathVariable
-                                          @ApiParam(value = "课程序号") String scId) throws IncorrectParameterException {
+    public OperationResponse modifyScNeedMonitor(@RequestBody @Validated SisCourse sisCourse,
+                                                 @ApiIgnore BindingResult bindingResult,
+                                                 @PathVariable
+                                       @ApiParam(value = "课程序号") String scId) throws IncorrectParameterException {
         if (bindingResult.hasErrors()) {
             throw new IncorrectParameterException(new JSONArray(bindingResult.getAllErrors()).toString());
         }
@@ -171,29 +171,29 @@ public class CourseController {
     @PreAuthorize("hasAuthority('ADMINISTRATOR')")
     @ApiOperation(value = "批量修改督导",
         notes = "批量修改督导根据搜索条件")
-    public JSONObject batchSupervision(@RequestParam @ApiParam(value =
-        "修改督导状态") Boolean monitorStatus,
-                                       @RequestBody(required = false) List<String> scIdList,
-                                       @RequestParam(required = false) @ApiParam(value = "是否需要督导filter,若该参数为null则忽略hasMonitor") Boolean needMonitor,
-                                       @RequestParam(required = false) @ApiParam(value = "是否已有督导员filter") Boolean hasMonitor,
-                                       @RequestParam(required = false) @ApiParam(value = "学院Id") Integer sdId,
-                                       @RequestParam(required = false) @ApiParam(value = "开课年级") Integer scGrade,
-                                       @RequestParam(required = false) @ApiParam(value = "课程序号模糊") String scId,
-                                       @RequestParam(required = false) @ApiParam(value = "课程名字模糊") String scName) {
+    public OperationResponse batchSetNeedMonitor(@RequestParam
+                                          @ApiParam(value = "修改督导状态") Boolean monitorStatus,
+                                                 @RequestBody(required = false) List<String> scIdList,
+                                                 @RequestParam(required = false) @ApiParam(value = "是否需要督导filter,若该参数为null则忽略hasMonitor") Boolean needMonitor,
+                                                 @RequestParam(required = false) @ApiParam(value = "是否已有督导员filter") Boolean hasMonitor,
+                                                 @RequestParam(required = false) @ApiParam(value = "学院Id") Integer sdId,
+                                                 @RequestParam(required = false) @ApiParam(value = "开课年级") Integer scGrade,
+                                                 @RequestParam(required = false) @ApiParam(value = "课程序号模糊") String scId,
+                                                 @RequestParam(required = false) @ApiParam(value = "课程名字模糊") String scName) {
         if (null != scIdList) {
-            return courseService.batchSupervision(monitorStatus, scIdList);
+            return courseService.batchSetNeedMonitor(monitorStatus, scIdList);
         }
-        return courseService.batchSupervision(monitorStatus, needMonitor,
+        return courseService.batchSetNeedMonitor(monitorStatus, needMonitor,
             hasMonitor, sdId, scGrade, scId, scName);
     }
 
     @GetMapping("/courses/{scId}/departments")
-    public JSONObject getCourseDepartments(@PathVariable String scId) {
+    public List<SisDepartment> getCourseDepartments(@PathVariable String scId) {
         return courseService.getCourseDepartments(scId);
     }
 
     @GetMapping("/courses/{scId}/joinCourses")
-    public JSONObject getJoinCourseStudents(@PathVariable String scId) {
+    public List<SisJoinCourse> getJoinCourseStudents(@PathVariable String scId) {
         return courseService.getJoinCourseStudents(scId);
     }
 }

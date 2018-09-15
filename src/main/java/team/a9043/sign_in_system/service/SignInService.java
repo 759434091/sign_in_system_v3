@@ -18,6 +18,8 @@ import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
 import team.a9043.sign_in_system.mapper.*;
 import team.a9043.sign_in_system.pojo.*;
+import team.a9043.sign_in_system.service_pojo.OperationResponse;
+import team.a9043.sign_in_system.service_pojo.SignInProcessing;
 import team.a9043.sign_in_system.util.LocationUtil;
 import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
 import team.a9043.sign_in_system.util.judgetime.JudgeTimeUtil;
@@ -31,7 +33,6 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 /**
  * @author a9043
@@ -39,9 +40,9 @@ import java.util.stream.StreamSupport;
 @Slf4j
 @Service
 public class SignInService {
+    private String signInKeyFormat = "sis_ssId_%s_week_%s";
     @Value("${location.limit}")
     private int MAX_DISTANCE;
-    private String signInKeyFormat = "sis_ssId_%s_week_%s";
     @Resource
     private ThreadPoolTaskScheduler threadPoolTaskScheduler;
     @Resource(name = "sisRedisTemplate")
@@ -64,9 +65,9 @@ public class SignInService {
     private SupervisionAspect supervisionAspect;
 
     @Transactional
-    public JSONObject createSignIn(SisUser sisUser,
-                                   Integer ssId,
-                                   LocalDateTime currentDateTime) throws InvalidTimeParameterException, InvalidPermissionException {
+    public OperationResponse createSignIn(SisUser sisUser,
+                                          Integer ssId,
+                                          LocalDateTime currentDateTime) throws InvalidTimeParameterException, InvalidPermissionException {
         SisSchedule sisSchedule = Optional
             .ofNullable(sisScheduleMapper.selectByPrimaryKey(ssId))
             .orElseThrow(() -> new InvalidParameterException("Invalid ssId: " + ssId));
@@ -74,36 +75,23 @@ public class SignInService {
         Integer week = JudgeTimeUtil.getWeek(currentDateTime.toLocalDate());
 
         //check week
-        if (week < sisSchedule.getSsStartWeek() || week > sisSchedule.getSsEndWeek()) {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("success", false);
-            jsonObject.put("message", "Invalid week: " + week);
-            return jsonObject;
-        }
+        if (week < sisSchedule.getSsStartWeek() || week > sisSchedule.getSsEndWeek())
+            return new OperationResponse(false, "Invalid week: " + week);
 
         //check suspend
         boolean isSuspend = sisSchedule.getSsSuspensionList()
             .stream()
             .anyMatch(tWeek -> tWeek.equals(week));
-        if (isSuspend) {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("success", false);
-            jsonObject.put("message", String.format(
-                "Schedule %d week %d is in the suspension list",
-                ssId, week));
-            return jsonObject;
-        }
+        if (isSuspend) return new OperationResponse(false, String.format(
+            "Schedule %d week %d is in the suspension list",
+            ssId, week));
 
         //check is end
         SisSignInExample sisSignInExample = new SisSignInExample();
         sisSignInExample.createCriteria().andSsIdEqualTo(ssId).andSsiWeekEqualTo(week);
-        if (!sisSignInMapper.selectByExample(sisSignInExample).isEmpty()) {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("success", false);
-            jsonObject.put("message", "Check-in has been launched and " +
-                "completed: week " + week);
-            return jsonObject;
-        }
+        if (!sisSignInMapper.selectByExample(sisSignInExample).isEmpty())
+            return new OperationResponse(false,
+                "Check-in has been launched and completed: week " + week);
 
         //get joinCourse
         SisJoinCourseExample sisJoinCourseExample = new SisJoinCourseExample();
@@ -130,40 +118,26 @@ public class SignInService {
             .map(SisJoinCourse::getSuId)
             .collect(Collectors.toMap(Function.identity(),
                 (s) -> Boolean.FALSE));
-        if (hashMap.isEmpty()) {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("success", false);
-            jsonObject.put("message", "No student in this course");
-            return jsonObject;
-        }
+        if (hashMap.isEmpty())
+            return new OperationResponse(false, "No student in this course");
 
         String key =
             String.format(signInKeyFormat, ssId,
                 week);
 
-        if (Boolean.TRUE.equals(sisRedisTemplate.hasKey(key))) {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("success", false);
-            jsonObject.put("message", "Sign in is processing");
-            return jsonObject;
-        }
+        if (Boolean.TRUE.equals(sisRedisTemplate.hasKey(key)))
+            return new OperationResponse(false, "Sign in is processing");
 
-        if (null == sisSchedule.getSlId()) {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("success", false);
-            jsonObject.put("message", "该课程未指定课程，请指定课程");
-        }
+        if (null == sisSchedule.getSlId())
+            return new OperationResponse(false,
+                "该课程未指定地点，请联系管理员设置地点");
 
         SisLocation sisLocation =
             sisLocationMapper.selectByPrimaryKey(sisSchedule.getSlId());
         if (null == sisLocation ||
             null == sisLocation.getSlLat() ||
-            null == sisLocation.getSlLong()) {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("success", false);
-            jsonObject.put("message", "地点信息不全，请联系管理员");
-            return jsonObject;
-        }
+            null == sisLocation.getSlLong())
+            return new OperationResponse(false, "地点信息不全，请联系管理员");
 
         log.info("create signIn schedule: " + key);
         hashMap.put("loc_lat", sisLocation.getSlLat());
@@ -184,21 +158,17 @@ public class SignInService {
             week), calendar.toInstant());
 
         log.info("start signIn schedule and end at: " + calendar.toInstant().toString());
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", true);
-        jsonObject.put("message", "success");
-        return jsonObject;
+        return OperationResponse.SUCCESS;
     }
 
-    public JSONObject getSignIn(Integer ssId, Integer week) {
+    public OperationResponse getSignIn(Integer ssId, Integer week) {
         String key = String.format(signInKeyFormat, ssId, week);
         if (Boolean.TRUE.equals(sisRedisTemplate.hasKey(key))) {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("success", true);
-            jsonObject.put("error", false);
-            jsonObject.put("code", 1);
-            jsonObject.put("message", "Processing");
-            return jsonObject;
+            OperationResponse operationResponse = new OperationResponse();
+            operationResponse.setSuccess(false);
+            operationResponse.setCode(1);
+            operationResponse.setMessage("Processing");
+            return operationResponse;
         }
 
         SisSignInExample sisSignInExample = new SisSignInExample();
@@ -216,12 +186,12 @@ public class SignInService {
                     sisScheduleMapper.selectByPrimaryKey(ssId);
 
                 if (null == sisSchedule) {
-                    JSONObject jsonObject = new JSONObject();
-                    jsonObject.put("success", false);
-                    jsonObject.put("error", true);
-                    jsonObject.put("code", 3);
-                    jsonObject.put("message", "schedule error: " + ssId);
-                    return jsonObject;
+                    OperationResponse operationResponse =
+                        new OperationResponse();
+                    operationResponse.setSuccess(false);
+                    operationResponse.setCode(3);
+                    operationResponse.setMessage("schedule error: " + ssId);
+                    return operationResponse;
                 }
                 SisCourse sisCourse =
                     sisCourseMapper.selectByPrimaryKey(sisSchedule.getScId());
@@ -233,49 +203,46 @@ public class SignInService {
                     sisSignInDetailMapper.selectByExample(sisSignInDetailExample);
 
                 List<String> suIdList =
-                    sisSignInDetailList.parallelStream().map(SisSignInDetail::getSuId).collect(Collectors.toList());
+                    sisSignInDetailList.parallelStream()
+                        .map(SisSignInDetail::getSuId)
+                        .distinct()
+                        .collect(Collectors.toList());
                 SisUserExample sisUserExample = new SisUserExample();
                 sisUserExample.createCriteria().andSuIdIn(suIdList);
-                List<SisUser> sisUserList;
-                if (suIdList.isEmpty()) {
-                    sisUserList = new ArrayList<>();
-                } else {
-                    sisUserList = sisUserMapper.selectByExample(sisUserExample);
-                }
+                List<SisUser> sisUserList = Optional
+                    .of(sisUserMapper.selectByExample(sisUserExample))
+                    .filter(l -> !l.isEmpty())
+                    .orElse(new ArrayList<>());
 
                 //merge
-                JSONObject sisScheduleJson = new JSONObject(sisSchedule);
-                sisScheduleJson.put("sisCourse", new JSONObject(sisCourse));
+                sisSchedule.setSisCourse(sisCourse);
 
-                JSONArray sisSignInDetailJsonArray =
-                    new JSONArray(sisSignInDetailList);
-                CourseService.mergeWithSuIdJsonArrayEtSisUser(sisUserList,
-                    sisSignInDetailJsonArray);
+                sisSignInDetailList.forEach(d -> d.setSisUser(sisUserList.parallelStream()
+                    .filter(u -> u.getSuId().equals(d.getSuId()))
+                    .peek(u -> u.setSuPassword(null))
+                    .findAny()
+                    .orElse(null)));
 
-                JSONObject sisSignInJson = new JSONObject(sisSignIn);
-                sisSignInJson.put("sisSignInDetailList",
-                    sisSignInDetailJsonArray);
-                sisSignInJson.put("sisSchedule", sisScheduleJson);
+                sisSignIn.setSisSignInDetailList(sisSignInDetailList);
+                sisSignIn.setSisSchedule(sisSchedule);
 
-                JSONObject jsonObject = new JSONObject();
-                jsonObject.put("success", true);
-                jsonObject.put("error", false);
-                jsonObject.put("code", 0);
-                jsonObject.put("record", sisSignInJson);
-                jsonObject.put("message", "End");
-                return jsonObject;
+                OperationResponse operationResponse = new OperationResponse();
+                operationResponse.setSuccess(true);
+                operationResponse.setCode(0);
+                operationResponse.setData(sisSignIn);
+                operationResponse.setMessage("End");
+                return operationResponse;
             })
             .orElseGet(() -> {
-                JSONObject jsonObject = new JSONObject();
-                jsonObject.put("success", true);
-                jsonObject.put("error", false);
-                jsonObject.put("code", 2);
-                jsonObject.put("message", "Not found");
-                return jsonObject;
+                OperationResponse operationResponse = new OperationResponse();
+                operationResponse.setSuccess(false);
+                operationResponse.setCode(2);
+                operationResponse.setMessage("Not found");
+                return operationResponse;
             });
     }
 
-    public JSONObject getSignIns(SisUser sisUser, String scId) throws IncorrectParameterException {
+    public SisCourse getSignIns(SisUser sisUser, String scId) throws IncorrectParameterException {
         //get course
         SisCourse sisCourse = Optional
             .ofNullable(sisCourseMapper.selectByPrimaryKey(scId))
@@ -289,10 +256,10 @@ public class SignInService {
             sisScheduleMapper.selectByExample(sisScheduleExample);
 
         //join SignIn
-        List<SisSignIn> sisSignInList = Optional
-            .of(sisScheduleList.stream()
-                .map(SisSchedule::getSsId)
-                .collect(Collectors.toList()))
+        List<Integer> ssIdList = sisScheduleList.stream()
+            .map(SisSchedule::getSsId)
+            .collect(Collectors.toList());
+        List<SisSignIn> sisSignInList = Optional.of(ssIdList)
             .filter(l -> !l.isEmpty())
             .map(l -> {
                 SisSignInExample sisSignInExample = new SisSignInExample();
@@ -302,10 +269,10 @@ public class SignInService {
             .orElse(new ArrayList<>());
 
         //join SignInDetail
-        List<SisSignInDetail> sisSignInDetailList = Optional
-            .of(sisSignInList.stream()
-                .map(SisSignIn::getSsiId)
-                .collect(Collectors.toList()))
+        List<Integer> ssiIdList = sisSignInList.stream()
+            .map(SisSignIn::getSsiId)
+            .collect(Collectors.toList());
+        List<SisSignInDetail> sisSignInDetailList = Optional.of(ssiIdList)
             .filter(l -> !l.isEmpty())
             .map(l -> {
                 SisSignInDetailExample sisSignInDetailExample =
@@ -313,18 +280,16 @@ public class SignInService {
                 SisSignInDetailExample.Criteria criteria =
                     sisSignInDetailExample.createCriteria();
                 criteria.andSsiIdIn(l);
-                if (null != sisUser) {
-                    criteria.andSuIdEqualTo(sisUser.getSuId());
-                }
+                if (null != sisUser) criteria.andSuIdEqualTo(sisUser.getSuId());
                 return sisSignInDetailMapper.selectByExample(sisSignInDetailExample);
             })
             .orElse(new ArrayList<>());
 
         //join student
-        List<SisUser> sisUserList = Optional
-            .of(sisSignInDetailList.parallelStream()
-                .map(SisSignInDetail::getSuId)
-                .collect(Collectors.toList()))
+        List<String> suIdList = sisSignInDetailList.parallelStream()
+            .map(SisSignInDetail::getSuId)
+            .collect(Collectors.toList());
+        List<SisUser> sisUserList = Optional.of(suIdList)
             .filter(l -> !l.isEmpty())
             .map(l -> {
                 SisUserExample sisUserExample =
@@ -335,89 +300,67 @@ public class SignInService {
             .orElse(new ArrayList<>());
 
         //merge student
-        JSONArray sisSignInDetailJsonArray = new JSONArray(sisSignInDetailList);
-        CourseService.mergeWithSuIdJsonArrayEtSisUser(sisUserList,
-            sisSignInDetailJsonArray);
+        sisSignInDetailList.forEach(d -> d.setSisUser(sisUserList.parallelStream()
+            .filter(u -> u.getSuId().equals(d.getSuId()))
+            .peek(u -> u.setSuPassword(null))
+            .findAny()
+            .orElse(null)));
 
         //merge signInDetail
-        JSONArray sisSignInJsonArray = new JSONArray(sisSignInList);
-        sisSignInJsonArray.forEach(sisSignInObj -> {
-            JSONObject sisSignInJson = (JSONObject) sisSignInObj;
-
-            Integer ssiId = sisSignInJson.getInt("ssiId");
-
-            List<JSONObject> sisSignInDetailJsonList = StreamSupport
-                .stream(sisSignInDetailJsonArray.spliterator(),
-                    false)
-                .map(sisSignInDetailObj -> (JSONObject) sisSignInDetailObj)
-                .filter(sisSignInDetailJson -> ssiId.equals(sisSignInDetailJson.getInt("ssiId")))
-                .collect(Collectors.toList());
-            sisSignInJson.put("sisSignInDetailList", sisSignInDetailJsonList);
-        });
+        sisSignInList.forEach(i -> i.setSisSignInDetailList(
+            sisSignInDetailList.parallelStream()
+                .filter(d -> d.getSsiId().equals(i.getSsiId()))
+                .collect(Collectors.toList())));
 
         //merge schedule
-        JSONArray sisScheduleJsonArray = new JSONArray(sisScheduleList);
-        sisScheduleJsonArray.forEach(sisScheduleObj -> {
-            JSONObject sisScheduleJson = (JSONObject) sisScheduleObj;
+        sisScheduleList.forEach(s -> {
+            String keyPattern = String.format(signInKeyFormat,
+                s.getSsId(), "*");
 
-            Integer ssId = sisScheduleJson.getInt("ssId");
+            // processing list
+            List<SignInProcessing> processingList = Optional
+                .ofNullable(sisRedisTemplate.keys(keyPattern))
+                .map(p -> p.stream()
+                    .map(key -> {
+                        Matcher matcher = Pattern.compile(
+                            "sis_ssId_\\d+_week_(\\d+)")
+                            .matcher(key);
+                        if (!matcher.find())
+                            return null;
 
-            String keyPattern = String.format(signInKeyFormat, ssId, "*");
-            List<JSONObject> processingList =
-                Optional
-                    .ofNullable(sisRedisTemplate.keys(keyPattern))
-                    .map(c -> c.stream()
-                        .map(key -> {
-                            Matcher matcher = Pattern.compile(
-                                "sis_ssId_\\d+_week_(\\d+)")
-                                .matcher(key);
-                            if (!matcher.find())
-                                return null;
+                        int week = Integer.valueOf(matcher.group(1));
+                        return new SignInProcessing(s.getSsId(), week);
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList()))
+                .orElse(new ArrayList<>());
 
-                            JSONObject jsonObject = new JSONObject();
-                            jsonObject.put("ssId", ssId);
-                            jsonObject.put("week",
-                                Integer.valueOf(matcher.group(1)));
-                            return jsonObject;
-                        })
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toList()))
-                    .orElse(null);
-
-            List<JSONObject> sisSignInJsonList = StreamSupport
-                .stream(sisSignInJsonArray.spliterator(), false)
-                .map(sisSignInObj -> (JSONObject) sisSignInObj)
-                .filter(sisSignInJson -> ssId.equals(sisSignInJson.getInt(
-                    "ssId")))
+            List<SisSignIn> tSignInList = sisSignInList.parallelStream()
+                .filter(i -> i.getSsId().equals(s.getSsId()))
                 .collect(Collectors.toList());
 
-            sisScheduleJson.put("sisProcessingList", processingList);
-            sisScheduleJson.put("sisSignInList", sisSignInJsonList);
+            s.setSisProcessingList(processingList);
+            s.setSisSignInList(tSignInList);
         });
 
         //merge course
-        JSONObject sisCourseJson = new JSONObject(sisCourse);
-        sisCourseJson.put("sisScheduleList", sisScheduleJsonArray);
+        sisCourse.setSisScheduleList(sisScheduleList);
 
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", true);
-        jsonObject.put("error", false);
-        jsonObject.put("course", sisCourseJson);
-        return jsonObject;
+        return sisCourse;
     }
 
-    public JSONObject getSignIns(String scId) throws IncorrectParameterException {
+    public SisCourse getSignIns(String scId) throws IncorrectParameterException {
         return getSignIns(null, scId);
     }
 
     @SuppressWarnings("ConstantConditions")
-    public JSONObject signIn(SisUser sisUser,
-                             Integer ssId,
-                             LocalDateTime currentDateTime,
-                             JSONObject locationJson) throws InvalidTimeParameterException, IncorrectParameterException, InvalidPermissionException {
-        if (log.isDebugEnabled()) {
+    public OperationResponse signIn(SisUser sisUser,
+                                    Integer ssId,
+                                    LocalDateTime currentDateTime,
+                                    JSONObject locationJson) throws InvalidTimeParameterException, IncorrectParameterException, InvalidPermissionException {
+        if (log.isDebugEnabled())
             log.debug("User " + sisUser.getSuId() + " try to signIn");
-        }
+
         String key =
             String.format(signInKeyFormat, ssId,
                 JudgeTimeUtil.getWeek(currentDateTime.toLocalDate()));
@@ -438,12 +381,8 @@ public class SignInService {
         }
 
         long until = createTime.until(currentDateTime, ChronoUnit.MINUTES);
-        if (until > 10 || until < 0) {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("success", false);
-            jsonObject.put("message", "Error time until: " + until);
-            return jsonObject;
-        }
+        if (until > 10 || until < 0)
+            return new OperationResponse(false, "Error time until: " + until);
 
         if (sisRedisTemplate.opsForHash().hasKey(key, "loc_lat") &&
             sisRedisTemplate.opsForHash().hasKey(key, "loc_long")) {
@@ -456,40 +395,32 @@ public class SignInService {
 
             double distance = LocationUtil.getDistance(stdLocLat, stdLocLong,
                 locLat, locLong);
-            if (distance > MAX_DISTANCE) {
-                JSONObject jsonObject = new JSONObject();
-                jsonObject.put("success", false);
-                jsonObject.put("message",
-                    "Error location distance: " + distance);
-                return jsonObject;
-            }
+            if (distance > MAX_DISTANCE) return new OperationResponse(false,
+                "Error location distance: " + distance);
         }
 
         sisRedisTemplate.opsForHash().put(key, sisUser.getSuId(), true);
-        if (log.isDebugEnabled()) {
+        if (log.isDebugEnabled())
             log.debug("User " + sisUser.getSuId() + " successfully signIn");
-        }
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", true);
-        jsonObject.put("message", "Success");
-        return jsonObject;
+
+        return OperationResponse.SUCCESS;
     }
 
-    public JSONObject getStuSignIns(String suId) {
+    public List<SisSignInDetail> getStuSignIns(String suId) {
         SisSignInDetailExample sisSignInDetailExample =
             new SisSignInDetailExample();
         sisSignInDetailExample.createCriteria().andSuIdEqualTo(suId);
         List<SisSignInDetail> sisSignInDetailList =
             sisSignInDetailMapper.selectByExample(sisSignInDetailExample);
-        if (sisSignInDetailList.isEmpty()) {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("success", true);
-            jsonObject.put("array", new ArrayList<>());
-        }
+        if (sisSignInDetailList.isEmpty()) return sisSignInDetailList;
 
         //join sisSignIn
+        List<Integer> ssiIdList = sisSignInDetailList.parallelStream()
+            .map(SisSignInDetail::getSsiId)
+            .distinct()
+            .collect(Collectors.toList());
         List<SisSignIn> sisSignInList = Optional
-            .of(sisSignInDetailList.parallelStream().map(SisSignInDetail::getSsiId).distinct().collect(Collectors.toList()))
+            .of(ssiIdList)
             .filter(l -> !l.isEmpty())
             .map(l -> {
                 SisSignInExample sisSignInExample = new SisSignInExample();
@@ -500,19 +431,28 @@ public class SignInService {
 
 
         //join schedule
+        List<Integer> ssIdList = sisSignInList.stream()
+            .map(SisSignIn::getSsId)
+            .distinct()
+            .collect(Collectors.toList());
         List<SisSchedule> sisScheduleList = Optional
-            .of(sisSignInList.stream().map(SisSignIn::getSsId).distinct().collect(Collectors.toList()))
+            .of(ssIdList)
             .filter(l -> !l.isEmpty())
             .map(l -> {
-                SisScheduleExample sisScheduleExample = new SisScheduleExample();
+                SisScheduleExample sisScheduleExample =
+                    new SisScheduleExample();
                 sisScheduleExample.createCriteria().andSsIdIn(l);
                 return sisScheduleMapper.selectByExample(sisScheduleExample);
             })
             .orElse(new ArrayList<>());
 
         //join course
+        List<String> scIdList = sisScheduleList.stream()
+            .map(SisSchedule::getScId)
+            .distinct()
+            .collect(Collectors.toList());
         List<SisCourse> sisCourseList = Optional
-            .of(sisScheduleList.stream().map(SisSchedule::getScId).distinct().collect(Collectors.toList()))
+            .of(scIdList)
             .filter(l -> !l.isEmpty())
             .map(l -> {
                 SisCourseExample sisCourseExample = new SisCourseExample();
@@ -521,41 +461,29 @@ public class SignInService {
             })
             .orElse(new ArrayList<>());
 
-        JSONArray signInDetailJsonArray = new JSONArray(sisSignInDetailList);
-        signInDetailJsonArray.forEach(signInDetailObj -> {
-            JSONObject jsonObject = (JSONObject) signInDetailObj;
+        sisSignInDetailList.parallelStream()
+            .forEach(d -> {
+                SisSignIn sisSignIn =
+                    sisSignInList.stream().filter(s -> s.getSsiId().equals(d.getSsiId())).findAny().orElse(null);
+                if (null == sisSignIn)
+                    return;
 
-            Integer ssiId = jsonObject.getInt("ssiId");
-            SisSignIn sisSignIn =
-                sisSignInList.stream().filter(s -> s.getSsiId().equals(ssiId)).findAny().orElse(null);
-            if (null == sisSignIn)
-                return;
+                SisSchedule sisSchedule =
+                    sisScheduleList.stream().filter(s -> s.getSsId().equals(sisSignIn.getSsId())).findAny().orElse(null);
+                if (null == sisSchedule)
+                    return;
 
-            Integer ssId = sisSignIn.getSsId();
-            SisSchedule sisSchedule =
-                sisScheduleList.stream().filter(s -> s.getSsId().equals(ssId)).findAny().orElse(null);
-            if (null == sisSchedule)
-                return;
+                SisCourse sisCourse =
+                    sisCourseList.stream().filter(c -> c.getScId().equals(sisSchedule.getScId())).findAny().orElse(null);
+                if (null == sisCourse)
+                    return;
 
-            String scId = sisSchedule.getScId();
-            SisCourse sisCourse =
-                sisCourseList.stream().filter(c -> c.getScId().equals(scId)).findAny().orElse(null);
-            if (null == sisCourse)
-                return;
+                d.setSisSignIn(sisSignIn);
+                sisSignIn.setSisSchedule(sisSchedule);
+                sisSchedule.setSisCourse(sisCourse);
+            });
 
-            JSONObject scheduleJson = new JSONObject(sisSchedule);
-            scheduleJson.put("sisCourse", new JSONObject(sisCourse));
-
-            JSONObject signInJson = new JSONObject(sisSignIn);
-            signInJson.put("sisSchedule", scheduleJson);
-
-            jsonObject.put("sisSignIn", signInJson);
-        });
-
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", true);
-        jsonObject.put("array", signInDetailJsonArray);
-        return jsonObject;
+        return sisSignInDetailList;
     }
 
     @Getter

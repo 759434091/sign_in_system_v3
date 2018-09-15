@@ -3,6 +3,7 @@ package team.a9043.sign_in_system.pojo;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 import lombok.Setter;
+import team.a9043.sign_in_system.service_pojo.SignInProcessing;
 
 import java.util.Arrays;
 import java.util.List;
@@ -85,4 +86,13 @@ public class SisSchedule {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<SisSupervision> sisSupervisionList;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private SisCourse sisCourse;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private List<SisSignIn> sisSignInList;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private List<SignInProcessing> sisProcessingList;
 }

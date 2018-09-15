@@ -1,5 +1,7 @@
 package team.a9043.sign_in_system.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.junit.Test;
@@ -7,7 +9,9 @@ import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
+import team.a9043.sign_in_system.pojo.SisCourse;
 import team.a9043.sign_in_system.pojo.SisUser;
+import team.a9043.sign_in_system.service_pojo.OperationResponse;
 
 import javax.annotation.Resource;
 
@@ -18,26 +22,29 @@ import javax.annotation.Resource;
 @SpringBootTest
 @Slf4j
 public class SignInServiceTest {
+    private ObjectMapper objectMapper = new ObjectMapper();
     @Resource
     private SignInService signInService;
 
     @Test
-    public void getSignInsUser() throws IncorrectParameterException {
+    public void getSignInsUser() throws IncorrectParameterException,
+        JsonProcessingException {
         SisUser sisUser = new SisUser();
         sisUser.setSuId("2016220401001");
-        JSONObject jsonObject = signInService.getSignIns(sisUser, "A");
-        log.info(jsonObject.toString(2));
+        SisCourse sc = signInService.getSignIns(sisUser, "A");
+        log.info(objectMapper.writeValueAsString(sc));
     }
 
     @Test
-    public void getSignIn() {
-        JSONObject jsonObject = signInService.getSignIn(2, 1);
-        log.info(jsonObject.toString(2));
+    public void getSignIn() throws JsonProcessingException {
+        OperationResponse or = signInService.getSignIn(2, 1);
+        log.info(objectMapper.writeValueAsString(or));
     }
 
     @Test
-    public void getSignIns() throws IncorrectParameterException {
-        JSONObject jsonObject = signInService.getSignIns("A");
-        log.info(jsonObject.toString(2));
+    public void getSignIns() throws IncorrectParameterException,
+        JsonProcessingException {
+        SisCourse sc = signInService.getSignIns("A");
+        log.info(objectMapper.writeValueAsString(sc));
     }
 }

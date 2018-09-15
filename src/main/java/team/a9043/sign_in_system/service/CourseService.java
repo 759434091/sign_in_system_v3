@@ -15,6 +15,7 @@ import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.mapper.*;
 import team.a9043.sign_in_system.pojo.*;
 import team.a9043.sign_in_system.security.tokenuser.TokenUser;
+import team.a9043.sign_in_system.service_pojo.OperationResponse;
 import team.a9043.sign_in_system.service_pojo.Week;
 import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
 import team.a9043.sign_in_system.util.judgetime.JudgeTimeUtil;
@@ -270,7 +271,7 @@ public class CourseService {
     }
 
     @Transactional
-    public JSONObject modifyScNeedMonitor(SisCourse sisCourse) throws IncorrectParameterException {
+    public OperationResponse modifyScNeedMonitor(SisCourse sisCourse) throws IncorrectParameterException {
         SisCourse stdSisCourse =
             sisCourseMapper.selectByPrimaryKey(sisCourse.getScId());
         if (null == stdSisCourse)
@@ -289,26 +290,20 @@ public class CourseService {
             if (null != sisUser)
                 sisCourseJson.put("sisUser", new JSONObject(sisUser));
         }
-
-        boolean success = sisCourseMapper.updateByPrimaryKey(stdSisCourse) > 0;
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", success);
-        if (success) {
-            jsonObject.put("sisCourse", sisCourseJson);
-            log.info("Success modify scNeedMonitor: scId " + sisCourse.getScId());
-        }
-        return jsonObject;
+        sisCourseMapper.updateByPrimaryKey(stdSisCourse);
+        log.info("Success modify scNeedMonitor: scId " + sisCourse.getScId());
+        return OperationResponse.SUCCESS;
     }
 
     @SuppressWarnings("Duplicates")
     @Transactional
-    public JSONObject batchSupervision(@NonNull boolean monitorStatus,
-                                       @Nullable Boolean needMonitor,
-                                       @Nullable Boolean hasMonitor,
-                                       @Nullable Integer sdId,
-                                       @Nullable Integer scGrade,
-                                       @Nullable String scId,
-                                       @Nullable String scName) {
+    public OperationResponse batchSetNeedMonitor(@NonNull boolean monitorStatus,
+                                                 @Nullable Boolean needMonitor,
+                                                 @Nullable Boolean hasMonitor,
+                                                 @Nullable Integer sdId,
+                                                 @Nullable Integer scGrade,
+                                                 @Nullable String scId,
+                                                 @Nullable String scName) {
         SisCourseExample sisCourseExample = new SisCourseExample();
         SisCourseExample.Criteria criteria = sisCourseExample.createCriteria();
         if (null != needMonitor) {
@@ -319,39 +314,27 @@ public class CourseService {
             else
                 criteria.andScNeedMonitorEqualTo(needMonitor).andSuIdIsNull();
         }
-        if (null != scGrade)
-            criteria.andScGradeEqualTo(scGrade);
-        if (null != scName)
-            criteria.andScNameLike(getFuzzySearch(scName));
-        if (null != scId) {
-            criteria.andScIdLike("%" + scId + "%");
-        }
-        if (null != sdId) {
-            sisCourseExample.setSdId(sdId);
-        }
+        if (null != scGrade) criteria.andScGradeEqualTo(scGrade);
+        if (null != scName) criteria.andScNameLike(getFuzzySearch(scName));
+        if (null != scId) criteria.andScIdLike("%" + scId + "%");
+        if (null != sdId) sisCourseExample.setSdId(sdId);
 
         List<SisCourse> stdSisCourseList =
             sisCourseMapper.selectByExample(sisCourseExample);
         stdSisCourseList.parallelStream()
             .forEach(sisCourse -> {
                 sisCourse.setScNeedMonitor(monitorStatus);
-                if (!monitorStatus) {
-                    sisCourse.setSuId(null);
-                }
+                if (!monitorStatus) sisCourse.setSuId(null);
             });
 
-        JSONObject jsonObject = new JSONObject();
-        boolean success =
-            sisCourseMapper.updateNeedMonitorList(stdSisCourseList) > 0;
-        jsonObject.put("success", success);
-        if (success)
-            log.info("Success batchSupervision: monitorStatus " + monitorStatus);
-        return jsonObject;
+        sisCourseMapper.updateNeedMonitorList(stdSisCourseList);
+        log.info("Success batchSetNeedMonitor: monitorStatus " + monitorStatus);
+        return OperationResponse.SUCCESS;
     }
 
     @Transactional
-    public JSONObject batchSupervision(@NonNull boolean monitorStatus,
-                                       @NonNull List<String> scIdList) {
+    public OperationResponse batchSetNeedMonitor(@NonNull boolean monitorStatus,
+                                                 @NonNull List<String> scIdList) {
         SisCourseExample sisCourseExample = new SisCourseExample();
         sisCourseExample.createCriteria().andScIdIn(scIdList);
         List<SisCourse> stdSisCourseList =
@@ -364,55 +347,35 @@ public class CourseService {
                 }
             });
 
-        JSONObject jsonObject = new JSONObject();
-        boolean success =
-            sisCourseMapper.updateNeedMonitorList(stdSisCourseList) > 0;
-        jsonObject.put("success", success);
-        if (success)
-            log.info("Success batchSupervision: monitorStatus " + monitorStatus + " scIdList -> " + new JSONArray(scIdList));
-        return jsonObject;
+        sisCourseMapper.updateNeedMonitorList(stdSisCourseList);
+        log.info("Success batchSetNeedMonitor: monitorStatus " + monitorStatus + " scIdList -> " + new JSONArray(scIdList));
+        return OperationResponse.SUCCESS;
     }
 
-
-    @SuppressWarnings("Duplicates")
-    public JSONObject getCourseDepartments(String scId) {
+    public List<SisDepartment> getCourseDepartments(String scId) {
         SisJoinDepartExample sisJoinDepartExample = new SisJoinDepartExample();
         sisJoinDepartExample.createCriteria().andScIdEqualTo(scId);
         List<SisJoinDepart> sisJoinDepartList =
             sisJoinDepartMapper.selectByExample(sisJoinDepartExample);
-        if (sisJoinDepartList.isEmpty()) {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("success", true);
-            jsonObject.put("array", new ArrayList<>());
-            return jsonObject;
-        }
+        if (sisJoinDepartList.isEmpty()) return new ArrayList<>();
 
         SisDepartmentExample sisDepartmentExample = new SisDepartmentExample();
-        sisDepartmentExample.createCriteria().andSdIdIn(sisJoinDepartList.stream().map(SisJoinDepart::getSdId).distinct().collect(Collectors.toList()));
-        List<SisDepartment> sisDepartmentList =
-            sisDepartmentMapper.selectByExample(sisDepartmentExample);
+        sisDepartmentExample.createCriteria().andSdIdIn(sisJoinDepartList.stream()
+            .map(SisJoinDepart::getSdId)
+            .distinct()
+            .collect(Collectors.toList()));
 
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", true);
-        jsonObject.put("array", new JSONArray(sisDepartmentList));
-        return jsonObject;
+        return sisDepartmentMapper.selectByExample(sisDepartmentExample);
     }
 
-
-    @SuppressWarnings("Duplicates")
-    public JSONObject getJoinCourseStudents(String scId) {
+    public List<SisJoinCourse> getJoinCourseStudents(String scId) {
         SisJoinCourseExample sisJoinCourseExample = new SisJoinCourseExample();
         sisJoinCourseExample.createCriteria()
             .andScIdEqualTo(scId)
             .andJoinCourseTypeEqualTo(SisJoinCourse.JoinCourseType.ATTENDANCE.ordinal());
         List<SisJoinCourse> sisJoinCourseList =
             sisJoinCourseMapper.selectByExample(sisJoinCourseExample);
-        if (sisJoinCourseList.isEmpty()) {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("success", true);
-            jsonObject.put("array", new ArrayList<>());
-            return jsonObject;
-        }
+        if (sisJoinCourseList.isEmpty()) return new ArrayList<>();
 
         SisUserExample sisUserExample = new SisUserExample();
         sisUserExample.createCriteria()
@@ -420,19 +383,13 @@ public class CourseService {
 
         List<SisUser> sisUserList =
             sisUserMapper.selectByExample(sisUserExample);
-        JSONArray joinCourseJsonArray = new JSONArray(sisJoinCourseList);
-        joinCourseJsonArray.forEach(jcObj -> {
-            JSONObject jcJson = (JSONObject) jcObj;
-            String suId = jcJson.getString("suId");
-            SisUser sisUser1 =
-                sisUserList.stream().filter(s -> s.getSuId().equals(suId)).findAny().orElse(null);
-            jcJson.put("sisUser", null == sisUser1 ? null :
-                new JSONObject(sisUser1));
-        });
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", true);
-        jsonObject.put("array", joinCourseJsonArray);
-        return jsonObject;
+        sisJoinCourseList.forEach(j -> j.setSisUser(sisUserList.stream()
+            .filter(u -> u.getSuId().equals(j.getSuId()))
+            .peek(u -> u.setSuPassword(null))
+            .findAny()
+            .orElse(null)));
+
+        return sisJoinCourseList;
     }
 
 

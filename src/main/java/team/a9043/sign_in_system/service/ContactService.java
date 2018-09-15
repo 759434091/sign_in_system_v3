@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import team.a9043.sign_in_system.async.AsyncSendMail;
 import team.a9043.sign_in_system.mapper.SisContactMapper;
 import team.a9043.sign_in_system.pojo.SisContact;
+import team.a9043.sign_in_system.service_pojo.OperationResponse;
 
 import javax.annotation.Resource;
 
@@ -16,8 +17,9 @@ public class ContactService {
     @Resource
     private AsyncSendMail asyncSendMail;
 
-    public boolean receiveKssContact(SisContact sisContact) {
+    public OperationResponse receiveKssContact(SisContact sisContact) {
         asyncSendMail.sendMail(sisContact);
-        return sisContactMapper.insert(sisContact) > 0;
+        sisContactMapper.insert(sisContact);
+        return OperationResponse.SUCCESS;
     }
 }

@@ -13,6 +13,7 @@ import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.pojo.SisCourse;
 import team.a9043.sign_in_system.pojo.SisJoinCourse;
 import team.a9043.sign_in_system.pojo.SisUser;
+import team.a9043.sign_in_system.service_pojo.OperationResponse;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -32,8 +33,8 @@ public class CourseServiceTest {
 
     @Test
     public void getCourses() throws
-        ExecutionException, InterruptedException, IncorrectParameterException
-        , JsonProcessingException {
+        ExecutionException, InterruptedException, IncorrectParameterException,
+        JsonProcessingException {
         LocalDateTime localDateTime = LocalDateTime.now();
         PageInfo<SisCourse> pageInfo = courseService.getCourses(1,
             10,
@@ -50,7 +51,8 @@ public class CourseServiceTest {
     }
 
     @Test
-    public void getCourses1() throws ExecutionException, InterruptedException, JsonProcessingException {
+    public void getCourses1() throws ExecutionException, InterruptedException
+        , JsonProcessingException {
         SisUser sisUser = new SisUser();
         sisUser.setSuId("3203604");
         PageInfo<SisJoinCourse> pageInfo = courseService.getCourses(sisUser,
@@ -59,11 +61,12 @@ public class CourseServiceTest {
     }
 
     @Test
-    public void modifySsNeedMonitor() throws IncorrectParameterException {
+    public void modifySsNeedMonitor() throws IncorrectParameterException,
+        JsonProcessingException {
         SisCourse sisCourse = new SisCourse();
         sisCourse.setScId("A");
         sisCourse.setScNeedMonitor(true);
-        JSONObject jsonObject = courseService.modifyScNeedMonitor(sisCourse);
-        log.info(jsonObject.toString(2));
+        OperationResponse or = courseService.modifyScNeedMonitor(sisCourse);
+        log.info(objectMapper.writeValueAsString(or));
     }
 }

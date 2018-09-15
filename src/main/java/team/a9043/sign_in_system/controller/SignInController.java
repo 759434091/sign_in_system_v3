@@ -10,9 +10,12 @@ import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
+import team.a9043.sign_in_system.pojo.SisCourse;
+import team.a9043.sign_in_system.pojo.SisSignInDetail;
 import team.a9043.sign_in_system.pojo.SisUser;
 import team.a9043.sign_in_system.security.tokenuser.TokenUser;
 import team.a9043.sign_in_system.service.SignInService;
+import team.a9043.sign_in_system.service_pojo.OperationResponse;
 import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
 
 import javax.annotation.Resource;
@@ -25,6 +28,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.Base64;
+import java.util.List;
 
 /**
  * @author a9043
@@ -42,16 +46,16 @@ public class SignInController {
     }
 
     @GetMapping("/users/{suId}/signIns")
-    public JSONObject getSignIns(@PathVariable String suId) {
+    public List<SisSignInDetail> getSignIns(@PathVariable String suId) {
         return signInService.getStuSignIns(suId);
     }
 
     @GetMapping("/courses/{scId}/signIns")
     @PreAuthorize("hasAnyAuthority('ADMINISTRATOR','STUDENT','TEACHER')")
     @ApiOperation("获得签到以及历史")
-    public JSONObject getSignIns(@TokenUser @ApiIgnore SisUser sisUser,
-                                 @PathVariable @ApiParam("课程") String scId,
-                                 @RequestParam
+    public SisCourse getSignIns(@TokenUser @ApiIgnore SisUser sisUser,
+                                @PathVariable @ApiParam("课程") String scId,
+                                @RequestParam
                                  @ApiParam(value = "查询类型", allowableValues =
                                      "student, teacher, administrator")
                                      String queryType) throws IncorrectParameterException, InvalidPermissionException {
@@ -83,8 +87,8 @@ public class SignInController {
     @PostMapping("/schedules/{ssId}/signIns")
     @PreAuthorize("hasAnyAuthority('ADMINISTRATOR','TEACHER')")
     @ApiOperation("发起签到")
-    public JSONObject createSignIn(@TokenUser @ApiIgnore SisUser sisUser,
-                                   @PathVariable @ApiParam("排课") Integer ssId) throws InvalidTimeParameterException, InvalidPermissionException {
+    public OperationResponse createSignIn(@TokenUser @ApiIgnore SisUser sisUser,
+                                          @PathVariable @ApiParam("排课") Integer ssId) throws InvalidTimeParameterException, InvalidPermissionException {
         LocalDateTime localDateTime = LocalDateTime.now();
 
         return signInService.createSignIn(sisUser, ssId, localDateTime);
@@ -93,8 +97,8 @@ public class SignInController {
     @GetMapping("/schedules/{ssId}/signIns/week/{week}")
     @PreAuthorize("hasAnyAuthority('ADMINISTRATOR','TEACHER')")
     @ApiOperation("获得签到")
-    public JSONObject getSignIn(@PathVariable @ApiParam("排课") Integer ssId,
-                                @PathVariable @ApiParam("签到周") Integer week) {
+    public OperationResponse getSignIn(@PathVariable @ApiParam("排课") Integer ssId,
+                                       @PathVariable @ApiParam("签到周") Integer week) {
         return signInService.getSignIn(ssId, week);
     }
 
@@ -102,9 +106,9 @@ public class SignInController {
     @PreAuthorize("hasAnyAuthority('STUDENT') && authentication.sisUser.type" +
         ".equals('code')")
     @ApiOperation("学生签到")
-    public JSONObject signIn(@TokenUser @ApiIgnore SisUser sisUser,
-                             @PathVariable @ApiParam("排课") Integer ssId,
-                             @RequestHeader("Access-Token")
+    public OperationResponse signIn(@TokenUser @ApiIgnore SisUser sisUser,
+                                    @PathVariable @ApiParam("排课") Integer ssId,
+                                    @RequestHeader("Access-Token")
                              @ApiParam(value = "json的加密内容进行Base64编码",
                                  allowableValues = "{loc_lat: Double, " +
                                      "loc_long: Double}") String base64EncodeAESBytesStr) throws IncorrectParameterException, InvalidTimeParameterException, InvalidPermissionException {

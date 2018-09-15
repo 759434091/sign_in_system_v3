@@ -1,5 +1,7 @@
 package team.a9043.sign_in_system.other;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
 import org.junit.Test;
@@ -11,10 +13,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.junit4.SpringRunner;
 import team.a9043.sign_in_system.mapper.SisJoinCourseMapper;
 import team.a9043.sign_in_system.mapper.SisScheduleMapper;
-import team.a9043.sign_in_system.pojo.SisJoinCourse;
-import team.a9043.sign_in_system.pojo.SisJoinCourseExample;
-import team.a9043.sign_in_system.pojo.SisSchedule;
-import team.a9043.sign_in_system.pojo.SisScheduleExample;
+import team.a9043.sign_in_system.pojo.*;
+import team.a9043.sign_in_system.service_pojo.OperationResponse;
 
 import javax.annotation.Resource;
 import javax.crypto.BadPaddingException;
@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 @SpringBootTest
 @Slf4j
 public class OtherTest {
+    private ObjectMapper objectMapper = new ObjectMapper();
     @Resource
     private SisJoinCourseMapper sisJoinCourseMapper;
     @Resource
@@ -137,5 +138,15 @@ public class OtherTest {
     @Test
     public void test5() {
         log.info(bCryptPasswordEncoder.encode("123456"));
+    }
+
+    @Test
+    public void test6() throws JsonProcessingException {
+        SisUser sisUser = new SisUser();
+        OperationResponse operationResponse = new OperationResponse();
+        operationResponse.setSuccess(true);
+        operationResponse.setCode(0);
+        operationResponse.setData(sisUser);
+        log.info(objectMapper.writeValueAsString(operationResponse));
     }
 }

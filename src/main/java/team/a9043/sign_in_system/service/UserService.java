@@ -18,6 +18,7 @@ import team.a9043.sign_in_system.mapper.SisSignInDetailMapper;
 import team.a9043.sign_in_system.mapper.SisUserMapper;
 import team.a9043.sign_in_system.pojo.SisUser;
 import team.a9043.sign_in_system.pojo.SisUserExample;
+import team.a9043.sign_in_system.service_pojo.OperationResponse;
 import team.a9043.sign_in_system.util.JwtUtil;
 
 import javax.annotation.Nullable;
@@ -46,8 +47,6 @@ public class UserService {
     private BCryptPasswordEncoder bCryptPasswordEncoder;
     @Resource
     private SisUserMapper sisUserMapper;
-    @Resource
-    private SisSignInDetailMapper sisSignInDetailMapper;
 
     public UserService(@Value("${wxapp.rooturl}") String rooturl,
                        @Autowired JsonObjectHttpMessageConverter jsonObjectHttpMessageConverter) {
@@ -56,37 +55,6 @@ public class UserService {
             .additionalMessageConverters(jsonObjectHttpMessageConverter)
             .rootUri(rooturl)
             .build();
-    }
-
-    @Deprecated
-    @SuppressWarnings("ConstantConditions")
-    public JSONObject getUser(SisUser sisUser) throws InvalidParameterException {
-        return Optional
-            .ofNullable(sisUserMapper.selectByPrimaryKey(sisUser.getSuId()))
-            .map(stdSisUser -> {
-                stdSisUser.setSuPassword(null);
-
-                JSONObject jsonObject = new JSONObject();
-                jsonObject.put("success", true);
-                jsonObject.put("error", false);
-                jsonObject.put("user", new JSONObject(stdSisUser));
-                return jsonObject;
-            })
-            .orElseThrow(() -> new InvalidParameterException(
-                "Token user not found: " + sisUser.getSuId()));
-    }
-
-    /**
-     * 新增用户
-     *
-     * @param sisUser 表单用户
-     * @return 操作结果
-     */
-    @Deprecated
-    @Transactional
-    public boolean createUser(SisUser sisUser) {
-        sisUser.setSuPassword(bCryptPasswordEncoder.encode(sisUser.getSuPassword()));
-        return sisUserMapper.insert(sisUser) > 0;
     }
 
     @SuppressWarnings("Duplicates")

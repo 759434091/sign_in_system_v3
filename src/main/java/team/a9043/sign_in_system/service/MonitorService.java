@@ -2,9 +2,10 @@ package team.a9043.sign_in_system.service;
 
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.json.JSONArray;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
@@ -14,6 +15,7 @@ import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
 import team.a9043.sign_in_system.mapper.*;
 import team.a9043.sign_in_system.pojo.*;
+import team.a9043.sign_in_system.service_pojo.OperationResponse;
 import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
 import team.a9043.sign_in_system.util.judgetime.JudgeTimeUtil;
 import team.a9043.sign_in_system.util.judgetime.ScheduleParserException;
@@ -22,14 +24,13 @@ import javax.annotation.Nullable;
 import javax.annotation.Resource;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
+import java.util.stream.IntStream;
 
 /**
  * @author a9043
@@ -51,13 +52,14 @@ public class MonitorService {
     private SisUserInfoMapper sisUserInfoMapper;
     @Resource
     private AsyncJoinService asyncJoinService;
-    private static final int N = 20;
-    private ReentrantLock[] locks = new ReentrantLock[N];
+    @Value("${monitorService.lockSize}")
+    private int N = 20;
+    private ReentrantLock[] locks = getReentrantLock();
 
-    {
-        for (int i = 0; i < N; i++) {
-            locks[i] = new ReentrantLock();
-        }
+    private ReentrantLock[] getReentrantLock() {
+        return IntStream.range(0, N)
+            .mapToObj(i -> new ReentrantLock())
+            .toArray(ReentrantLock[]::new);
     }
 
 
@@ -115,8 +117,8 @@ public class MonitorService {
         return sisCoursePageInfo;
     }
 
-    public JSONObject getSupervisions(@NotNull SisUser sisUser,
-                                      @NotNull String scId) throws IncorrectParameterException, InvalidPermissionException {
+    public List<SisSchedule> getSupervisions(@NotNull SisUser sisUser,
+                                             @NotNull String scId) throws IncorrectParameterException, InvalidPermissionException {
 
         SisCourse sisCourse = Optional
             .ofNullable(sisCourseMapper.selectByPrimaryKey(scId))
@@ -140,95 +142,63 @@ public class MonitorService {
         List<Integer> ssIdList = sisScheduleList.stream()
             .map(SisSchedule::getSsId)
             .collect(Collectors.toList());
+        if (ssIdList.isEmpty()) return sisScheduleList;
 
-        //join supervision
-        List<SisSupervision> sisSupervisionList;
-        if (ssIdList.isEmpty()) {
-            sisSupervisionList = new ArrayList<>();
-        } else {
-            SisSupervisionExample sisSupervisionExample =
-                new SisSupervisionExample();
-            sisScheduleExample.createCriteria().andSsIdIn(ssIdList);
-            sisSupervisionList =
-                sisSupervisionMapper.selectByExample(sisSupervisionExample);
-        }
+        SisSupervisionExample sisSupervisionExample =
+            new SisSupervisionExample();
+        sisScheduleExample.createCriteria().andSsIdIn(ssIdList);
+        List<SisSupervision> sisSupervisionList =
+            sisSupervisionMapper.selectByExample(sisSupervisionExample);
 
         //merge sisSchedule
-        JSONArray sisScheduleJsonArray = new JSONArray(sisScheduleList);
-        sisScheduleJsonArray.forEach(sisScheduleObj -> {
-            JSONObject sisScheduleJson = (JSONObject) sisScheduleObj;
+        sisScheduleList.forEach(s -> s.setSisSupervisionList(sisSupervisionList.stream()
+            .filter(sisSupervision -> sisSupervision.getSsId().equals(s.getSsId()))
+            .collect(Collectors.toList())));
 
-            Integer ssId = sisScheduleJson.getInt("ssId");
-            List<SisSupervision> tSisSupervisionList =
-                sisSupervisionList.stream()
-                    .filter(sisSupervision -> sisSupervision.getSsId().equals(ssId))
-                    .collect(Collectors.toList());
-
-            sisScheduleJson.put("sisSupervisionList",
-                new JSONArray(tSisSupervisionList));
-        });
-
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", true);
-        jsonObject.put("error", false);
-        jsonObject.put("array", sisScheduleJsonArray);
-        jsonObject.put("arrSize", sisScheduleJsonArray.length());
         if (log.isDebugEnabled()) {
             log.debug("User " + sisUser.getSuId() + " get supervisions: " + scId);
         }
-        return jsonObject;
+        return sisScheduleList;
     }
 
     @Transactional
-    public JSONObject drawMonitor(@NotNull SisUser sisUser,
-                                  @NotNull String scId) throws IncorrectParameterException, InvalidPermissionException {
+    public OperationResponse drawMonitor(@NotNull SisUser sisUser,
+                                         @NotNull String scId) throws IncorrectParameterException {
         int idx = String.format("sis_draw_monitor_%s", scId).hashCode() % N;
-        if (idx < 0)
-            idx = idx + N;
-        ReentrantLock lock =
-            locks[idx];
-        if (!lock.tryLock()) {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("success", false);
-            jsonObject.put("message", "该课已被占, 请稍后再试");
-            return jsonObject;
-        }
+        if (idx < 0) idx += N;
+        ReentrantLock lock = locks[idx];
+        if (!lock.tryLock()) return new OperationResponse(false, "该课程已被领取");
 
         SisCourse sisCourse = Optional
             .ofNullable(sisCourseMapper.selectByPrimaryKey(scId))
-            .orElseThrow(() -> new IncorrectParameterException("No course" +
-                ": " + scId));
+            .orElseThrow(() -> new IncorrectParameterException(
+                "No course: " + scId));
 
-        if (null != sisCourse.getSuId()) {
-            throw new InvalidPermissionException("Invalid permission: " + scId);
-        }
+        if (null != sisCourse.getSuId())
+            return new OperationResponse(false, "该课程已被领取");
 
         SisCourse updatedSisCourse = new SisCourse();
         updatedSisCourse.setScId(sisCourse.getScId());
         updatedSisCourse.setSuId(sisUser.getSuId());
 
-        JSONObject jsonObject = new JSONObject();
-        boolean success =
-            sisCourseMapper.updateByPrimaryKeySelective(updatedSisCourse) > 0;
-        jsonObject.put("success", success);
+        sisCourseMapper.updateByPrimaryKeySelective(updatedSisCourse);
         log.info("User " + sisUser.getSuId() + " has draw course: " + scId);
         lock.unlock();
-        return jsonObject;
+        return OperationResponse.SUCCESS;
     }
 
     @Transactional
-    public JSONObject insertSupervision(@NotNull SisUser sisUser,
-                                        @NotNull Integer ssId,
-                                        @NotNull SisSupervision sisSupervision,
-                                        @NotNull LocalDateTime currentDateTime) throws IncorrectParameterException, ScheduleParserException, InvalidPermissionException, InvalidTimeParameterException {
+    public OperationResponse insertSupervision(@NotNull SisUser sisUser,
+                                               @NotNull Integer ssId,
+                                               @NotNull SisSupervision sisSupervision,
+                                               @NotNull LocalDateTime currentDateTime) throws IncorrectParameterException, ScheduleParserException, InvalidPermissionException, InvalidTimeParameterException {
         //check exist
         SisSupervisionKey sisSupervisionKey = new SisSupervisionKey();
         sisSupervisionKey.setSsId(ssId);
         sisSupervisionKey.setSsvWeek(sisSupervision.getSsvWeek());
 
-        if (null != sisSupervisionMapper.selectByPrimaryKey(sisSupervisionKey)) {
+        if (null != sisSupervisionMapper.selectByPrimaryKey(sisSupervisionKey))
             throw new InvalidPermissionException("Supervision exist: " + ssId + ", " + sisSupervision.getSsvWeek());
-        }
 
         //valid sisSchedule
         SisSchedule sisSchedule = Optional
@@ -266,70 +236,52 @@ public class MonitorService {
         if (!JudgeTimeUtil.isCourseTime(sisSchedule,
             sisSupervision.getSsvWeek(),
             currentDateTime)) {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("success", false);
-            jsonObject.put("message", "Incorrect time");
-            return jsonObject;
+            return new OperationResponse(false, "Incorrect time");
         }
 
         sisSupervision.setSsId(ssId);
-        JSONObject jsonObject = new JSONObject();
-        boolean success = sisSupervisionMapper.insert(sisSupervision) > 0;
-        jsonObject.put("success", success);
+        sisSupervisionMapper.insert(sisSupervision);
         log.info("User " + sisUser.getSuId() + " insert supervision: ssId " + ssId + " week " + ssvWeek);
-        return jsonObject;
+        return OperationResponse.SUCCESS;
     }
 
-    public JSONObject getTransCourses(@NotNull SisUser sisUser,
-                                      Integer smtStatus) {
+    public List<SisMonitorTrans> getTransCourses(@NotNull SisUser sisUser,
+                                                 Integer smtStatus) {
         SisMonitorTransExample sisMonitorTransExample =
             new SisMonitorTransExample();
         sisMonitorTransExample.createCriteria()
             .andSuIdEqualTo(sisUser.getSuId())
             .andSmtStatusEqualTo(smtStatus);
-        List<JSONObject> sisMonitorTransJsonList = sisMonitorTransMapper
-            .selectByExample(sisMonitorTransExample)
-            .stream()
-            .map(sisMonitorTrans -> {
-                //join schedule
+
+        List<SisMonitorTrans> sisMonitorTransList = sisMonitorTransMapper
+            .selectByExample(sisMonitorTransExample);
+        sisMonitorTransList
+            .forEach(sisMonitorTrans -> {
+                //get schedule
                 SisSchedule sisSchedule =
                     sisScheduleMapper.selectByPrimaryKey(sisMonitorTrans.getSsId());
 
-                //join course
+                //get course
                 SisCourse sisCourse =
                     sisCourseMapper.selectByPrimaryKey(sisSchedule.getScId());
 
                 //join monitor
-                JSONObject sisCourseJson = new JSONObject(sisCourse);
-                if (null != sisCourse.getSuId()) {
-                    SisUser monitor =
-                        sisUserMapper.selectByPrimaryKey(sisCourse.getSuId());
-                    sisCourseJson.put("sisUser", new JSONObject(monitor));
-                }
+                if (null != sisCourse.getSuId())
+                    sisCourse.setMonitor(sisUserMapper.selectByPrimaryKey(sisCourse.getSuId()));
 
-                //merge all
-                JSONObject sisScheduleJson = new JSONObject(sisSchedule);
-                sisScheduleJson.put("sisCourse", sisCourseJson);
+                //join course
+                sisSchedule.setSisCourse(sisCourse);
 
-                JSONObject sisMonitorTransJson =
-                    new JSONObject(sisMonitorTrans);
-                sisMonitorTransJson.put("sisSchedule", sisScheduleJson);
-                return sisMonitorTransJson;
-            })
-            .collect(Collectors.toList());
+                sisMonitorTrans.setSisSchedule(sisSchedule);
+            });
 
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", true);
-        jsonObject.put("error", false);
-        jsonObject.put("array", sisMonitorTransJsonList);
-        jsonObject.put("arrSize", sisMonitorTransJsonList.size());
-        return jsonObject;
+        return sisMonitorTransList;
     }
 
     @Transactional
-    public JSONObject applyForTransfer(@NotNull SisUser sisUser,
-                                       @NotNull Integer ssId,
-                                       @NotNull SisMonitorTrans sisMonitorTrans) throws InvalidPermissionException, IncorrectParameterException {
+    public OperationResponse applyForTransfer(@NotNull SisUser sisUser,
+                                              @NotNull Integer ssId,
+                                              @NotNull SisMonitorTrans sisMonitorTrans) throws InvalidPermissionException, IncorrectParameterException {
         SisSchedule sisSchedule = Optional
             .ofNullable(sisScheduleMapper.selectByPrimaryKey(ssId))
             .orElseThrow(() ->
@@ -349,30 +301,29 @@ public class MonitorService {
         sisMonitorTransKey.setSmtWeek(sisMonitorTrans.getSmtWeek());
         SisMonitorTrans stdSisMonitorTrans =
             sisMonitorTransMapper.selectByPrimaryKey(sisMonitorTransKey);
-        if (null != stdSisMonitorTrans) {
+        if (null != stdSisMonitorTrans)
             throw new InvalidPermissionException("MonitorTrans exist: " + new JSONObject(sisMonitorTransKey).toString());
-        }
 
         //check permission
         SisCourse sisCourse =
             sisCourseMapper.selectByPrimaryKey(sisSchedule.getScId());
-        if (null == sisCourse || null == sisCourse.getSuId() || !sisCourse.getSuId().equals(sisUser.getSuId())) {
+        if (null == sisCourse ||
+            null == sisCourse.getSuId() ||
+            !sisCourse.getSuId().equals(sisUser.getSuId()))
             throw new InvalidPermissionException("Invalid Permission: ssId " + sisSchedule.getSsId());
-        }
 
         sisMonitorTrans.setSmtStatus(SisMonitorTrans.SmtStatus.UNTREATED.ordinal());
         sisMonitorTrans.setSuId(sisMonitorTrans.getSuId());
         sisMonitorTrans.setSsId(ssId);
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success",
-            sisMonitorTransMapper.insert(sisMonitorTrans) > 0);
-        return jsonObject;
+
+        sisMonitorTransMapper.insert(sisMonitorTrans);
+        return OperationResponse.SUCCESS;
     }
 
     @Transactional
-    public JSONObject modifyTransfer(@NotNull SisUser sisUser,
-                                     @NotNull Integer ssId,
-                                     @NotNull SisMonitorTrans sisMonitorTrans) throws IncorrectParameterException, InvalidPermissionException {
+    public OperationResponse modifyTransfer(@NotNull SisUser sisUser,
+                                            @NotNull Integer ssId,
+                                            @NotNull SisMonitorTrans sisMonitorTrans) throws IncorrectParameterException, InvalidPermissionException {
         if (null == sisMonitorTrans.getSmtWeek())
             throw new IncorrectParameterException("Incorrect smtWeek: " + sisMonitorTrans.getSmtWeek());
         if (null == sisMonitorTrans.getSmtStatus())
@@ -390,41 +341,32 @@ public class MonitorService {
                 "Invalid Permission: sisMonitorTrans " + new JSONObject(sisMonitorTransKey).toString());
 
         stdSisMonitorTrans.setSmtStatus(sisMonitorTrans.getSmtStatus());
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success",
-            sisMonitorTransMapper.updateByPrimaryKey(stdSisMonitorTrans));
-        return jsonObject;
+
+        sisMonitorTransMapper.updateByPrimaryKey(stdSisMonitorTrans);
+        return OperationResponse.SUCCESS;
     }
 
-    @SuppressWarnings("Duplicates")
-    public JSONObject getMonitors(@Nullable Integer page,
-                                  @Nullable Integer pageSize,
-                                  @Nullable String suId,
-                                  @Nullable String suName,
-                                  @Nullable Boolean ordByLackNum) throws IncorrectParameterException {
-        if (null == page) {
+    public PageInfo<SisUser> getMonitors(@NonNull Integer page,
+                                         @NonNull Integer pageSize,
+                                         @Nullable String suId,
+                                         @Nullable String suName,
+                                         @Nullable Boolean ordByLackNum) throws IncorrectParameterException {
+        if (null == page)
             throw new IncorrectParameterException("Incorrect page: " + null);
-        }
         if (page < 1)
             throw new IncorrectParameterException("Incorrect page: " + page +
                 " (must equal or bigger than 1)");
-        if (null == pageSize)
-            pageSize = 10;
-        else if (pageSize <= 0 || pageSize > 500) {
-            throw new IncorrectParameterException("pageSize must between [1," +
-                "500]");
-        }
+        else if (pageSize <= 0 || pageSize > 500)
+            throw new IncorrectParameterException(
+                "pageSize must between [1, 500]");
 
         SisUserExample sisUserExample = new SisUserExample();
         SisUserExample.Criteria criteria = sisUserExample.createCriteria();
         criteria.andSuAuthoritiesStrLike("%MONITOR%");
 
-        if (null != suId) {
-            criteria.andSuIdLike("%" + suId + "%");
-        }
-        if (null != suName) {
+        if (null != suId) criteria.andSuIdLike("%" + suId + "%");
+        if (null != suName)
             criteria.andSuNameLike(CourseService.getFuzzySearch(suName));
-        }
         if (null != ordByLackNum && ordByLackNum) {
             sisUserExample.setOrderByClause("sui_lack_num desc");
             sisUserExample.setOrdByLackNum(true);
@@ -440,40 +382,25 @@ public class MonitorService {
             .distinct()
             .collect(Collectors.toList());
 
-        if (suIdList.isEmpty()) {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("success", false);
-            jsonObject.put("page", page);
-            jsonObject.put("message", "No monitor");
-            return jsonObject;
-        }
+        if (suIdList.isEmpty()) return pageInfo;
 
         SisUserInfoExample sisUserInfoExample = new SisUserInfoExample();
         sisUserInfoExample.createCriteria().andSuIdIn(suIdList);
         List<SisUserInfo> sisUserInfoList =
             sisUserInfoMapper.selectByExample(sisUserInfoExample);
 
-        JSONObject pageJson = new JSONObject(pageInfo);
-        pageJson.getJSONArray("list")
-            .forEach(sisUserObj -> {
-                JSONObject sisUserJson = (JSONObject) sisUserObj;
-                String tSuId = sisUserJson.getString("suId");
-
-                sisUserJson.remove("suPassword");
-                sisUserJson.put("suiLackNum", sisUserInfoList.parallelStream()
-                    .filter(sisUserInfo -> sisUserInfo.getSuId().equals(tSuId))
-                    .findAny()
-                    .map(SisUserInfo::getSuiLackNum)
-                    .orElse(0));
-            });
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", true);
-        jsonObject.put("page", page);
-        jsonObject.put("data", pageJson);
-        return jsonObject;
+        pageInfo.getList().forEach(u -> {
+            u.setSuPassword(null);
+            u.setSuiLackNum(sisUserInfoList.parallelStream()
+                .filter(sisUserInfo -> sisUserInfo.getSuId().equals(u.getSuId()))
+                .findAny()
+                .map(SisUserInfo::getSuiLackNum)
+                .orElse(0));
+        });
+        return pageInfo;
     }
 
-    public JSONObject grantMonitor(String suId) throws IncorrectParameterException {
+    public OperationResponse grantMonitor(String suId) throws IncorrectParameterException {
         SisUser sisUser = sisUserMapper.selectByPrimaryKey(suId);
         if (null == sisUser)
             throw new IncorrectParameterException("Incorrect suId: " + suId);
@@ -487,13 +414,11 @@ public class MonitorService {
         updatedSisUser.setSuId(sisUser.getSuId());
         updatedSisUser.setSuAuthorities(authList);
 
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success",
-            sisUserMapper.updateByPrimaryKeySelective(updatedSisUser));
-        return jsonObject;
+        sisUserMapper.updateByPrimaryKeySelective(updatedSisUser);
+        return OperationResponse.SUCCESS;
     }
 
-    public JSONObject revokeMonitor(String suId) throws IncorrectParameterException {
+    public OperationResponse revokeMonitor(String suId) throws IncorrectParameterException {
         SisUser sisUser = sisUserMapper.selectByPrimaryKey(suId);
         if (null == sisUser)
             throw new IncorrectParameterException("Incorrect suId: " + suId);
@@ -506,10 +431,8 @@ public class MonitorService {
         updatedSisUser.setSuId(sisUser.getSuId());
         updatedSisUser.setSuAuthorities(authList);
 
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success",
-            sisUserMapper.updateByPrimaryKeySelective(updatedSisUser));
-        return jsonObject;
+        sisUserMapper.updateByPrimaryKeySelective(updatedSisUser);
+        return OperationResponse.SUCCESS;
     }
 }
 

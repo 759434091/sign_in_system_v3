@@ -11,6 +11,7 @@ import team.a9043.sign_in_system.mapper.SisScheduleMapper;
 import team.a9043.sign_in_system.mapper.SisSignInMapper;
 import team.a9043.sign_in_system.mapper.SisSupervisionMapper;
 import team.a9043.sign_in_system.pojo.*;
+import team.a9043.sign_in_system.service_pojo.OperationResponse;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -43,8 +44,8 @@ public class SupervisionAspect {
                                  Integer ssId,
                                  SisSupervision sisSupervision,
                                  LocalDateTime localDateTime,
-                                 JSONObject res) {
-        if (!res.getBoolean("success"))
+                                 OperationResponse res) {
+        if (!res.isSuccess())
             return;
 
         updateAttRate(ssId);

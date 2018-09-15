@@ -32,7 +32,9 @@ public class SisCourse {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private SisUser monitor;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<SisSchedule> sisScheduleList;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<SisJoinCourse> sisJoinCourseList;
 }

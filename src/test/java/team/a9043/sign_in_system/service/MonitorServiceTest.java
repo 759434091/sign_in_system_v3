@@ -14,6 +14,7 @@ import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
 import team.a9043.sign_in_system.mapper.SisScheduleMapper;
 import team.a9043.sign_in_system.pojo.*;
+import team.a9043.sign_in_system.service_pojo.OperationResponse;
 import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
 import team.a9043.sign_in_system.util.judgetime.JudgeTimeUtil;
 import team.a9043.sign_in_system.util.judgetime.ScheduleParserException;
@@ -39,7 +40,8 @@ public class MonitorServiceTest {
     private SisScheduleMapper sisScheduleMapper;
 
     @Test
-    public void getCourses() throws ExecutionException, InterruptedException, JsonProcessingException {
+    public void getCourses() throws ExecutionException, InterruptedException,
+        JsonProcessingException {
         SisUser sisUser = new SisUser();
         sisUser.setSuId("2016220401001");
         PageInfo<SisCourse> pageInfo = monitorService.getCourses(sisUser);
@@ -50,7 +52,7 @@ public class MonitorServiceTest {
     @Transactional
     public void insertSupervision() throws IncorrectParameterException,
         ScheduleParserException, InvalidPermissionException,
-        InvalidTimeParameterException {
+        InvalidTimeParameterException, JsonProcessingException {
         SisUser sisUser = new SisUser();
         sisUser.setSuId("2016220401001");
 
@@ -74,10 +76,10 @@ public class MonitorServiceTest {
             JudgeTimeUtil.getClassTime(sisSchedule.getSsStartTime());
 
         LocalDateTime localDateTime = LocalDateTime.of(localDate, localTime);
-        JSONObject jsonObject = monitorService.insertSupervision(sisUser, ssId,
+        OperationResponse or = monitorService.insertSupervision(sisUser, ssId,
             sisSupervision,
             localDateTime);
-        log.info(jsonObject.toString(2));
+        log.info(objectMapper.writeValueAsString(or));
     }
 
     @Test
@@ -107,10 +109,11 @@ public class MonitorServiceTest {
     }
 
     @Test
-    public void getMonitors() throws IncorrectParameterException {
-        JSONObject jsonObject = monitorService.getMonitors(1, 10,
+    public void getMonitors() throws IncorrectParameterException,
+        JsonProcessingException {
+        PageInfo<SisUser> pageInfo = monitorService.getMonitors(1, 10,
             "2016220401001", null, true);
-        log.info(jsonObject.toString(2));
+        log.info(objectMapper.writeValueAsString(pageInfo));
     }
 
     @Test
