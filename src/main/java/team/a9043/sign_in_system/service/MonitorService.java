@@ -194,8 +194,11 @@ public class MonitorService {
     @Transactional
     public JSONObject drawMonitor(@NotNull SisUser sisUser,
                                   @NotNull String scId) throws IncorrectParameterException, InvalidPermissionException {
+        int idx = String.format("sis_draw_monitor_%s", scId).hashCode() % N;
+        if (idx < 0)
+            idx = idx + N;
         ReentrantLock lock =
-            locks[String.format("sis_draw_monitor_%s", scId).hashCode() % N];
+            locks[idx];
         if (!lock.tryLock()) {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("success", false);
