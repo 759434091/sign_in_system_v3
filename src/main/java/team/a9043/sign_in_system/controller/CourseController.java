@@ -9,17 +9,17 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
-import team.a9043.sign_in_system.aspect.TimeFreezeAspect;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
 import team.a9043.sign_in_system.pojo.SisCourse;
+import team.a9043.sign_in_system.pojo.SisDepartment;
 import team.a9043.sign_in_system.pojo.SisJoinCourse;
 import team.a9043.sign_in_system.pojo.SisUser;
 import team.a9043.sign_in_system.security.tokenuser.TokenUser;
 import team.a9043.sign_in_system.service.CourseService;
 import team.a9043.sign_in_system.service.MonitorService;
+import team.a9043.sign_in_system.service_pojo.Week;
 import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
-import team.a9043.sign_in_system.util.judgetime.JudgeTimeUtil;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -38,19 +38,15 @@ public class CourseController {
 
     @GetMapping("/week")
     @ApiOperation(value = "获得当前周和服务器时间")
-    public JSONObject getWeek() throws InvalidTimeParameterException {
+    public Week getWeek() throws InvalidTimeParameterException {
         LocalDateTime localDateTime = LocalDateTime.now();
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("server_time", localDateTime);
-        jsonObject.put("week",
-            JudgeTimeUtil.getWeek(localDateTime.toLocalDate()));
-        return jsonObject;
+        return courseService.getWeek(localDateTime);
     }
 
 
     @GetMapping("/departments")
     @ApiOperation(value = "获得学院", notes = "根据sdName获取课程")
-    public JSONObject getDepartments(@RequestParam @ApiParam(value = "课程名字模糊") String sdName) {
+    public List<SisDepartment> getDepartments(@RequestParam @ApiParam(value = "课程名字模糊") String sdName) {
         return courseService.getDepartments(sdName);
     }
 

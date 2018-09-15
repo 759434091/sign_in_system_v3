@@ -15,12 +15,13 @@ import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.mapper.*;
 import team.a9043.sign_in_system.pojo.*;
 import team.a9043.sign_in_system.security.tokenuser.TokenUser;
+import team.a9043.sign_in_system.service_pojo.Week;
+import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
+import team.a9043.sign_in_system.util.judgetime.JudgeTimeUtil;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
@@ -46,17 +47,17 @@ public class CourseService {
     @Resource
     private SisJoinDepartMapper sisJoinDepartMapper;
 
-    public JSONObject getDepartments(String sdName) {
+    public Week getWeek(LocalDateTime currentDateTime) throws InvalidTimeParameterException {
+        int week = JudgeTimeUtil.getWeek(currentDateTime.toLocalDate());
+        return new Week(currentDateTime, week);
+    }
+
+    public List<SisDepartment> getDepartments(String sdName) {
 
         SisDepartmentExample sisDepartmentExample = new SisDepartmentExample();
         sisDepartmentExample.createCriteria().andSdNameLike(getFuzzySearch(sdName));
-        List<SisDepartment> sisDepartmentList =
-            sisDepartmentMapper.selectByExample(sisDepartmentExample);
 
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", true);
-        jsonObject.put("sisDepartmentList", new JSONArray(sisDepartmentList));
-        return jsonObject;
+        return sisDepartmentMapper.selectByExample(sisDepartmentExample);
     }
 
     @SuppressWarnings("Duplicates")
@@ -115,13 +116,15 @@ public class CourseService {
             return jsonObject;
         }
 
-        List<String> suIdList = new ArrayList<>();
-        List<String> scIdList = new ArrayList<>();
+        Set<String> suIdSet = new HashSet<>();
+        Set<String> scIdSet = new HashSet<>();
         pageInfo.getList()
             .forEach(sisCourse -> {
-                suIdList.add(sisCourse.getSuId());
-                scIdList.add(sisCourse.getScId());
+                suIdSet.add(sisCourse.getSuId());
+                scIdSet.add(sisCourse.getScId());
             });
+        List<String> suIdList = new ArrayList<>(suIdSet);
+        List<String> scIdList = new ArrayList<>(scIdSet);
 
         //join monitor & schedules & joinCourses
         Future<List<team.a9043.sign_in_system.pojo.SisUser>> monitorListFuture =
@@ -146,16 +149,41 @@ public class CourseService {
         Future<List<SisSupervision>> sisSupervisionListFuture =
             asyncJoinService.joinSisSupervisionByForeignKey(ssIdList);
         List<String> joinCoursesSuIdList =
-            sisJoinCourseList.parallelStream().map(SisJoinCourse::getSuId).collect(Collectors.toList());
+            sisJoinCourseList.parallelStream()
+                .map(SisJoinCourse::getSuId)
+                .distinct()
+                .collect(Collectors.toList());
         Future<List<team.a9043.sign_in_system.pojo.SisUser>> joinCoursesSisUserListFuture =
             asyncJoinService.joinSisUserById(joinCoursesSuIdList);
 
         List<SisSupervision> sisSupervisionList =
             sisSupervisionListFuture.get();
-        List<team.a9043.sign_in_system.pojo.SisUser> joinCoursesSisUserList
+        List<SisUser> joinCoursesSisUserList
             = joinCoursesSisUserListFuture.get();
 
         //merge to json
+        pageInfo.getList().parallelStream()
+            .forEach(c -> {
+                c.setMonitor(sisUserList.stream()
+                    .filter(sisUser -> sisUser.getSuId().equals(c.getSuId()))
+                    .findAny()
+                    .map(sisUser -> {
+                        sisUser.setSuPassword(null);
+                        return sisUser;
+                    })
+                    .orElse(null));
+
+                List<SisSchedule> tSchList = sisScheduleList.stream()
+                    .filter(sisSchedule -> sisSchedule.getScId().equals(c.getScId()))
+                    .collect(Collectors.toList());
+
+                tSchList.forEach(s -> s.setSisSupervisionList(
+                    sisSupervisionList.stream()
+                        .filter(sisSupervision -> sisSupervision.getSsId().equals(s.getSsId()))
+                        .collect(Collectors.toList())));
+            });
+
+
         JSONObject pageJson = new JSONObject(pageInfo);
         pageJson.getJSONArray("list")
             .forEach(sisCourseObj -> {
