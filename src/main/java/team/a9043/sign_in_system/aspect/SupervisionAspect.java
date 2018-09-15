@@ -5,6 +5,7 @@ import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
 import org.json.JSONObject;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import team.a9043.sign_in_system.mapper.SisCourseMapper;
 import team.a9043.sign_in_system.mapper.SisScheduleMapper;
 import team.a9043.sign_in_system.mapper.SisSignInMapper;
@@ -15,6 +16,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 
@@ -36,6 +38,7 @@ public class SupervisionAspect {
         "sisSupervision,localDateTime)",
         returning = "res", argNames = "sisUser,ssId,sisSupervision," +
         "localDateTime,res")
+    @Transactional
     public void afterSupervision(SisUser sisUser,
                                  Integer ssId,
                                  SisSupervision sisSupervision,
@@ -47,6 +50,7 @@ public class SupervisionAspect {
         updateAttRate(ssId);
     }
 
+    @Transactional
     public void updateAttRate(Integer ssId) {
         SisSchedule sisSchedule = sisScheduleMapper.selectByPrimaryKey(ssId);
         if (null == ssId)
@@ -58,7 +62,7 @@ public class SupervisionAspect {
         if (null == sisCourse)
             return;
         Integer actNum = sisCourse.getScActSize();
-        if (null == actNum)
+        if (null == actNum || 0 == actNum)
             return;
 
         SisScheduleExample sisScheduleExample = new SisScheduleExample();
@@ -97,7 +101,8 @@ public class SupervisionAspect {
             });
 
         DoubleStream doubleStream1 = sisSignInList.parallelStream()
-            .mapToDouble(SisSignIn::getSsiAttRate);
+            .mapToDouble(SisSignIn::getSsiAttRate)
+            .filter(Objects::nonNull);
 
         double totalRate1 = doubleStream.average().orElse(-1);
         double totalRate2 = doubleStream1.average().orElse(-1);
