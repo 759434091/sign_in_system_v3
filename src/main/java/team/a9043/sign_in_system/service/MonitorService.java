@@ -404,7 +404,7 @@ public class MonitorService {
         stdSisMonitorTrans.setSmtStatus(sisMonitorTrans.getSmtStatus());
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("success",
-            sisMonitorTransMapper.updateByPrimaryKey(stdSisMonitorTrans));
+            sisMonitorTransMapper.updateByPrimaryKey(stdSisMonitorTrans) > 0);
         return jsonObject;
     }
 
@@ -501,7 +501,7 @@ public class MonitorService {
 
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("success",
-            sisUserMapper.updateByPrimaryKeySelective(updatedSisUser));
+            sisUserMapper.updateByPrimaryKeySelective(updatedSisUser) > 0);
         return jsonObject;
     }
 
@@ -520,7 +520,7 @@ public class MonitorService {
 
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("success",
-            sisUserMapper.updateByPrimaryKeySelective(updatedSisUser));
+            sisUserMapper.updateByPrimaryKeySelective(updatedSisUser) > 0);
         return jsonObject;
     }
 }
