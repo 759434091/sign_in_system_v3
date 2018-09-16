@@ -85,8 +85,7 @@ public class SignInService {
             .stream()
             .anyMatch(tWeek -> tWeek.equals(week));
         if (isSuspend) return new VoidOperationResponse(false, String.format(
-            "Schedule %d week %d is in the suspension list",
-            ssId, week));
+            "排课编号%s在第%s周已经停课", ssId, week));
 
         //check is end
         SisSignInExample sisSignInExample = new SisSignInExample();

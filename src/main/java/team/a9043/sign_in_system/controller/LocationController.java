@@ -28,7 +28,7 @@ public class LocationController {
     }
 
     @GetMapping("/locations/{slId}")
-    public OperationResponse<SisLocation> getLocation(@PathVariable Integer slId) throws IncorrectParameterException {
+    public SisLocation getLocation(@PathVariable Integer slId) throws IncorrectParameterException {
         return locationService.getLocation(slId);
     }
 

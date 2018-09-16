@@ -52,18 +52,13 @@ public class LocationService {
         return operationResponse;
     }
 
-    public OperationResponse<SisLocation> getLocation(Integer slId) throws IncorrectParameterException {
+    public SisLocation getLocation(Integer slId) throws IncorrectParameterException {
         SisLocation sisLocation = sisLocationMapper.selectByPrimaryKey(slId);
         if (null == sisLocation)
             throw new IncorrectParameterException("Incorrecr location slId: " + slId);
 
         log.info("get location by id: " + slId);
-        OperationResponse<SisLocation> operationResponse =
-            new OperationResponse<>();
-        operationResponse.setSuccess(true);
-        operationResponse.setData(sisLocation);
-        operationResponse.setMessage("data => sisLocation");
-        return operationResponse;
+        return sisLocation;
     }
 
     public PageInfo<SisLocation> getLocations(Integer page, Integer pageSize,
