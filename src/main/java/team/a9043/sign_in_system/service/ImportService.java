@@ -17,6 +17,8 @@ import team.a9043.sign_in_system.exception.UnknownServerError;
 import team.a9043.sign_in_system.mapper.*;
 import team.a9043.sign_in_system.pojo.*;
 import team.a9043.sign_in_system.service_pojo.OperationResponse;
+import team.a9043.sign_in_system.service_pojo.VoidOperationResponse;
+import team.a9043.sign_in_system.service_pojo.VoidSuccessOperationResponse;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Resource;
@@ -56,14 +58,14 @@ public class ImportService {
     @Resource(name = "sisRedisTemplate")
     private RedisTemplate<String, Object> sisRedisTemplate;
 
-    public OperationResponse getProgress(String key) {
+    public OperationResponse<Integer> getProgress(String key) {
         Integer progress = (Integer) sisRedisTemplate.opsForValue().get(key);
         if (null == progress)
-            return new OperationResponse(false, "No process.");
+            return new OperationResponse<>(false, "No process.");
         if (progress.equals(-1))
-            return new OperationResponse(false, "Process error");
+            return new OperationResponse<>(false, "Process error");
 
-        OperationResponse operationResponse = new OperationResponse();
+        OperationResponse<Integer> operationResponse = new OperationResponse<>();
         operationResponse.setSuccess(true);
         operationResponse.setData(progress);
         operationResponse.setMessage("data => progress");
@@ -719,8 +721,6 @@ public class ImportService {
             sisCourseMapper.selectByExample(sisCourseExample).parallelStream()
                 .map(SisCourse::getScId)
                 .collect(Collectors.toList());
-        sisCourseExample = null;
-        scIdList = null;
 
         //get old join course
         sisJoinCourseExample.getOredCriteria().removeIf(Objects::isNull);
@@ -776,18 +776,18 @@ public class ImportService {
     /*------------------------------------------------*/
 
     @Transactional
-    public OperationResponse deleteCourse(String scId) throws IncorrectParameterException {
+    public VoidOperationResponse deleteCourse(String scId) throws IncorrectParameterException {
         SisCourse sisCourse = sisCourseMapper.selectByPrimaryKey(scId);
         if (null == sisCourse)
             throw new IncorrectParameterException("Course not found: " + scId);
 
         sisCourseMapper.deleteByPrimaryKey(scId);
         logger.info("Delete course success: " + scId);
-        return OperationResponse.SUCCESS;
+        return VoidSuccessOperationResponse.SUCCESS;
     }
 
     @Transactional
-    public OperationResponse deleteJoinCourse(Integer sjcId) throws IncorrectParameterException {
+    public VoidOperationResponse deleteJoinCourse(Integer sjcId) throws IncorrectParameterException {
         SisJoinCourse sisJoinCourse =
             sisJoinCourseMapper.selectByPrimaryKey(sjcId);
         if (null == sisJoinCourse)
@@ -795,24 +795,12 @@ public class ImportService {
 
         sisJoinCourseMapper.deleteByPrimaryKey(sjcId);
         logger.info("Delete joinCourse success: " + sjcId);
-        return OperationResponse.SUCCESS;
-    }
-
-    @Transactional
-    public OperationResponse deleteSchedule(Integer ssId) throws IncorrectParameterException {
-        SisSchedule sisSchedule =
-            sisScheduleMapper.selectByPrimaryKey(ssId);
-        if (null == sisSchedule)
-            throw new IncorrectParameterException("Schedule not found: " + ssId);
-
-        sisScheduleMapper.deleteByPrimaryKey(ssId);
-        logger.info("Delete Schedule success: " + ssId);
-        return OperationResponse.SUCCESS;
+        return VoidSuccessOperationResponse.SUCCESS;
     }
 
     @SuppressWarnings("Duplicates")
     @Transactional
-    public OperationResponse modifyStudent(String suId, String suName,
+    public VoidOperationResponse modifyStudent(String suId, String suName,
                                            List<String> scIdList) throws IncorrectParameterException {
         SisUser sisUser = sisUserMapper.selectByPrimaryKey(suId);
         if (null == sisUser)
@@ -850,11 +838,11 @@ public class ImportService {
             sisJoinCourseMapper.insertList(sisJoinCourseList);
         }
 
-        return OperationResponse.SUCCESS;
+        return VoidSuccessOperationResponse.SUCCESS;
     }
 
     @SuppressWarnings("Duplicates")
-    public OperationResponse createStudent(String suId, String suName,
+    public VoidOperationResponse createStudent(String suId, String suName,
                                            List<String> scIdList,
                                            Boolean force) throws IncorrectParameterException, InvalidPermissionException {
         SisUser sisUser = sisUserMapper.selectByPrimaryKey(suId);
@@ -897,10 +885,10 @@ public class ImportService {
             sisJoinCourseMapper.insertList(sisJoinCourseList);
         }
 
-        return OperationResponse.SUCCESS;
+        return VoidSuccessOperationResponse.SUCCESS;
     }
 
-    public OperationResponse createCourse(String scId, SisCourse sisCourse,
+    public VoidOperationResponse createCourse(String scId, SisCourse sisCourse,
                                           List<SisSchedule> sisScheduleList,
                                           List<SisDepartment> sisDepartmentList) throws IncorrectParameterException, UnknownServerError {
         SisCourse stdSisCourse = sisCourseMapper.selectByPrimaryKey(scId);
@@ -933,14 +921,14 @@ public class ImportService {
 
         insertJoinDepart(scId, sisDepartmentList);
 
-        if (!insertScheduleList(sisScheduleList, scId))
+        if (insertScheduleList(sisScheduleList, scId))
             throw new UnknownServerError("insert schedule list error.");
 
-        return OperationResponse.SUCCESS;
+        return VoidSuccessOperationResponse.SUCCESS;
     }
 
 
-    public OperationResponse modifyCourse(String scId, SisCourse sisCourse,
+    public VoidOperationResponse modifyCourse(String scId, SisCourse sisCourse,
                                           List<SisSchedule> mSisScheduleList,
                                           List<SisSchedule> nSisScheduleList,
                                           List<SisDepartment> sisDepartmentList) throws IncorrectParameterException, UnknownServerError {
@@ -1016,10 +1004,10 @@ public class ImportService {
         if (!modifyScheduleList(mSisScheduleList, stdScheduleList, scId))
             throw new UnknownServerError("update schedule list error.");
 
-        if (!insertScheduleList(nSisScheduleList, scId))
+        if (insertScheduleList(nSisScheduleList, scId))
             throw new UnknownServerError("insert schedule list error.");
 
-        return OperationResponse.SUCCESS;
+        return VoidSuccessOperationResponse.SUCCESS;
     }
 
     private void insertJoinDepart(String scId,
@@ -1146,7 +1134,7 @@ public class ImportService {
     private boolean insertScheduleList(List<SisSchedule> nSisScheduleList,
                                        String scId) throws IncorrectParameterException {
         if (nSisScheduleList.isEmpty())
-            return true;
+            return false;
         List<Integer> slIdList =
             nSisScheduleList.stream().map(SisSchedule::getSlId).filter(Objects::nonNull).collect(Collectors.toList());
         List<SisLocation> sisLocationList;
@@ -1214,7 +1202,7 @@ public class ImportService {
             m.setScId(scId);
             m.setSsSuspension("");
         }
-        return sisScheduleMapper.insertList(nSisScheduleList) > 0;
+        return sisScheduleMapper.insertList(nSisScheduleList) <= 0;
     }
 
     private List<SisLocation> getSisLocations(List<Integer> slIdList) {
@@ -1231,7 +1219,7 @@ public class ImportService {
         return sisLocationList;
     }
 
-    public OperationResponse modifyDepartment(Integer sdId, String sdName) throws IncorrectParameterException {
+    public VoidOperationResponse modifyDepartment(Integer sdId, String sdName) throws IncorrectParameterException {
         if ("".equals(sdName.trim()))
             throw new IncorrectParameterException("sdName can not be blank");
         SisDepartment sisDepartment =
@@ -1241,28 +1229,28 @@ public class ImportService {
 
         sisDepartment.setSdName(sdName.trim());
         sisDepartmentMapper.updateByPrimaryKey(sisDepartment);
-        return OperationResponse.SUCCESS;
+        return VoidSuccessOperationResponse.SUCCESS;
     }
 
-    public OperationResponse deleteDepartment(Integer sdId) throws IncorrectParameterException {
+    public VoidOperationResponse deleteDepartment(Integer sdId) throws IncorrectParameterException {
         SisDepartment sisDepartment =
             sisDepartmentMapper.selectByPrimaryKey(sdId);
         if (null == sisDepartment)
             throw new IncorrectParameterException("department not found: " + sdId);
         sisDepartmentMapper.deleteByPrimaryKey(sdId);
-        return OperationResponse.SUCCESS;
+        return VoidSuccessOperationResponse.SUCCESS;
     }
 
-    public OperationResponse addDepartment(String sdName) throws IncorrectParameterException {
+    public VoidOperationResponse addDepartment(String sdName) throws IncorrectParameterException {
         if ("".equals(sdName.trim()))
             throw new IncorrectParameterException("sdName can not be blank");
         SisDepartment sisDepartment = new SisDepartment();
         sisDepartment.setSdName(sdName);
         sisDepartmentMapper.insert(sisDepartment);
-        return OperationResponse.SUCCESS;
+        return VoidSuccessOperationResponse.SUCCESS;
     }
 
-    public OperationResponse modifyJoinCourses(String scId,
+    public VoidOperationResponse modifyJoinCourses(String scId,
                                                List<SisJoinCourse> sisJoinCourseList) throws IncorrectParameterException, UnknownServerError {
         SisCourse sisCourse = sisCourseMapper.selectByPrimaryKey(scId);
         if (null == sisCourse)
@@ -1326,6 +1314,6 @@ public class ImportService {
             sisJoinCourseMapper.insertList(nSisJoinCourseList);
         }
 
-        return OperationResponse.SUCCESS;
+        return VoidSuccessOperationResponse.SUCCESS;
     }
 }

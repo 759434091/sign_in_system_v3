@@ -12,6 +12,8 @@ import team.a9043.sign_in_system.pojo.SisLocation;
 import team.a9043.sign_in_system.pojo.SisLocationExample;
 import team.a9043.sign_in_system.pojo.SisSchedule;
 import team.a9043.sign_in_system.service_pojo.OperationResponse;
+import team.a9043.sign_in_system.service_pojo.VoidOperationResponse;
+import team.a9043.sign_in_system.service_pojo.VoidSuccessOperationResponse;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -28,8 +30,7 @@ public class LocationService {
     private SisScheduleMapper sisScheduleMapper;
 
     @Transactional
-    //todo doc data
-    public OperationResponse modifyScheduleLocation(Integer ssId,
+    public OperationResponse<SisSchedule> modifyScheduleLocation(Integer ssId,
                                                     Integer slId) throws IncorrectParameterException {
         SisSchedule sisSchedule = sisScheduleMapper.selectByPrimaryKey(ssId);
         if (null == sisSchedule)
@@ -43,21 +44,22 @@ public class LocationService {
 
         log.info("Success in update schedule location: ssId " + ssId + " " +
             "slId " + slId);
-        OperationResponse operationResponse = new OperationResponse();
+        OperationResponse<SisSchedule> operationResponse =
+            new OperationResponse<>();
         operationResponse.setSuccess(true);
         operationResponse.setData(sisSchedule);
         operationResponse.setMessage("data => sisSchedule");
         return operationResponse;
     }
 
-    //todo doc data
-    public OperationResponse getLocation(Integer slId) throws IncorrectParameterException {
+    public OperationResponse<SisLocation> getLocation(Integer slId) throws IncorrectParameterException {
         SisLocation sisLocation = sisLocationMapper.selectByPrimaryKey(slId);
         if (null == sisLocation)
             throw new IncorrectParameterException("Incorrecr location slId: " + slId);
 
         log.info("get location by id: " + slId);
-        OperationResponse operationResponse = new OperationResponse();
+        OperationResponse<SisLocation> operationResponse =
+            new OperationResponse<>();
         operationResponse.setSuccess(true);
         operationResponse.setData(sisLocation);
         operationResponse.setMessage("data => sisLocation");
@@ -90,8 +92,7 @@ public class LocationService {
     }
 
     @Transactional
-    //todo doc data
-    public OperationResponse createLocation(SisLocation sisLocation) {
+    public OperationResponse<SisLocation> createLocation(SisLocation sisLocation) {
         SisLocationExample sisLocationExample = new SisLocationExample();
         sisLocationExample.createCriteria().andSlNameLike("%" + sisLocation.getSlName() + "%");
         SisLocation stdSisLocation =
@@ -99,13 +100,14 @@ public class LocationService {
                 .stream()
                 .findAny()
                 .orElse(null);
-        if (null != stdSisLocation) return new OperationResponse(false,
+        if (null != stdSisLocation) return new OperationResponse<>(false,
             "location exist: " + stdSisLocation.getSlId() + ", " + stdSisLocation.getSlName());
 
         sisLocationMapper.insert(sisLocation);
         log.info("success insert location: " + sisLocation.getSlName());
 
-        OperationResponse operationResponse = new OperationResponse();
+        OperationResponse<SisLocation> operationResponse =
+            new OperationResponse<>();
         operationResponse.setSuccess(true);
         operationResponse.setData(sisLocation);
         operationResponse.setMessage("data => sisLocation");
@@ -113,8 +115,7 @@ public class LocationService {
     }
 
     @Transactional
-    //todo doc data
-    public OperationResponse modifyLocation(Integer slId,
+    public OperationResponse<SisLocation> modifyLocation(Integer slId,
                                             SisLocation sisLocation) throws IncorrectParameterException {
         SisLocation stdSisLocation = sisLocationMapper.selectByPrimaryKey(slId);
         if (null == stdSisLocation)
@@ -126,7 +127,8 @@ public class LocationService {
         sisLocationMapper.updateByPrimaryKeySelective(stdSisLocation);
         log.info("Success in modifying location: " + slId);
 
-        OperationResponse operationResponse = new OperationResponse();
+        OperationResponse<SisLocation> operationResponse =
+            new OperationResponse<>();
         operationResponse.setSuccess(true);
         operationResponse.setData(sisLocation);
         operationResponse.setMessage("data => sisLocation");
@@ -134,7 +136,7 @@ public class LocationService {
     }
 
     @Transactional
-    public OperationResponse deleteLocation(Integer slId) throws IncorrectParameterException {
+    public VoidOperationResponse deleteLocation(Integer slId) throws IncorrectParameterException {
         SisLocation sisLocation = sisLocationMapper.selectByPrimaryKey(slId);
         if (null == sisLocation)
             throw new IncorrectParameterException("Location not found: " + slId);
@@ -142,7 +144,7 @@ public class LocationService {
         sisLocationMapper.deleteByPrimaryKey(slId);
         log.info("Delete location success: " + slId);
 
-        return OperationResponse.SUCCESS;
+        return VoidSuccessOperationResponse.SUCCESS;
     }
 
 }

@@ -20,6 +20,8 @@ import team.a9043.sign_in_system.mapper.*;
 import team.a9043.sign_in_system.pojo.*;
 import team.a9043.sign_in_system.service_pojo.OperationResponse;
 import team.a9043.sign_in_system.service_pojo.SignInProcessing;
+import team.a9043.sign_in_system.service_pojo.VoidOperationResponse;
+import team.a9043.sign_in_system.service_pojo.VoidSuccessOperationResponse;
 import team.a9043.sign_in_system.util.LocationUtil;
 import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
 import team.a9043.sign_in_system.util.judgetime.JudgeTimeUtil;
@@ -65,9 +67,9 @@ public class SignInService {
     private SupervisionAspect supervisionAspect;
 
     @Transactional
-    public OperationResponse createSignIn(SisUser sisUser,
-                                          Integer ssId,
-                                          LocalDateTime currentDateTime) throws InvalidTimeParameterException, InvalidPermissionException {
+    public VoidOperationResponse createSignIn(SisUser sisUser,
+                                              Integer ssId,
+                                              LocalDateTime currentDateTime) throws InvalidTimeParameterException, InvalidPermissionException {
         SisSchedule sisSchedule = Optional
             .ofNullable(sisScheduleMapper.selectByPrimaryKey(ssId))
             .orElseThrow(() -> new InvalidParameterException("Invalid ssId: " + ssId));
@@ -76,13 +78,13 @@ public class SignInService {
 
         //check week
         if (week < sisSchedule.getSsStartWeek() || week > sisSchedule.getSsEndWeek())
-            return new OperationResponse(false, "Invalid week: " + week);
+            return new VoidOperationResponse(false, "Invalid week: " + week);
 
         //check suspend
         boolean isSuspend = sisSchedule.getSsSuspensionList()
             .stream()
             .anyMatch(tWeek -> tWeek.equals(week));
-        if (isSuspend) return new OperationResponse(false, String.format(
+        if (isSuspend) return new VoidOperationResponse(false, String.format(
             "Schedule %d week %d is in the suspension list",
             ssId, week));
 
@@ -90,7 +92,7 @@ public class SignInService {
         SisSignInExample sisSignInExample = new SisSignInExample();
         sisSignInExample.createCriteria().andSsIdEqualTo(ssId).andSsiWeekEqualTo(week);
         if (!sisSignInMapper.selectByExample(sisSignInExample).isEmpty())
-            return new OperationResponse(false,
+            return new VoidOperationResponse(false,
                 "Check-in has been launched and completed: week " + week);
 
         //get joinCourse
@@ -119,17 +121,18 @@ public class SignInService {
             .collect(Collectors.toMap(Function.identity(),
                 (s) -> Boolean.FALSE));
         if (hashMap.isEmpty())
-            return new OperationResponse(false, "No student in this course");
+            return new VoidOperationResponse(false, "No student in this " +
+                "course");
 
         String key =
             String.format(signInKeyFormat, ssId,
                 week);
 
         if (Boolean.TRUE.equals(sisRedisTemplate.hasKey(key)))
-            return new OperationResponse(false, "Sign in is processing");
+            return new VoidOperationResponse(false, "Sign in is processing");
 
         if (null == sisSchedule.getSlId())
-            return new OperationResponse(false,
+            return new VoidOperationResponse(false,
                 "该课程未指定地点，请联系管理员设置地点");
 
         SisLocation sisLocation =
@@ -137,7 +140,7 @@ public class SignInService {
         if (null == sisLocation ||
             null == sisLocation.getSlLat() ||
             null == sisLocation.getSlLong())
-            return new OperationResponse(false, "地点信息不全，请联系管理员");
+            return new VoidOperationResponse(false, "地点信息不全，请联系管理员");
 
         log.info("create signIn schedule: " + key);
         hashMap.put("loc_lat", sisLocation.getSlLat());
@@ -158,13 +161,14 @@ public class SignInService {
             week), calendar.toInstant());
 
         log.info("start signIn schedule and end at: " + calendar.toInstant().toString());
-        return OperationResponse.SUCCESS;
+        return VoidSuccessOperationResponse.SUCCESS;
     }
 
-    public OperationResponse getSignIn(Integer ssId, Integer week) {
+    public OperationResponse<SisSignIn> getSignIn(Integer ssId, Integer week) {
         String key = String.format(signInKeyFormat, ssId, week);
         if (Boolean.TRUE.equals(sisRedisTemplate.hasKey(key))) {
-            OperationResponse operationResponse = new OperationResponse();
+            OperationResponse<SisSignIn> operationResponse =
+                new OperationResponse<>();
             operationResponse.setSuccess(false);
             operationResponse.setCode(1);
             operationResponse.setMessage("Processing");
@@ -186,8 +190,8 @@ public class SignInService {
                     sisScheduleMapper.selectByPrimaryKey(ssId);
 
                 if (null == sisSchedule) {
-                    OperationResponse operationResponse =
-                        new OperationResponse();
+                    OperationResponse<SisSignIn> operationResponse =
+                        new OperationResponse<>();
                     operationResponse.setSuccess(false);
                     operationResponse.setCode(3);
                     operationResponse.setMessage("schedule error: " + ssId);
@@ -226,7 +230,8 @@ public class SignInService {
                 sisSignIn.setSisSignInDetailList(sisSignInDetailList);
                 sisSignIn.setSisSchedule(sisSchedule);
 
-                OperationResponse operationResponse = new OperationResponse();
+                OperationResponse<SisSignIn> operationResponse =
+                    new OperationResponse<>();
                 operationResponse.setSuccess(true);
                 operationResponse.setCode(0);
                 operationResponse.setData(sisSignIn);
@@ -234,7 +239,8 @@ public class SignInService {
                 return operationResponse;
             })
             .orElseGet(() -> {
-                OperationResponse operationResponse = new OperationResponse();
+                OperationResponse<SisSignIn> operationResponse =
+                    new OperationResponse<>();
                 operationResponse.setSuccess(false);
                 operationResponse.setCode(2);
                 operationResponse.setMessage("Not found");
@@ -354,10 +360,10 @@ public class SignInService {
     }
 
     @SuppressWarnings("ConstantConditions")
-    public OperationResponse signIn(SisUser sisUser,
-                                    Integer ssId,
-                                    LocalDateTime currentDateTime,
-                                    JSONObject locationJson) throws InvalidTimeParameterException, IncorrectParameterException, InvalidPermissionException {
+    public VoidOperationResponse signIn(SisUser sisUser,
+                                        Integer ssId,
+                                        LocalDateTime currentDateTime,
+                                        JSONObject locationJson) throws InvalidTimeParameterException, IncorrectParameterException, InvalidPermissionException {
         if (log.isDebugEnabled())
             log.debug("User " + sisUser.getSuId() + " try to signIn");
 
@@ -382,7 +388,8 @@ public class SignInService {
 
         long until = createTime.until(currentDateTime, ChronoUnit.MINUTES);
         if (until > 10 || until < 0)
-            return new OperationResponse(false, "Error time until: " + until);
+            return new VoidOperationResponse(false,
+                "Error time until: " + until);
 
         if (sisRedisTemplate.opsForHash().hasKey(key, "loc_lat") &&
             sisRedisTemplate.opsForHash().hasKey(key, "loc_long")) {
@@ -395,7 +402,7 @@ public class SignInService {
 
             double distance = LocationUtil.getDistance(stdLocLat, stdLocLong,
                 locLat, locLong);
-            if (distance > MAX_DISTANCE) return new OperationResponse(false,
+            if (distance > MAX_DISTANCE) return new VoidOperationResponse(false,
                 "Error location distance: " + distance);
         }
 
@@ -403,7 +410,7 @@ public class SignInService {
         if (log.isDebugEnabled())
             log.debug("User " + sisUser.getSuId() + " successfully signIn");
 
-        return OperationResponse.SUCCESS;
+        return VoidSuccessOperationResponse.SUCCESS;
     }
 
     public List<SisSignInDetail> getStuSignIns(String suId) {

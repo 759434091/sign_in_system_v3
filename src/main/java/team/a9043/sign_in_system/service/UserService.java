@@ -20,6 +20,8 @@ import team.a9043.sign_in_system.pojo.SisUser;
 import team.a9043.sign_in_system.pojo.SisUserExample;
 import team.a9043.sign_in_system.service_pojo.OperationResponse;
 import team.a9043.sign_in_system.service_pojo.TokenResult;
+import team.a9043.sign_in_system.service_pojo.VoidOperationResponse;
+import team.a9043.sign_in_system.service_pojo.VoidSuccessOperationResponse;
 import team.a9043.sign_in_system.util.JwtUtil;
 
 import javax.annotation.Nullable;
@@ -57,19 +59,19 @@ public class UserService {
             .build();
     }
 
-    @SuppressWarnings("Duplicates")
-    //TODO doc data
-    public OperationResponse modifyBindUser(SisUser sisUser, String code) throws InvalidParameterException, WxServerException {
+    public OperationResponse<String> modifyBindUser(SisUser sisUser,
+                                                    String code) throws InvalidParameterException, WxServerException {
         SisUser stdSisUser =
             sisUserMapper.selectByPrimaryKey(sisUser.getSuId());
         if (null == stdSisUser) throw new InvalidParameterException(
             "Token user not found: " + sisUser.getSuId());
 
         if (null != stdSisUser.getSuOpenid()) {
-            OperationResponse operationResponse = new OperationResponse();
+            OperationResponse<String> operationResponse =
+                new OperationResponse<>();
             operationResponse.setSuccess(false);
             operationResponse.setCode(1);
-            operationResponse.setMessage("User has bind");
+            operationResponse.setMessage("该用户已绑定微信账号");
             return operationResponse;
         }
 
@@ -78,7 +80,8 @@ public class UserService {
 
         if (null == wxUserInfo) throw new WxServerException("WX Server error");
         if (!wxUserInfo.has("openid")) {
-            OperationResponse operationResponse = new OperationResponse();
+            OperationResponse<String> operationResponse =
+                new OperationResponse<>();
             operationResponse.setSuccess(false);
             operationResponse.setData(wxUserInfo.toString());
             operationResponse.setCode(2);
@@ -90,10 +93,11 @@ public class UserService {
         SisUserExample sisUserExample = new SisUserExample();
         sisUserExample.createCriteria().andSuOpenidEqualTo(openid);
         if (!sisUserMapper.selectByExample(sisUserExample).isEmpty()) {
-            OperationResponse operationResponse = new OperationResponse();
+            OperationResponse<String> operationResponse =
+                new OperationResponse<>();
             operationResponse.setSuccess(false);
             operationResponse.setCode(1);
-            operationResponse.setMessage("User has bind");
+            operationResponse.setMessage("该微信账号已绑定其他用户");
             return operationResponse;
         }
 
@@ -110,7 +114,7 @@ public class UserService {
             sisUser.getSuAuthoritiesStr());
 
         log.info("User " + sisUser.getSuId() + " successfully bind openId: " + openid);
-        OperationResponse operationResponse = new OperationResponse();
+        OperationResponse<String> operationResponse = new OperationResponse<>();
         operationResponse.setSuccess(true);
         operationResponse.setData(JwtUtil.createJWT(claimsMap));
         operationResponse.setCode(0);
@@ -126,13 +130,13 @@ public class UserService {
      * @return JSON
      * @throws WxServerException 微信服务器错误
      */
-    public OperationResponse getTokensByCode(String code) throws WxServerException {
+    public OperationResponse<TokenResult> getTokensByCode(String code) throws WxServerException {
         JSONObject wxUserInfo = restTemplate.getForObject(
             String.format(apiurl, appid, secret, code), JSONObject.class);
 
         if (null == wxUserInfo) throw new WxServerException("WX Server error");
         if (!wxUserInfo.has("openid"))
-            return new OperationResponse(false, wxUserInfo.toString());
+            return new OperationResponse<>(false, wxUserInfo.toString());
 
         String openid = wxUserInfo.getString("openid");
         SisUserExample sisUserExample = new SisUserExample();
@@ -154,14 +158,15 @@ public class UserService {
 
                 TokenResult tokenResult = new TokenResult();
                 tokenResult.setSisUser(sisUser);
-                tokenResult.setToken(JwtUtil.createJWT(claimsMap));
-                OperationResponse operationResponse = new OperationResponse();
+                tokenResult.setAccessToken(JwtUtil.createJWT(claimsMap));
+                OperationResponse<TokenResult> operationResponse =
+                    new OperationResponse<>();
                 operationResponse.setSuccess(true);
                 operationResponse.setMessage("data => access_token");
                 operationResponse.setData(tokenResult);
                 return operationResponse;
             })
-            .orElseGet(() -> new OperationResponse(false,
+            .orElseGet(() -> new OperationResponse<>(false,
                 String.format("No user found " + "by openid %s", openid)));
     }
 
@@ -209,7 +214,7 @@ public class UserService {
     }
 
     @Transactional
-    public OperationResponse modifyPassword(String suId,
+    public VoidOperationResponse modifyPassword(String suId,
                                             String oldPassword,
                                             String newPassword) throws IncorrectParameterException {
         SisUser sisUser = sisUserMapper.selectByPrimaryKey(suId);
@@ -220,21 +225,21 @@ public class UserService {
 
         if (!bCryptPasswordEncoder
             .matches(oldPassword, sisUser.getSuPassword()))
-            return new OperationResponse(false, "Incorrect password");
+            return new VoidOperationResponse(false, "Incorrect password");
 
         sisUser.setSuPassword(bCryptPasswordEncoder.encode(newPassword));
         sisUserMapper.updateByPrimaryKey(sisUser);
-        return OperationResponse.SUCCESS;
+        return VoidSuccessOperationResponse.SUCCESS;
     }
 
-    public OperationResponse deleteUser(String suId) throws IncorrectParameterException {
+    public VoidOperationResponse deleteUser(String suId) throws IncorrectParameterException {
         SisUser sisUser = sisUserMapper.selectByPrimaryKey(suId);
         if (null == sisUser)
             throw new IncorrectParameterException("User not found.");
 
         sisUserMapper.deleteByPrimaryKey(suId);
         log.debug("User delete success: " + suId);
-        return OperationResponse.SUCCESS;
+        return VoidSuccessOperationResponse.SUCCESS;
     }
 }
 

@@ -41,9 +41,10 @@ public class SisAuthenticationSuccessHandler implements AuthenticationSuccessHan
         sisUser.setSuPassword(null);
         TokenResult tokenResult = new TokenResult();
         tokenResult.setSisUser(sisUser);
-        tokenResult.setToken(token);
+        tokenResult.setAccessToken(token);
         response.setHeader("Content-type", "application/json;charset=utf-8");
-        OperationResponse operationResponse = new OperationResponse();
+        OperationResponse<TokenResult> operationResponse =
+            new OperationResponse<>();
         operationResponse.setSuccess(true);
         operationResponse.setData(tokenResult);
         operationResponse.setMessage("data => tokenResult");

@@ -9,20 +9,14 @@ import lombok.Setter;
  */
 @Setter
 @Getter
-public class OperationResponse {
-    public static final OperationResponse SUCCESS = new OperationResponse(true);
-
-    private boolean success;
-    private String message;
+public class OperationResponse<T> {
+    protected boolean success;
+    protected String message;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    private Object data;
+    protected T data;
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    private int code;
-
-    private OperationResponse(boolean success) {
-        this.success = success;
-    }
+    protected Integer code;
 
     public OperationResponse() {
     }

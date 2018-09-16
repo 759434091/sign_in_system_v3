@@ -11,11 +11,13 @@ import springfox.documentation.annotations.ApiIgnore;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
 import team.a9043.sign_in_system.pojo.SisCourse;
+import team.a9043.sign_in_system.pojo.SisSignIn;
 import team.a9043.sign_in_system.pojo.SisSignInDetail;
 import team.a9043.sign_in_system.pojo.SisUser;
 import team.a9043.sign_in_system.security.tokenuser.TokenUser;
 import team.a9043.sign_in_system.service.SignInService;
 import team.a9043.sign_in_system.service_pojo.OperationResponse;
+import team.a9043.sign_in_system.service_pojo.VoidOperationResponse;
 import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
 
 import javax.annotation.Resource;
@@ -87,8 +89,8 @@ public class SignInController {
     @PostMapping("/schedules/{ssId}/signIns")
     @PreAuthorize("hasAnyAuthority('ADMINISTRATOR','TEACHER')")
     @ApiOperation("发起签到")
-    public OperationResponse createSignIn(@TokenUser @ApiIgnore SisUser sisUser,
-                                          @PathVariable @ApiParam("排课") Integer ssId) throws InvalidTimeParameterException, InvalidPermissionException {
+    public VoidOperationResponse createSignIn(@TokenUser @ApiIgnore SisUser sisUser,
+                                              @PathVariable @ApiParam("排课") Integer ssId) throws InvalidTimeParameterException, InvalidPermissionException {
         LocalDateTime localDateTime = LocalDateTime.now();
 
         return signInService.createSignIn(sisUser, ssId, localDateTime);
@@ -97,16 +99,17 @@ public class SignInController {
     @GetMapping("/schedules/{ssId}/signIns/week/{week}")
     @PreAuthorize("hasAnyAuthority('ADMINISTRATOR','TEACHER')")
     @ApiOperation("获得签到")
-    public OperationResponse getSignIn(@PathVariable @ApiParam("排课") Integer ssId,
-                                       @PathVariable @ApiParam("签到周") Integer week) {
+    public OperationResponse<SisSignIn> getSignIn(@PathVariable @ApiParam("排课") Integer ssId,
+                                                  @PathVariable @ApiParam("签到周") Integer week) {
         return signInService.getSignIn(ssId, week);
     }
 
+    @SuppressWarnings({"ELValidationInJSP", "SpringElInspection"})
     @PostMapping("/schedules/{ssId}/signIns/doSignIn")
     @PreAuthorize("hasAnyAuthority('STUDENT') && authentication.sisUser.type" +
         ".equals('code')")
     @ApiOperation("学生签到")
-    public OperationResponse signIn(@TokenUser @ApiIgnore SisUser sisUser,
+    public VoidOperationResponse signIn(@TokenUser @ApiIgnore SisUser sisUser,
                                     @PathVariable @ApiParam("排课") Integer ssId,
                                     @RequestHeader("Access-Token")
                              @ApiParam(value = "json的加密内容进行Base64编码",

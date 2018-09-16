@@ -5,8 +5,10 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.pojo.SisLocation;
+import team.a9043.sign_in_system.pojo.SisSchedule;
 import team.a9043.sign_in_system.service.LocationService;
 import team.a9043.sign_in_system.service_pojo.OperationResponse;
+import team.a9043.sign_in_system.service_pojo.VoidOperationResponse;
 
 import javax.annotation.Resource;
 
@@ -20,13 +22,13 @@ public class LocationController {
 
     @PutMapping("/schedules/{ssId}/locations/{slId}")
     @PreAuthorize("hasAnyAuthority('TEACHER','ADMINISTRATOR')")
-    public OperationResponse modifyScheduleLocation(@PathVariable Integer ssId,
-                                                    @PathVariable Integer slId) throws IncorrectParameterException {
+    public OperationResponse<SisSchedule> modifyScheduleLocation(@PathVariable Integer ssId,
+                                                                 @PathVariable Integer slId) throws IncorrectParameterException {
         return locationService.modifyScheduleLocation(ssId, slId);
     }
 
     @GetMapping("/locations/{slId}")
-    public OperationResponse getLocation(@PathVariable Integer slId) throws IncorrectParameterException {
+    public OperationResponse<SisLocation> getLocation(@PathVariable Integer slId) throws IncorrectParameterException {
         return locationService.getLocation(slId);
     }
 
@@ -40,20 +42,20 @@ public class LocationController {
 
     @PutMapping("/locations/{slId}")
     @PreAuthorize("hasAuthority('ADMINISTRATOR')")
-    public OperationResponse modifyLocation(@PathVariable Integer slId,
+    public OperationResponse<SisLocation> modifyLocation(@PathVariable Integer slId,
                                             @RequestBody SisLocation sisLocation) throws IncorrectParameterException {
         return locationService.modifyLocation(slId, sisLocation);
     }
 
     @DeleteMapping("/locations/{slId}")
     @PreAuthorize("hasAuthority('ADMINISTRATOR')")
-    public OperationResponse deleteLocation(@PathVariable Integer slId) throws IncorrectParameterException {
+    public VoidOperationResponse deleteLocation(@PathVariable Integer slId) throws IncorrectParameterException {
         return locationService.deleteLocation(slId);
     }
 
     @PostMapping("/locations")
     @PreAuthorize("hasAuthority('ADMINISTRATOR')")
-    public OperationResponse createLocation(@RequestBody SisLocation sisLocation) {
+    public OperationResponse<SisLocation> createLocation(@RequestBody SisLocation sisLocation) {
         return locationService.createLocation(sisLocation);
     }
 }

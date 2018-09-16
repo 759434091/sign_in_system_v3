@@ -16,14 +16,14 @@ import team.a9043.sign_in_system.pojo.SisSchedule;
 import team.a9043.sign_in_system.service.FileService;
 import team.a9043.sign_in_system.service.ImportService;
 import team.a9043.sign_in_system.service_pojo.OperationResponse;
+import team.a9043.sign_in_system.service_pojo.VoidOperationResponse;
 
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.util.List;
 
 /**
- * @author: 卢学能 zzz13129180808@gmail.com
- * @date: 2018/9/6 下午7:33
+ * @author 卢学能 zzz13129180808@gmail.com
  */
 @RestController
 public class ImportController {
@@ -34,29 +34,29 @@ public class ImportController {
 
     @GetMapping("/progress/{key}")
     @PreAuthorize("hasAuthority('ADMINISTRATOR')")
-    public OperationResponse getProgress(@PathVariable String key) {
+    public OperationResponse<Integer> getProgress(@PathVariable String key) {
         return importService.getProgress(key);
     }
 
     @PostMapping("/courses/import")
     @PreAuthorize("hasAuthority('ADMINISTRATOR')")
-    public OperationResponse importCozInfo(@RequestPart("cozInfo") MultipartFile multipartFile) throws IOException {
+    public OperationResponse<String> importCozInfo(@RequestPart("cozInfo") MultipartFile multipartFile) throws IOException {
         return fileService.readCozInfo(multipartFile);
     }
 
     @PostMapping("/students/import")
     @PreAuthorize("hasAuthority('ADMINISTRATOR')")
-    public OperationResponse importStuInfo(@RequestPart("stuInfo") MultipartFile multipartFile) throws IOException {
+    public OperationResponse<String> importStuInfo(@RequestPart("stuInfo") MultipartFile multipartFile) throws IOException {
         return fileService.readStuInfo(multipartFile);
     }
 
     @PostMapping("/courses/{scId}")
     @ApiOperation(value = "新增/修改课程", notes = "根据scId，if force, " +
         "将会删除旧课程、排课、教课、参课，再重新导入")
-    public OperationResponse createCourse(@PathVariable String scId,
-                                          @RequestPart("course") String course,
-                                          @RequestPart("scheduleList") String scheduleList,
-                                          @RequestPart("departList") String departList) throws IncorrectParameterException, UnknownServerError {
+    public VoidOperationResponse createCourse(@PathVariable String scId,
+                                              @RequestPart("course") String course,
+                                              @RequestPart("scheduleList") String scheduleList,
+                                              @RequestPart("departList") String departList) throws IncorrectParameterException, UnknownServerError {
         ObjectMapper objectMapper =
             new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         try {
@@ -79,11 +79,11 @@ public class ImportController {
 
     @PutMapping("/courses/{scId}")
     @PreAuthorize("hasAuthority('ADMINISTRATOR')")
-    public OperationResponse modifyCourse(@PathVariable String scId,
-                                          @RequestPart("course") String course,
-                                          @RequestPart("mScheduleList") String mScheduleList,
-                                          @RequestPart("nScheduleList") String nScheduleList,
-                                          @RequestPart("departList") String departList) throws IncorrectParameterException, UnknownServerError {
+    public VoidOperationResponse modifyCourse(@PathVariable String scId,
+                                              @RequestPart("course") String course,
+                                              @RequestPart("mScheduleList") String mScheduleList,
+                                              @RequestPart("nScheduleList") String nScheduleList,
+                                              @RequestPart("departList") String departList) throws IncorrectParameterException, UnknownServerError {
         ObjectMapper objectMapper =
             new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         try {
@@ -110,7 +110,7 @@ public class ImportController {
 
     @DeleteMapping("/courses/{scId}")
     @PreAuthorize("hasAuthority('ADMINISTRATOR')")
-    public OperationResponse deleteCourse(@PathVariable String scId) throws IncorrectParameterException {
+    public VoidOperationResponse deleteCourse(@PathVariable String scId) throws IncorrectParameterException {
         return importService.deleteCourse(scId);
     }
 
@@ -118,53 +118,56 @@ public class ImportController {
     @PreAuthorize("hasAuthority('ADMINISTRATOR')")
     @ApiOperation(value = "新增/修改用户", notes = "根据suId，if " +
         "force，先删除旧用户信息（包括参加的课堂），然后再更新")
-    public OperationResponse createStudent(@PathVariable String suId,
-                                           @RequestParam String suName,
-                                           @RequestParam(value = "scIdList[]",
-                                        required = false) List<String> scIdList,
-                                           @RequestParam(value = "force", required =
-                                        false) Boolean force) throws InvalidPermissionException, IncorrectParameterException {
+    public VoidOperationResponse createStudent(@PathVariable String suId,
+                                               @RequestParam String suName,
+                                               @RequestParam(value =
+                                                   "scIdList[]",
+                                                   required = false) List<String> scIdList,
+                                               @RequestParam(value = "force",
+                                                   required =
+                                                       false) Boolean force) throws InvalidPermissionException, IncorrectParameterException {
         return importService.createStudent(suId, suName, scIdList, force);
     }
 
     @PutMapping("/students/{suId}")
     @PreAuthorize("hasAuthority('ADMINISTRATOR')")
-    public OperationResponse modifyStudent(@PathVariable String suId,
-                                           @RequestParam String suName,
-                                           @RequestParam(value = "scIdList[]",
-                                        required = false) List<String> scIds) throws IncorrectParameterException {
+    public VoidOperationResponse modifyStudent(@PathVariable String suId,
+                                               @RequestParam String suName,
+                                               @RequestParam(value =
+                                                   "scIdList[]",
+                                                   required = false) List<String> scIds) throws IncorrectParameterException {
         return importService.modifyStudent(suId, suName, scIds);
     }
 
     @PutMapping("/courses/{scId}/joinCourses")
     @PreAuthorize("hasAuthority('ADMINISTRATOR')")
-    public OperationResponse modifyJoinCourses(@PathVariable String scId,
-                                               @RequestBody List<SisJoinCourse> joinCourseList) throws IncorrectParameterException, UnknownServerError {
+    public VoidOperationResponse modifyJoinCourses(@PathVariable String scId,
+                                                   @RequestBody List<SisJoinCourse> joinCourseList) throws IncorrectParameterException, UnknownServerError {
         return importService.modifyJoinCourses(scId, joinCourseList);
     }
 
     @DeleteMapping("/joinCourses/{sjcId}")
     @PreAuthorize("hasAuthority('ADMINISTRATOR')")
-    public OperationResponse deleteJoinCourse(@PathVariable Integer sjcId) throws IncorrectParameterException {
+    public VoidOperationResponse deleteJoinCourse(@PathVariable Integer sjcId) throws IncorrectParameterException {
         return importService.deleteJoinCourse(sjcId);
     }
 
     @PutMapping("/departments/{sdId}")
     @PreAuthorize("hasAuthority('ADMINISTRATOR')")
-    public OperationResponse modifyDepartment(@PathVariable Integer sdId,
-                                              @RequestParam String sdName) throws IncorrectParameterException {
+    public VoidOperationResponse modifyDepartment(@PathVariable Integer sdId,
+                                                  @RequestParam String sdName) throws IncorrectParameterException {
         return importService.modifyDepartment(sdId, sdName);
     }
 
     @DeleteMapping("/departments/{sdId}")
     @PreAuthorize("hasAuthority('ADMINISTRATOR')")
-    public OperationResponse deleteDepartment(@PathVariable Integer sdId) throws IncorrectParameterException {
+    public VoidOperationResponse deleteDepartment(@PathVariable Integer sdId) throws IncorrectParameterException {
         return importService.deleteDepartment(sdId);
     }
 
     @PostMapping("/departments")
     @PreAuthorize("hasAuthority('ADMINISTRATOR')")
-    public OperationResponse addDepartment(@RequestParam String sdName) throws IncorrectParameterException {
+    public VoidOperationResponse addDepartment(@RequestParam String sdName) throws IncorrectParameterException {
         return importService.addDepartment(sdName);
     }
 }

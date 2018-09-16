@@ -29,6 +29,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Resource
     private SisAuthenticationSuccessHandler sisAuthenticationSuccessHandler;
     @Resource
+    private SisAuthenticationFailureHandler sisAuthenticationFailureHandler;
+    @Resource
+    private SisAuthenticationEntryPoint sisAuthenticationEntryPoint;
+    @Resource
     private BCryptPasswordEncoder bCryptPasswordEncoder;
 
     private DaoAuthenticationProvider getDaoAuthenticationProvider() {
@@ -82,10 +86,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .passwordParameter("suPassword")
             .loginProcessingUrl("/tokens")
             .successHandler(sisAuthenticationSuccessHandler)
-            .failureHandler(new SisAuthenticationFailureHandler())
+            .failureHandler(sisAuthenticationFailureHandler)
             .and()
             .exceptionHandling()
-            .authenticationEntryPoint(new SisAuthenticationEntryPoint())
+            .authenticationEntryPoint(sisAuthenticationEntryPoint)
             .and()
             .addFilterBefore(new SisAuthenticationFilter(),
                 UsernamePasswordAuthenticationFilter.class);

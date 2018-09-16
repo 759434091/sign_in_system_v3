@@ -18,7 +18,7 @@ import team.a9043.sign_in_system.pojo.SisUser;
 import team.a9043.sign_in_system.security.tokenuser.TokenUser;
 import team.a9043.sign_in_system.service.CourseService;
 import team.a9043.sign_in_system.service.MonitorService;
-import team.a9043.sign_in_system.service_pojo.OperationResponse;
+import team.a9043.sign_in_system.service_pojo.VoidOperationResponse;
 import team.a9043.sign_in_system.service_pojo.Week;
 import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
 
@@ -156,9 +156,9 @@ public class CourseController {
         notes = "根据scId修改督导,SisCourse -> {\n  scNeedMonitor: boolean,\n  " +
             "monitor: SisUser - {suId: String}\n}",
         produces = "application/json")
-    public OperationResponse modifyScNeedMonitor(@RequestBody @Validated SisCourse sisCourse,
-                                                 @ApiIgnore BindingResult bindingResult,
-                                                 @PathVariable
+    public VoidOperationResponse modifyScNeedMonitor(@RequestBody @Validated SisCourse sisCourse,
+                                                     @ApiIgnore BindingResult bindingResult,
+                                                     @PathVariable
                                        @ApiParam(value = "课程序号") String scId) throws IncorrectParameterException {
         if (bindingResult.hasErrors()) {
             throw new IncorrectParameterException(new JSONArray(bindingResult.getAllErrors()).toString());
@@ -171,7 +171,7 @@ public class CourseController {
     @PreAuthorize("hasAuthority('ADMINISTRATOR')")
     @ApiOperation(value = "批量修改督导",
         notes = "批量修改督导根据搜索条件")
-    public OperationResponse batchSetNeedMonitor(@RequestParam
+    public VoidOperationResponse batchSetNeedMonitor(@RequestParam
                                           @ApiParam(value = "修改督导状态") Boolean monitorStatus,
                                                  @RequestBody(required = false) List<String> scIdList,
                                                  @RequestParam(required = false) @ApiParam(value = "是否需要督导filter,若该参数为null则忽略hasMonitor") Boolean needMonitor,

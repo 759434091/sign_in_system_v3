@@ -18,7 +18,7 @@ import team.a9043.sign_in_system.pojo.SisSupervision;
 import team.a9043.sign_in_system.pojo.SisUser;
 import team.a9043.sign_in_system.security.tokenuser.TokenUser;
 import team.a9043.sign_in_system.service.MonitorService;
-import team.a9043.sign_in_system.service_pojo.OperationResponse;
+import team.a9043.sign_in_system.service_pojo.VoidOperationResponse;
 import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
 import team.a9043.sign_in_system.util.judgetime.ScheduleParserException;
 
@@ -40,11 +40,11 @@ public class MonitorController {
     public PageInfo<SisUser> getMonitors(@RequestParam @ApiParam("页数") Integer page,
                                          @RequestParam @ApiParam("页数大小") Integer pageSize,
                                          @RequestParam(required = false) @ApiParam(
-                                      "学号模糊") String suId,
+                                             "学号模糊") String suId,
                                          @RequestParam(required = false) @ApiParam(
-                                      "姓名模糊") String suName,
+                                             "姓名模糊") String suName,
                                          @RequestParam(required = false) @ApiParam(
-                                      "是否按督导分排序") Boolean ordByLackNum) throws IncorrectParameterException {
+                                             "是否按督导分排序") Boolean ordByLackNum) throws IncorrectParameterException {
         return monitorService.getMonitors(page, pageSize, suId, suName,
             ordByLackNum);
     }
@@ -52,8 +52,9 @@ public class MonitorController {
     @PostMapping("/courses/{scId}/monitor")
     @PreAuthorize("hasAuthority('MONITOR')")
     @ApiOperation(value = "领取督导池", notes = "只可领取, 不可取消")
-    public OperationResponse drawMonitor(@TokenUser @ApiIgnore SisUser sisUser,
-                                         @PathVariable @ApiParam(value = "课程序号") String scId) throws InvalidPermissionException, IncorrectParameterException {
+    public VoidOperationResponse drawMonitor(@TokenUser @ApiIgnore SisUser sisUser,
+                                             @PathVariable @ApiParam(value =
+                                                 "课程序号") String scId) throws IncorrectParameterException {
 
         return monitorService.drawMonitor(sisUser, scId);
     }
@@ -62,10 +63,12 @@ public class MonitorController {
     @PreAuthorize("hasAnyAuthority('MONITOR','ADMINISTRATOR','TEACHER')")
     @ApiOperation(value = "获取督导记录", notes = "根据课程序号获取督导记录")
     public List<SisSchedule> getSupervisions(@TokenUser @ApiIgnore SisUser sisUser,
-                                             @PathVariable @ApiParam(value = "课程序号") String scId) throws InvalidPermissionException, IncorrectParameterException {
+                                             @PathVariable @ApiParam(value =
+                                                 "课程序号") String scId) throws InvalidPermissionException, IncorrectParameterException {
         return monitorService.getSupervisions(sisUser, scId);
     }
 
+    @SuppressWarnings({"ELValidationInJSP", "SpringElInspection"})
     @PostMapping(value = "/schedules/{ssId}/supervisions")
     @PreAuthorize("hasAuthority('MONITOR') &&" +
         "authentication.sisUser.type.equals('code')")
@@ -73,11 +76,11 @@ public class MonitorController {
         notes = "SisSupervision{ssvWeek, ssvActualNum, ssvMobileNum, " +
             "ssvSleepNum, ssvRecInfo}",
         produces = "application/json")
-    public OperationResponse insertSupervision(@TokenUser @ApiIgnore SisUser sisUser,
-                                               @PathVariable
-                                        @ApiParam(value = "排课号") Integer ssId,
-                                               @RequestBody @Validated SisSupervision sisSupervision,
-                                               @ApiIgnore BindingResult bindingResult) throws IncorrectParameterException, ScheduleParserException, InvalidPermissionException, InvalidTimeParameterException {
+    public VoidOperationResponse insertSupervision(@TokenUser @ApiIgnore SisUser sisUser,
+                                                   @PathVariable
+                                                   @ApiParam(value = "排课号") Integer ssId,
+                                                   @RequestBody @Validated SisSupervision sisSupervision,
+                                                   @ApiIgnore BindingResult bindingResult) throws IncorrectParameterException, ScheduleParserException, InvalidPermissionException, InvalidTimeParameterException {
 
         if (bindingResult.hasErrors()) {
             throw new IncorrectParameterException(new JSONArray(bindingResult.getAllErrors()).toString());
@@ -96,10 +99,11 @@ public class MonitorController {
     @ApiOperation(value = "申请转接",
         notes = "SisMonitorTrans{smtWeek, suId}",
         produces = "application/json")
-    public OperationResponse applyForTransfer(@TokenUser @ApiIgnore SisUser sisUser,
-                                              @PathVariable @ApiParam("排课") Integer ssId,
-                                              @RequestBody @Validated SisMonitorTrans sisMonitorTrans,
-                                              @ApiIgnore BindingResult bindingResult) throws IncorrectParameterException, InvalidPermissionException {
+    public VoidOperationResponse applyForTransfer(@TokenUser @ApiIgnore SisUser sisUser,
+                                                  @PathVariable @ApiParam(
+                                                      "排课") Integer ssId,
+                                                  @RequestBody @Validated SisMonitorTrans sisMonitorTrans,
+                                                  @ApiIgnore BindingResult bindingResult) throws IncorrectParameterException, InvalidPermissionException {
         if (bindingResult.hasErrors()) {
             throw new IncorrectParameterException(new JSONArray(bindingResult.getAllErrors()).toString());
         }
@@ -111,9 +115,9 @@ public class MonitorController {
     @ApiOperation(value = "接受或拒绝转接",
         notes = "SisMonitorTrans{smtStatus, smtWeek}",
         produces = "application/json")
-    public OperationResponse modifyTransfer(@TokenUser @ApiIgnore SisUser sisUser,
-                                            @PathVariable @ApiParam("排课") Integer ssId,
-                                            @RequestBody SisMonitorTrans sisMonitorTrans) throws IncorrectParameterException, InvalidPermissionException {
+    public VoidOperationResponse modifyTransfer(@TokenUser @ApiIgnore SisUser sisUser,
+                                                @PathVariable @ApiParam("排课") Integer ssId,
+                                                @RequestBody SisMonitorTrans sisMonitorTrans) throws IncorrectParameterException, InvalidPermissionException {
         return monitorService.modifyTransfer(sisUser, ssId, sisMonitorTrans);
     }
 
@@ -124,10 +128,11 @@ public class MonitorController {
             "application/json")
     public List<SisMonitorTrans> getTransCourses(@TokenUser @ApiIgnore SisUser sisUser,
                                                  @RequestParam
-                                      @ApiParam(value = "获得方式",
-                                          allowableValues = "untreated,agree," +
-                                              "disagree")
-                                          String smtStatus) throws String2ValueException {
+                                                 @ApiParam(value = "获得方式",
+                                                     allowableValues =
+                                                         "untreated,agree," +
+                                                         "disagree")
+                                                     String smtStatus) throws String2ValueException {
         return monitorService.getTransCourses(sisUser,
             SisMonitorTrans.SmtStatus.lowercase2Value(smtStatus));
     }
@@ -135,14 +140,14 @@ public class MonitorController {
     @PostMapping("/monitors/{suId}")
     @PreAuthorize("hasAuthority('ADMINISTRATOR')")
     @ApiOperation("授予督导权")
-    public OperationResponse grantMonitor(@PathVariable @ApiParam("用户Id") String suId) throws IncorrectParameterException {
+    public VoidOperationResponse grantMonitor(@PathVariable @ApiParam("用户Id") String suId) throws IncorrectParameterException {
         return monitorService.grantMonitor(suId);
     }
 
     @DeleteMapping("/monitors/{suId}")
     @PreAuthorize("hasAuthority('ADMINISTRATOR')")
     @ApiOperation("撤回")
-    public OperationResponse revokeMonitor(@PathVariable @ApiParam("用户Id") String suId) throws IncorrectParameterException {
+    public VoidOperationResponse revokeMonitor(@PathVariable @ApiParam("用户Id") String suId) throws IncorrectParameterException {
         return monitorService.revokeMonitor(suId);
     }
 }

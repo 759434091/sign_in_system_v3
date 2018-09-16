@@ -10,6 +10,6 @@ import team.a9043.sign_in_system.pojo.SisUser;
 @Getter
 @Setter
 public class TokenResult {
-    private String token;
+    private String accessToken;
     private SisUser sisUser;
 }

@@ -15,7 +15,8 @@ import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.mapper.*;
 import team.a9043.sign_in_system.pojo.*;
 import team.a9043.sign_in_system.security.tokenuser.TokenUser;
-import team.a9043.sign_in_system.service_pojo.OperationResponse;
+import team.a9043.sign_in_system.service_pojo.VoidOperationResponse;
+import team.a9043.sign_in_system.service_pojo.VoidSuccessOperationResponse;
 import team.a9043.sign_in_system.service_pojo.Week;
 import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
 import team.a9043.sign_in_system.util.judgetime.JudgeTimeUtil;
@@ -173,7 +174,7 @@ public class CourseService {
                         .filter(sisSupervision -> sisSupervision.getSsId().equals(s.getSsId()))
                         .collect(Collectors.toList())));
 
-                c.setSisScheduleList(sisScheduleList);
+                c.setSisScheduleList(tSchList);
 
                 // set joinCourse
                 List<SisJoinCourse> tJoinCourseList = sisJoinCourseList
@@ -271,7 +272,7 @@ public class CourseService {
     }
 
     @Transactional
-    public OperationResponse modifyScNeedMonitor(SisCourse sisCourse) throws IncorrectParameterException {
+    public VoidOperationResponse modifyScNeedMonitor(SisCourse sisCourse) throws IncorrectParameterException {
         SisCourse stdSisCourse =
             sisCourseMapper.selectByPrimaryKey(sisCourse.getScId());
         if (null == stdSisCourse)
@@ -292,12 +293,12 @@ public class CourseService {
         }
         sisCourseMapper.updateByPrimaryKey(stdSisCourse);
         log.info("Success modify scNeedMonitor: scId " + sisCourse.getScId());
-        return OperationResponse.SUCCESS;
+        return VoidSuccessOperationResponse.SUCCESS;
     }
 
     @SuppressWarnings("Duplicates")
     @Transactional
-    public OperationResponse batchSetNeedMonitor(@NonNull boolean monitorStatus,
+    public VoidOperationResponse batchSetNeedMonitor(@NonNull boolean monitorStatus,
                                                  @Nullable Boolean needMonitor,
                                                  @Nullable Boolean hasMonitor,
                                                  @Nullable Integer sdId,
@@ -329,11 +330,11 @@ public class CourseService {
 
         sisCourseMapper.updateNeedMonitorList(stdSisCourseList);
         log.info("Success batchSetNeedMonitor: monitorStatus " + monitorStatus);
-        return OperationResponse.SUCCESS;
+        return VoidSuccessOperationResponse.SUCCESS;
     }
 
     @Transactional
-    public OperationResponse batchSetNeedMonitor(@NonNull boolean monitorStatus,
+    public VoidOperationResponse batchSetNeedMonitor(@NonNull boolean monitorStatus,
                                                  @NonNull List<String> scIdList) {
         SisCourseExample sisCourseExample = new SisCourseExample();
         sisCourseExample.createCriteria().andScIdIn(scIdList);
@@ -349,7 +350,7 @@ public class CourseService {
 
         sisCourseMapper.updateNeedMonitorList(stdSisCourseList);
         log.info("Success batchSetNeedMonitor: monitorStatus " + monitorStatus + " scIdList -> " + new JSONArray(scIdList));
-        return OperationResponse.SUCCESS;
+        return VoidSuccessOperationResponse.SUCCESS;
     }
 
     public List<SisDepartment> getCourseDepartments(String scId) {
@@ -395,27 +396,6 @@ public class CourseService {
 
     //----------------------------util------------------------------//
 
-    static void mergeWithSuIdJsonArrayEtSisUser(List<SisUser> sisUserList,
-                                                JSONArray withSuIdJsonArray) {
-        withSuIdJsonArray.forEach(withSuIdObj -> {
-            JSONObject withSuIdJson = (JSONObject) withSuIdObj;
-
-            String suId = withSuIdJson.optString("suId", null);
-            SisUser tSisUser =
-                sisUserList.parallelStream()
-                    .filter(tSisUser1 -> tSisUser1.getSuId().equals(suId))
-                    .findAny()
-                    .map(tSisUser1 -> {
-                        tSisUser1.setSuPassword(null);
-                        return tSisUser1;
-                    })
-                    .orElse(null);
-
-            withSuIdJson.put("sisUser", null == tSisUser ? null :
-                new JSONObject(tSisUser));
-        });
-    }
-
     static List<SisUser> getSisUserBySuIdList(List<String> suIdList,
                                               SisUserMapper sisUserMapper) {
         if (suIdList.isEmpty()) {
@@ -427,7 +407,7 @@ public class CourseService {
         }
     }
 
-    public static String getFuzzySearch(String fuzzyName) {
+    static String getFuzzySearch(String fuzzyName) {
         return Optional
             .ofNullable(fuzzyName)
             .filter(name -> !name.equals(""))

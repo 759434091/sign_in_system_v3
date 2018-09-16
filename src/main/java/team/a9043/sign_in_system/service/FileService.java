@@ -16,22 +16,22 @@ public class FileService {
     @Resource
     private ImportService importService;
 
-    public OperationResponse readStuInfo(MultipartFile multipartFile) throws IOException {
+    public OperationResponse<String> readStuInfo(MultipartFile multipartFile) throws IOException {
         String key =
             "SIS_Process_" + UUID.randomUUID().toString().replaceAll("-", "");
         importService.readStuInfo(key, multipartFile.getInputStream());
-        OperationResponse operationResponse = new OperationResponse();
+        OperationResponse<String> operationResponse = new OperationResponse<>();
         operationResponse.setSuccess(true);
         operationResponse.setData(key);
         operationResponse.setMessage("data => key");
         return operationResponse;
     }
 
-    public OperationResponse readCozInfo(MultipartFile multipartFile) throws IOException {
+    public OperationResponse<String> readCozInfo(MultipartFile multipartFile) throws IOException {
         String key =
             "SIS_Process_" + UUID.randomUUID().toString().replaceAll("-", "");
         importService.readCozInfo(key, multipartFile.getInputStream());
-        OperationResponse operationResponse = new OperationResponse();
+        OperationResponse<String> operationResponse = new OperationResponse<>();
         operationResponse.setSuccess(true);
         operationResponse.setData(key);
         operationResponse.setMessage("data => key");

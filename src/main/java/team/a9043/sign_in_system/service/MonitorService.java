@@ -15,7 +15,8 @@ import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
 import team.a9043.sign_in_system.mapper.*;
 import team.a9043.sign_in_system.pojo.*;
-import team.a9043.sign_in_system.service_pojo.OperationResponse;
+import team.a9043.sign_in_system.service_pojo.VoidOperationResponse;
+import team.a9043.sign_in_system.service_pojo.VoidSuccessOperationResponse;
 import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
 import team.a9043.sign_in_system.util.judgetime.JudgeTimeUtil;
 import team.a9043.sign_in_system.util.judgetime.ScheduleParserException;
@@ -162,12 +163,12 @@ public class MonitorService {
     }
 
     @Transactional
-    public OperationResponse drawMonitor(@NotNull SisUser sisUser,
-                                         @NotNull String scId) throws IncorrectParameterException {
+    public VoidOperationResponse drawMonitor(@NotNull SisUser sisUser,
+                                             @NotNull String scId) throws IncorrectParameterException {
         int idx = String.format("sis_draw_monitor_%s", scId).hashCode() % N;
         if (idx < 0) idx += N;
         ReentrantLock lock = locks[idx];
-        if (!lock.tryLock()) return new OperationResponse(false, "该课程已被领取");
+        if (!lock.tryLock()) return new VoidOperationResponse(false, "该课程已被领取");
 
         SisCourse sisCourse = Optional
             .ofNullable(sisCourseMapper.selectByPrimaryKey(scId))
@@ -175,7 +176,7 @@ public class MonitorService {
                 "No course: " + scId));
 
         if (null != sisCourse.getSuId())
-            return new OperationResponse(false, "该课程已被领取");
+            return new VoidOperationResponse(false, "该课程已被领取");
 
         SisCourse updatedSisCourse = new SisCourse();
         updatedSisCourse.setScId(sisCourse.getScId());
@@ -184,11 +185,11 @@ public class MonitorService {
         sisCourseMapper.updateByPrimaryKeySelective(updatedSisCourse);
         log.info("User " + sisUser.getSuId() + " has draw course: " + scId);
         lock.unlock();
-        return OperationResponse.SUCCESS;
+        return VoidSuccessOperationResponse.SUCCESS;
     }
 
     @Transactional
-    public OperationResponse insertSupervision(@NotNull SisUser sisUser,
+    public VoidOperationResponse insertSupervision(@NotNull SisUser sisUser,
                                                @NotNull Integer ssId,
                                                @NotNull SisSupervision sisSupervision,
                                                @NotNull LocalDateTime currentDateTime) throws IncorrectParameterException, ScheduleParserException, InvalidPermissionException, InvalidTimeParameterException {
@@ -236,13 +237,13 @@ public class MonitorService {
         if (!JudgeTimeUtil.isCourseTime(sisSchedule,
             sisSupervision.getSsvWeek(),
             currentDateTime)) {
-            return new OperationResponse(false, "Incorrect time");
+            return new VoidOperationResponse(false, "Incorrect time");
         }
 
         sisSupervision.setSsId(ssId);
         sisSupervisionMapper.insert(sisSupervision);
         log.info("User " + sisUser.getSuId() + " insert supervision: ssId " + ssId + " week " + ssvWeek);
-        return OperationResponse.SUCCESS;
+        return VoidSuccessOperationResponse.SUCCESS;
     }
 
     public List<SisMonitorTrans> getTransCourses(@NotNull SisUser sisUser,
@@ -279,7 +280,7 @@ public class MonitorService {
     }
 
     @Transactional
-    public OperationResponse applyForTransfer(@NotNull SisUser sisUser,
+    public VoidOperationResponse applyForTransfer(@NotNull SisUser sisUser,
                                               @NotNull Integer ssId,
                                               @NotNull SisMonitorTrans sisMonitorTrans) throws InvalidPermissionException, IncorrectParameterException {
         SisSchedule sisSchedule = Optional
@@ -317,11 +318,11 @@ public class MonitorService {
         sisMonitorTrans.setSsId(ssId);
 
         sisMonitorTransMapper.insert(sisMonitorTrans);
-        return OperationResponse.SUCCESS;
+        return VoidSuccessOperationResponse.SUCCESS;
     }
 
     @Transactional
-    public OperationResponse modifyTransfer(@NotNull SisUser sisUser,
+    public VoidOperationResponse modifyTransfer(@NotNull SisUser sisUser,
                                             @NotNull Integer ssId,
                                             @NotNull SisMonitorTrans sisMonitorTrans) throws IncorrectParameterException, InvalidPermissionException {
         if (null == sisMonitorTrans.getSmtWeek())
@@ -343,7 +344,7 @@ public class MonitorService {
         stdSisMonitorTrans.setSmtStatus(sisMonitorTrans.getSmtStatus());
 
         sisMonitorTransMapper.updateByPrimaryKey(stdSisMonitorTrans);
-        return OperationResponse.SUCCESS;
+        return VoidSuccessOperationResponse.SUCCESS;
     }
 
     public PageInfo<SisUser> getMonitors(@NonNull Integer page,
@@ -400,7 +401,7 @@ public class MonitorService {
         return pageInfo;
     }
 
-    public OperationResponse grantMonitor(String suId) throws IncorrectParameterException {
+    public VoidOperationResponse grantMonitor(String suId) throws IncorrectParameterException {
         SisUser sisUser = sisUserMapper.selectByPrimaryKey(suId);
         if (null == sisUser)
             throw new IncorrectParameterException("Incorrect suId: " + suId);
@@ -415,10 +416,10 @@ public class MonitorService {
         updatedSisUser.setSuAuthorities(authList);
 
         sisUserMapper.updateByPrimaryKeySelective(updatedSisUser);
-        return OperationResponse.SUCCESS;
+        return VoidSuccessOperationResponse.SUCCESS;
     }
 
-    public OperationResponse revokeMonitor(String suId) throws IncorrectParameterException {
+    public VoidOperationResponse revokeMonitor(String suId) throws IncorrectParameterException {
         SisUser sisUser = sisUserMapper.selectByPrimaryKey(suId);
         if (null == sisUser)
             throw new IncorrectParameterException("Incorrect suId: " + suId);
@@ -432,7 +433,7 @@ public class MonitorService {
         updatedSisUser.setSuAuthorities(authList);
 
         sisUserMapper.updateByPrimaryKeySelective(updatedSisUser);
-        return OperationResponse.SUCCESS;
+        return VoidSuccessOperationResponse.SUCCESS;
     }
 }
 
