@@ -131,8 +131,11 @@ public class MonitorController {
                                                  @ApiParam(value = "获得方式",
                                                      allowableValues =
                                                          "untreated,agree," +
-                                                         "disagree")
+                                                             "disagree,mine")
                                                      String smtStatus) throws String2ValueException {
+        if ("mine".equals(smtStatus)) {
+            return monitorService.getMyTransCourses(sisUser);
+        }
         return monitorService.getTransCourses(sisUser,
             SisMonitorTrans.SmtStatus.lowercase2Value(smtStatus));
     }

@@ -25,6 +25,7 @@ import javax.annotation.Nullable;
 import javax.annotation.Resource;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -51,6 +52,8 @@ public class MonitorService {
     private SisMonitorTransMapper sisMonitorTransMapper;
     @Resource
     private SisUserInfoMapper sisUserInfoMapper;
+    @Resource
+    private SisJoinCourseMapper sisJoinCourseMapper;
     @Resource
     private AsyncJoinService asyncJoinService;
     @Value("${monitorService.lockSize}")
@@ -190,9 +193,9 @@ public class MonitorService {
 
     @Transactional
     public VoidOperationResponse insertSupervision(@NotNull SisUser sisUser,
-                                               @NotNull Integer ssId,
-                                               @NotNull SisSupervision sisSupervision,
-                                               @NotNull LocalDateTime currentDateTime) throws IncorrectParameterException, ScheduleParserException, InvalidPermissionException, InvalidTimeParameterException {
+                                                   @NotNull Integer ssId,
+                                                   @NotNull SisSupervision sisSupervision,
+                                                   @NotNull LocalDateTime currentDateTime) throws IncorrectParameterException, ScheduleParserException, InvalidPermissionException, InvalidTimeParameterException {
         //check exist
         SisSupervisionKey sisSupervisionKey = new SisSupervisionKey();
         sisSupervisionKey.setSsId(ssId);
@@ -256,33 +259,15 @@ public class MonitorService {
 
         List<SisMonitorTrans> sisMonitorTransList = sisMonitorTransMapper
             .selectByExample(sisMonitorTransExample);
-        sisMonitorTransList
-            .forEach(sisMonitorTrans -> {
-                //get schedule
-                SisSchedule sisSchedule =
-                    sisScheduleMapper.selectByPrimaryKey(sisMonitorTrans.getSsId());
-
-                //get course
-                SisCourse sisCourse =
-                    sisCourseMapper.selectByPrimaryKey(sisSchedule.getScId());
-
-                //join monitor
-                if (null != sisCourse.getSuId())
-                    sisCourse.setMonitor(sisUserMapper.selectByPrimaryKey(sisCourse.getSuId()));
-
-                //join course
-                sisSchedule.setSisCourse(sisCourse);
-
-                sisMonitorTrans.setSisSchedule(sisSchedule);
-            });
+        joinMonitorTrans(sisMonitorTransList);
 
         return sisMonitorTransList;
     }
 
     @Transactional
     public VoidOperationResponse applyForTransfer(@NotNull SisUser sisUser,
-                                              @NotNull Integer ssId,
-                                              @NotNull SisMonitorTrans sisMonitorTrans) throws InvalidPermissionException, IncorrectParameterException {
+                                                  @NotNull Integer ssId,
+                                                  @NotNull SisMonitorTrans sisMonitorTrans) throws InvalidPermissionException, IncorrectParameterException {
         SisSchedule sisSchedule = Optional
             .ofNullable(sisScheduleMapper.selectByPrimaryKey(ssId))
             .orElseThrow(() ->
@@ -323,8 +308,8 @@ public class MonitorService {
 
     @Transactional
     public VoidOperationResponse modifyTransfer(@NotNull SisUser sisUser,
-                                            @NotNull Integer ssId,
-                                            @NotNull SisMonitorTrans sisMonitorTrans) throws IncorrectParameterException, InvalidPermissionException {
+                                                @NotNull Integer ssId,
+                                                @NotNull SisMonitorTrans sisMonitorTrans) throws IncorrectParameterException, InvalidPermissionException {
         if (null == sisMonitorTrans.getSmtWeek())
             throw new IncorrectParameterException("Incorrect smtWeek: " + sisMonitorTrans.getSmtWeek());
         if (null == sisMonitorTrans.getSmtStatus())
@@ -344,6 +329,10 @@ public class MonitorService {
         stdSisMonitorTrans.setSmtStatus(sisMonitorTrans.getSmtStatus());
 
         sisMonitorTransMapper.updateByPrimaryKey(stdSisMonitorTrans);
+        log.info(String.format("success modify transfer: [%s,%s] , res %s",
+            sisMonitorTrans.getSsId(),
+            sisMonitorTrans.getSmtWeek(),
+            sisMonitorTrans.getSmtStatus()));
         return VoidSuccessOperationResponse.SUCCESS;
     }
 
@@ -434,6 +423,80 @@ public class MonitorService {
 
         sisUserMapper.updateByPrimaryKeySelective(updatedSisUser);
         return VoidSuccessOperationResponse.SUCCESS;
+    }
+
+    public List<SisMonitorTrans> getMyTransCourses(SisUser sisUser) {
+        SisCourseExample sisCourseExample = new SisCourseExample();
+        sisCourseExample.createCriteria().andSuIdEqualTo(sisUser.getSuId());
+        List<SisCourse> sisCourseList =
+            sisCourseMapper.selectByExample(sisCourseExample);
+        if (sisCourseList.isEmpty()) return new ArrayList<>();
+        SisScheduleExample sisScheduleExample = new SisScheduleExample();
+        sisScheduleExample.createCriteria()
+            .andScIdIn(sisCourseList.stream()
+                .map(SisCourse::getScId)
+                .collect(Collectors.toList()));
+        List<SisSchedule> sisScheduleList =
+            sisScheduleMapper.selectByExample(sisScheduleExample);
+
+        SisMonitorTransExample sisMonitorTransExample =
+            new SisMonitorTransExample();
+        sisMonitorTransExample.createCriteria()
+            .andSsIdIn(sisScheduleList.stream()
+                .map(SisSchedule::getSsId)
+                .collect(Collectors.toList()));
+
+        List<SisMonitorTrans> sisMonitorTransList = sisMonitorTransMapper
+            .selectByExample(sisMonitorTransExample);
+        joinMonitorTrans(sisMonitorTransList);
+
+        return sisMonitorTransList;
+    }
+
+    private void joinMonitorTrans(List<SisMonitorTrans> sisMonitorTransList) {
+        sisMonitorTransList
+            .forEach(sisMonitorTrans -> {
+                //get schedule
+                SisSchedule sisSchedule =
+                    sisScheduleMapper.selectByPrimaryKey(sisMonitorTrans.getSsId());
+
+                //get course
+                SisCourse sisCourse =
+                    sisCourseMapper.selectByPrimaryKey(sisSchedule.getScId());
+
+                SisJoinCourseExample sisJoinCourseExample =
+                    new SisJoinCourseExample();
+                sisJoinCourseExample.createCriteria()
+                    .andJoinCourseTypeEqualTo(SisJoinCourse.JoinCourseType.TEACHING.ordinal())
+                    .andScIdEqualTo(sisSchedule.getScId());
+                List<SisJoinCourse> sisJoinCourseList =
+                    sisJoinCourseMapper.selectByExample(sisJoinCourseExample);
+                sisCourse.setSisJoinCourseList(sisJoinCourseList);
+
+                SisUserExample sisUserExample = new SisUserExample();
+                sisUserExample.createCriteria().andSuIdIn(sisJoinCourseList.stream()
+                    .map(SisJoinCourse::getSuId)
+                    .distinct()
+                    .collect(Collectors.toList()));
+                List<SisUser> sisUserList =
+                    sisUserMapper.selectByExample(sisUserExample);
+
+                sisJoinCourseList.forEach(j -> j.setSisUser(sisUserList.parallelStream()
+                    .filter(u -> u.getSuId().equals(j.getSuId()))
+                    .peek(u -> u.setSuPassword(null))
+                    .findAny()
+                    .orElse(null)));
+
+
+                //join monitor
+                if (null != sisCourse.getSuId())
+                    sisCourse.setMonitor(sisUserMapper.selectByPrimaryKey(sisCourse.getSuId()));
+
+                //join course
+                sisSchedule.setSisCourse(sisCourse);
+
+                sisMonitorTrans.setSisSchedule(sisSchedule);
+            });
     }
 }
 

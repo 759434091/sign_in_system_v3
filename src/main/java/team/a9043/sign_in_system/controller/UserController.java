@@ -48,7 +48,6 @@ public class UserController {
     }
 
     @GetMapping("/students")
-    @PreAuthorize("hasAuthority('ADMINISTRATOR')")
     @ApiOperation("模糊搜索学生")
     public PageInfo<SisUser> getStudents(@RequestParam @ApiParam("页数") Integer page,
                                          @RequestParam @ApiParam("页大小") Integer pageSize,
