@@ -6,6 +6,7 @@ import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.json.JSONObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.web.firewall.RequestRejectedException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MissingPathVariableException;
@@ -75,7 +76,8 @@ public class GlobalExceptionHandler {
         MissingServletRequestPartException.class,
         InvalidFormatException.class,
         POIXMLException.class,
-        ServletRequestBindingException.class})
+        ServletRequestBindingException.class,
+        RequestRejectedException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public void handleBadRequest(Exception e,
                                  HttpServletResponse response) throws IOException {
@@ -90,7 +92,7 @@ public class GlobalExceptionHandler {
     })
     @ResponseStatus(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
     public void handleUnsupportedMediaType(Exception e,
-                                                 HttpServletResponse response) throws IOException {
+                                           HttpServletResponse response) throws IOException {
         response.setHeader("Content-type",
             "application/json;charset=utf-8");
         response.getWriter().write(
