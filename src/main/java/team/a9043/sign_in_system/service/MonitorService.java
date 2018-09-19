@@ -259,6 +259,21 @@ public class MonitorService {
 
         List<SisMonitorTrans> sisMonitorTransList = sisMonitorTransMapper
             .selectByExample(sisMonitorTransExample);
+        if (SisMonitorTrans.SmtStatus.AGREE.ordinal() == smtStatus && !sisMonitorTransList.isEmpty()) {
+            SisSupervisionExample sisSupervisionExample =
+                new SisSupervisionExample();
+            sisMonitorTransList.forEach(t -> sisMonitorTransExample.or()
+                .andSsIdEqualTo(t.getSsId())
+                .andSmtWeekEqualTo(t.getSmtWeek()));
+            List<SisSupervision> sisSupervisionList =
+                sisSupervisionMapper.selectByExample(sisSupervisionExample);
+
+            sisMonitorTransList.forEach(t -> t.setSisSupervision(sisSupervisionList.stream()
+                .filter(s -> s.getSsId().equals(t.getSsId()) && s.getSsvWeek().equals(t.getSmtWeek()))
+                .findAny()
+                .orElse(null)));
+        }
+
         joinMonitorTrans(sisMonitorTransList);
 
         return sisMonitorTransList;

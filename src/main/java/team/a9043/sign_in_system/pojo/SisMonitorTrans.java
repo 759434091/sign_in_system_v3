@@ -38,4 +38,7 @@ public class SisMonitorTrans extends SisMonitorTransKey {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private SisSchedule sisSchedule;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private SisSupervision sisSupervision;
 }
