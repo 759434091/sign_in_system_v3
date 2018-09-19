@@ -83,6 +83,7 @@ public class CourseController {
                                @RequestParam(required = false) @ApiParam(value = "开课年级") Integer scGrade,
                                @RequestParam(required = false) @ApiParam(value = "课程序号模糊") String scId,
                                @RequestParam(required = false) @ApiParam(value = "课程名字模糊") String scName,
+                               @RequestParam(required = false) @ApiParam(value = "特别指定督导人学号") String suId,
                                @RequestParam
                                @ApiParam(value = "获得方式",
                                    allowableValues = "student,monitor," +
@@ -102,13 +103,24 @@ public class CourseController {
                     sdId, scGrade, scId, scName);
             }
             case "monitor": {
+                if (null != suId) {
+                    if (!sisUser.getSuAuthoritiesStr()
+                        .contains("ADMINISTRATOR")) {
+                        throw new InvalidPermissionException(
+                            "Invalid permission:" + suId);
+                    }
+                    SisUser sisUser1 = new SisUser();
+                    sisUser1.setSuId(suId);
+                    return monitorService.getCourses(sisUser1);
+                }
                 if (!sisUser.getSuAuthoritiesStr().contains("MONITOR")) {
                     throw new InvalidPermissionException(
                         "Invalid permission:" + needMonitor + "," + hasMonitor);
                 }
                 if (null != needMonitor && null != hasMonitor) {
                     if (needMonitor && !hasMonitor)
-                        return courseService.getCourses(page, pageSize, true,
+                        return courseService.getCourses(page, pageSize,
+                            true,
                             false,
                             null, null, null, null);
                     throw new InvalidPermissionException(
@@ -156,10 +168,12 @@ public class CourseController {
         notes = "根据scId修改督导,SisCourse -> {\n  scNeedMonitor: boolean,\n  " +
             "monitor: SisUser - {suId: String}\n}",
         produces = "application/json")
-    public VoidOperationResponse modifyScNeedMonitor(@RequestBody @Validated SisCourse sisCourse,
-                                                     @ApiIgnore BindingResult bindingResult,
-                                                     @PathVariable
-                                       @ApiParam(value = "课程序号") String scId) throws IncorrectParameterException {
+    public VoidOperationResponse modifyScNeedMonitor
+    (@RequestBody @Validated SisCourse sisCourse,
+     @ApiIgnore BindingResult bindingResult,
+     @PathVariable
+     @ApiParam(value = "课程序号") String scId) throws
+        IncorrectParameterException {
         if (bindingResult.hasErrors()) {
             throw new IncorrectParameterException(new JSONArray(bindingResult.getAllErrors()).toString());
         }
@@ -172,28 +186,41 @@ public class CourseController {
     @ApiOperation(value = "批量修改督导",
         notes = "批量修改督导根据搜索条件")
     public VoidOperationResponse batchSetNeedMonitor(@RequestParam
-                                          @ApiParam(value = "修改督导状态") Boolean monitorStatus,
-                                                 @RequestBody(required = false) List<String> scIdList,
-                                                 @RequestParam(required = false) @ApiParam(value = "是否需要督导filter,若该参数为null则忽略hasMonitor") Boolean needMonitor,
-                                                 @RequestParam(required = false) @ApiParam(value = "是否已有督导员filter") Boolean hasMonitor,
-                                                 @RequestParam(required = false) @ApiParam(value = "学院Id") Integer sdId,
-                                                 @RequestParam(required = false) @ApiParam(value = "开课年级") Integer scGrade,
-                                                 @RequestParam(required = false) @ApiParam(value = "课程序号模糊") String scId,
-                                                 @RequestParam(required = false) @ApiParam(value = "课程名字模糊") String scName) {
+                                                     @ApiParam(value =
+                                                         "修改督导状态") Boolean monitorStatus,
+                                                     @RequestBody(required =
+                                                         false) List<String> scIdList,
+                                                     @RequestParam(required =
+                                                         false) @ApiParam(value = "是否需要督导filter,若该参数为null则忽略hasMonitor"
+                                                     ) Boolean
+                                                         needMonitor,
+                                                     @RequestParam(required =
+                                                         false) @ApiParam(value = "是否已有督导员filter") Boolean hasMonitor,
+                                                     @RequestParam(required =
+                                                         false) @ApiParam(value = "学院Id") Integer sdId,
+                                                     @RequestParam(required =
+                                                         false) @ApiParam(value = "开课年级") Integer scGrade,
+                                                     @RequestParam(required =
+                                                         false) @ApiParam(value = "课程序号模糊") String scId,
+                                                     @RequestParam(required =
+                                                         false) @ApiParam(value = "课程名字模糊") String scName) {
         if (null != scIdList) {
-            return courseService.batchSetNeedMonitor(monitorStatus, scIdList);
+            return courseService.batchSetNeedMonitor(monitorStatus,
+                scIdList);
         }
         return courseService.batchSetNeedMonitor(monitorStatus, needMonitor,
             hasMonitor, sdId, scGrade, scId, scName);
     }
 
     @GetMapping("/courses/{scId}/departments")
-    public List<SisDepartment> getCourseDepartments(@PathVariable String scId) {
+    public List<SisDepartment> getCourseDepartments(@PathVariable String
+                                                        scId) {
         return courseService.getCourseDepartments(scId);
     }
 
     @GetMapping("/courses/{scId}/joinCourses")
-    public List<SisJoinCourse> getJoinCourseStudents(@PathVariable String scId) {
+    public List<SisJoinCourse> getJoinCourseStudents(@PathVariable String
+                                                         scId) {
         return courseService.getJoinCourseStudents(scId);
     }
 }
