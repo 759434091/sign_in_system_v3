@@ -22,6 +22,7 @@ import team.a9043.sign_in_system.service_pojo.VoidSuccessOperationResponse;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Resource;
+import javax.servlet.ServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -65,7 +66,8 @@ public class ImportService {
         if (progress.equals(-1))
             return new OperationResponse<>(false, "Process error");
 
-        OperationResponse<Integer> operationResponse = new OperationResponse<>();
+        OperationResponse<Integer> operationResponse =
+            new OperationResponse<>();
         operationResponse.setSuccess(true);
         operationResponse.setData(progress);
         operationResponse.setMessage("data => progress");
@@ -537,6 +539,7 @@ public class ImportService {
                     .parallel()
                     .mapToObj(i -> {
                         //获得地点
+                        String ssRoom = locMatchStrList[i].trim();
                         String slName = locMatchStrList[i]
                             .replaceAll("[a-zA-Z0-9\\-、\\s]", "")
                             .replaceAll("[樓]", "楼")
@@ -616,6 +619,7 @@ public class ImportService {
                         schedule.setSsEndWeek(endWeek);
                         schedule.setSsYearEtTerm(yearAndTerm);
                         schedule.setScId(scId);
+                        schedule.setSsRoom(ssRoom);
                         schedule.setSlId(slId);
                         return schedule;
                     })
@@ -801,7 +805,7 @@ public class ImportService {
     @SuppressWarnings("Duplicates")
     @Transactional
     public VoidOperationResponse modifyStudent(String suId, String suName,
-                                           List<String> scIdList) throws IncorrectParameterException {
+                                               List<String> scIdList) throws IncorrectParameterException {
         SisUser sisUser = sisUserMapper.selectByPrimaryKey(suId);
         if (null == sisUser)
             throw new IncorrectParameterException("User not found: " + suId);
@@ -843,8 +847,8 @@ public class ImportService {
 
     @SuppressWarnings("Duplicates")
     public VoidOperationResponse createStudent(String suId, String suName,
-                                           List<String> scIdList,
-                                           Boolean force) throws IncorrectParameterException, InvalidPermissionException {
+                                               List<String> scIdList,
+                                               Boolean force) throws IncorrectParameterException, InvalidPermissionException {
         SisUser sisUser = sisUserMapper.selectByPrimaryKey(suId);
         if (null != sisUser) {
             if (force)
@@ -889,8 +893,8 @@ public class ImportService {
     }
 
     public VoidOperationResponse createCourse(String scId, SisCourse sisCourse,
-                                          List<SisSchedule> sisScheduleList,
-                                          List<SisDepartment> sisDepartmentList) throws IncorrectParameterException, UnknownServerError {
+                                              List<SisSchedule> sisScheduleList,
+                                              List<SisDepartment> sisDepartmentList) throws IncorrectParameterException, UnknownServerError {
         SisCourse stdSisCourse = sisCourseMapper.selectByPrimaryKey(scId);
         if (null != stdSisCourse)
             throw new IncorrectParameterException("SisCourse exists: " + scId);
@@ -929,9 +933,9 @@ public class ImportService {
 
 
     public VoidOperationResponse modifyCourse(String scId, SisCourse sisCourse,
-                                          List<SisSchedule> mSisScheduleList,
-                                          List<SisSchedule> nSisScheduleList,
-                                          List<SisDepartment> sisDepartmentList) throws IncorrectParameterException, UnknownServerError {
+                                              List<SisSchedule> mSisScheduleList,
+                                              List<SisSchedule> nSisScheduleList,
+                                              List<SisDepartment> sisDepartmentList) throws IncorrectParameterException, UnknownServerError {
         SisCourse stdSisCourse = sisCourseMapper.selectByPrimaryKey(scId);
         if (null == stdSisCourse)
             throw new IncorrectParameterException("SisCourse not found: " + scId);
@@ -1219,7 +1223,8 @@ public class ImportService {
         return sisLocationList;
     }
 
-    public VoidOperationResponse modifyDepartment(Integer sdId, String sdName) throws IncorrectParameterException {
+    public VoidOperationResponse modifyDepartment(Integer sdId,
+                                                  String sdName) throws IncorrectParameterException {
         if ("".equals(sdName.trim()))
             throw new IncorrectParameterException("sdName can not be blank");
         SisDepartment sisDepartment =
@@ -1251,7 +1256,7 @@ public class ImportService {
     }
 
     public VoidOperationResponse modifyJoinCourses(String scId,
-                                               List<SisJoinCourse> sisJoinCourseList) throws IncorrectParameterException, UnknownServerError {
+                                                   List<SisJoinCourse> sisJoinCourseList) throws IncorrectParameterException, UnknownServerError {
         SisCourse sisCourse = sisCourseMapper.selectByPrimaryKey(scId);
         if (null == sisCourse)
             throw new IncorrectParameterException("course not found: " + scId);

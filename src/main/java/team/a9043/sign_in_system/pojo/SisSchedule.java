@@ -82,6 +82,8 @@ public class SisSchedule {
 
     private String ssSuspension;
 
+    private String ssRoom;
+
     private Integer slId;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
