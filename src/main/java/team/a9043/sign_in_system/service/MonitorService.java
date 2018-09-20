@@ -9,7 +9,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import team.a9043.sign_in_system.async.AsyncJoinService;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
 import team.a9043.sign_in_system.mapper.*;
@@ -28,9 +27,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 /**
@@ -39,6 +35,8 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 public class MonitorService {
+    private CopyOnWriteArraySet<String> copyOnWriteArraySet =
+        new CopyOnWriteArraySet<>();
     @Resource
     private SisCourseMapper sisCourseMapper;
     @Resource
@@ -53,33 +51,8 @@ public class MonitorService {
     private SisUserInfoMapper sisUserInfoMapper;
     @Resource
     private SisJoinCourseMapper sisJoinCourseMapper;
-    @Resource
-    private AsyncJoinService asyncJoinService;
-    private CopyOnWriteArraySet<String> copyOnWriteArraySet;
 
-    class CourseLock extends ReentrantLock {
-        final String key;
-
-        CourseLock(String key) {
-            this.key = key;
-        }
-
-        @Override
-        public int hashCode() {
-            return key.hashCode();
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (obj == this) return true;
-            if (!(obj instanceof CourseLock)) return false;
-            if (null == key) return null == ((CourseLock) obj).key;
-            return key.equals(((CourseLock) obj).key);
-        }
-    }
-
-
-    public PageInfo<SisCourse> getCourses(@NotNull SisUser sisUser) throws ExecutionException, InterruptedException {
+    public PageInfo<SisCourse> getCourses(@NotNull SisUser sisUser) {
         SisCourseExample sisCourseExample = new SisCourseExample();
         sisCourseExample.createCriteria().andSuIdEqualTo(sisUser.getSuId());
 
@@ -92,14 +65,19 @@ public class MonitorService {
             .map(SisCourse::getScId)
             .collect(Collectors.toList());
 
-        //join sisJoinCourse & sisSchedule
-        Future<List<SisJoinCourse>> sisJoinCourseListFuture =
-            asyncJoinService.joinSisJoinCourseByForeignKey(scIdList);
-        Future<List<SisSchedule>> sisScheduleListFuture =
-            asyncJoinService.joinSisScheduleByForeignKey(scIdList);
+        // join joinCourse
+        SisJoinCourseExample sisJoinCourseExample = new SisJoinCourseExample();
+        sisJoinCourseExample.createCriteria()
+            .andJoinCourseTypeEqualTo(SisJoinCourse.JoinCourseType.TEACHING.ordinal())
+            .andScIdIn(scIdList);
+        List<SisJoinCourse> sisJoinCourseList =
+            sisJoinCourseMapper.selectByExample(sisJoinCourseExample);
 
-        List<SisJoinCourse> sisJoinCourseList = sisJoinCourseListFuture.get();
-        List<SisSchedule> sisScheduleList = sisScheduleListFuture.get();
+        // join schedule
+        SisScheduleExample sisScheduleExample = new SisScheduleExample();
+        sisScheduleExample.createCriteria().andScIdIn(scIdList);
+        List<SisSchedule> sisScheduleList =
+            sisScheduleMapper.selectByExample(sisScheduleExample);
 
         List<String> suIdList = sisJoinCourseList.parallelStream()
             .map(SisJoinCourse::getSuId)

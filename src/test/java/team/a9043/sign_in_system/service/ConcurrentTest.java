@@ -13,12 +13,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-import team.a9043.sign_in_system.exception.InvalidPermissionException;
 import team.a9043.sign_in_system.mapper.SisJoinCourseMapper;
 import team.a9043.sign_in_system.mapper.SisScheduleMapper;
-import team.a9043.sign_in_system.pojo.*;
+import team.a9043.sign_in_system.pojo.SisJoinCourse;
+import team.a9043.sign_in_system.pojo.SisJoinCourseExample;
+import team.a9043.sign_in_system.pojo.SisSchedule;
+import team.a9043.sign_in_system.pojo.SisScheduleExample;
 import team.a9043.sign_in_system.util.JwtUtil;
-import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
 
 import javax.annotation.Resource;
 import javax.crypto.BadPaddingException;
@@ -28,7 +29,6 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.time.LocalDateTime;
 import java.util.*;
 
 /**
@@ -43,8 +43,6 @@ public class ConcurrentTest {
     private SisJoinCourseMapper sisJoinCourseMapper;
     @Resource
     private SisScheduleMapper sisScheduleMapper;
-    @Resource
-    private SignInService signInService;
     private RestTemplate restTemplate;
 
     public ConcurrentTest() {
@@ -61,21 +59,6 @@ public class ConcurrentTest {
             "E0901330.03",
             "E0901330.04"
         );
-
-        Map<String, Object> claimsMap = new HashMap<>();
-        claimsMap.put("suId", "2016220401000");
-        claimsMap.put("suName", "");
-        claimsMap.put("suAuthoritiesStr", "ADMINISTRATOR, TEACHER");
-        claimsMap.put("type", "code");
-        HttpHeaders httpHeaders = new HttpHeaders();
-        try {
-            httpHeaders.add("Access-Token", getAccessToken());
-        } catch (NoSuchPaddingException | NoSuchAlgorithmException | BadPaddingException | InvalidKeyException | IllegalBlockSizeException e) {
-            e.printStackTrace();
-        }
-        httpHeaders.add("Authorization",
-            "Bearer " + JwtUtil.createJWT(claimsMap));
-
         SisJoinCourseExample sisJoinCourseExample = new
             SisJoinCourseExample();
         sisJoinCourseExample.createCriteria()
