@@ -74,7 +74,7 @@ public class CourseController {
     @ApiOperation(value = "获得课程",
         notes = "根据getType获取课程",
         produces = "application/json")
-    public PageInfo getCourses(@TokenUser @ApiIgnore SisUser sisUser,
+    public PageInfo<SisCourse> getCourses(@TokenUser @ApiIgnore SisUser sisUser,
                                @RequestParam(required = false) @ApiParam(value = "分页filter") Integer page,
                                @RequestParam(required = false) @ApiParam(value = "分页大小filter") Integer pageSize,
                                @RequestParam(required = false) @ApiParam(value = "是否需要督导filter,若该参数为null则忽略hasMonitor") Boolean needMonitor,
