@@ -5,7 +5,6 @@ import com.github.pagehelper.PageInfo;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
@@ -28,11 +27,11 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * @author a9043
@@ -56,14 +55,27 @@ public class MonitorService {
     private SisJoinCourseMapper sisJoinCourseMapper;
     @Resource
     private AsyncJoinService asyncJoinService;
-    @Value("${monitorService.lockSize}")
-    private int N = 20;
-    private ReentrantLock[] locks = getReentrantLock();
+    private CopyOnWriteArraySet<String> copyOnWriteArraySet;
 
-    private ReentrantLock[] getReentrantLock() {
-        return IntStream.range(0, N)
-            .mapToObj(i -> new ReentrantLock())
-            .toArray(ReentrantLock[]::new);
+    class CourseLock extends ReentrantLock {
+        final String key;
+
+        CourseLock(String key) {
+            this.key = key;
+        }
+
+        @Override
+        public int hashCode() {
+            return key.hashCode();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == this) return true;
+            if (!(obj instanceof CourseLock)) return false;
+            if (null == key) return null == ((CourseLock) obj).key;
+            return key.equals(((CourseLock) obj).key);
+        }
     }
 
 
@@ -168,10 +180,9 @@ public class MonitorService {
     @Transactional
     public VoidOperationResponse drawMonitor(@NotNull SisUser sisUser,
                                              @NotNull String scId) throws IncorrectParameterException {
-        int idx = String.format("sis_draw_monitor_%s", scId).hashCode() % N;
-        if (idx < 0) idx += N;
-        ReentrantLock lock = locks[idx];
-        if (!lock.tryLock()) return new VoidOperationResponse(false, "该课程已被领取");
+        String key = String.format("sis_draw_monitor_%s", scId);
+        if (!copyOnWriteArraySet.add(key))
+            return new VoidOperationResponse(false, "该课程已被领取");
 
         SisCourse sisCourse = Optional
             .ofNullable(sisCourseMapper.selectByPrimaryKey(scId))
@@ -187,7 +198,7 @@ public class MonitorService {
 
         sisCourseMapper.updateByPrimaryKeySelective(updatedSisCourse);
         log.info("User " + sisUser.getSuId() + " has draw course: " + scId);
-        lock.unlock();
+        copyOnWriteArraySet.remove(key);
         return VoidSuccessOperationResponse.SUCCESS;
     }
 
