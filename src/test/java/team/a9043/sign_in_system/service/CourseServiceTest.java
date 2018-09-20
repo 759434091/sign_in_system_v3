@@ -42,9 +42,7 @@ public class CourseServiceTest {
     }
 
     @Test
-    public void getCourses() throws
-        ExecutionException, InterruptedException, IncorrectParameterException,
-        JsonProcessingException {
+    public void getCourses() throws IncorrectParameterException, JsonProcessingException {
         LocalDateTime localDateTime = LocalDateTime.now();
         PageInfo<SisCourse> pageInfo = courseService.getCourses(1,
             10,

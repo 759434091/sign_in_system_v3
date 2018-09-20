@@ -124,13 +124,13 @@ public class CourseService {
 
         // join teaching -> user
         SisUserExample sisUserExample = new SisUserExample();
-        sisUserExample.createCriteria().andSuIdIn(sisJoinCourseList.parallelStream()
+        sisUserExample.createCriteria().andSuIdIn(sisJoinCourseList.stream()
             .map(SisJoinCourse::getSuId)
             .distinct()
             .collect(Collectors.toList()));
         List<SisUser> teacherList =
             sisUserMapper.selectByExample(sisUserExample);
-        sisJoinCourseList.forEach(j -> j.setSisUser(teacherList.parallelStream()
+        sisJoinCourseList.forEach(j -> j.setSisUser(teacherList.stream()
             .filter(u -> u.getSuId().equals(j.getSuId()))
             .peek(u -> u.setSuPassword(null))
             .findAny()
@@ -153,7 +153,7 @@ public class CourseService {
             sisScheduleMapper.selectByExample(sisScheduleExample);
 
         //join schedule -> supervision
-        List<Integer> ssIdList = sisScheduleList.parallelStream()
+        List<Integer> ssIdList = sisScheduleList.stream()
             .map(SisSchedule::getSsId)
             .collect(Collectors.toList());
         List<SisSupervision> sisSupervisionList = Optional.of(ssIdList)
@@ -167,34 +167,33 @@ public class CourseService {
             .orElse(new ArrayList<>());
 
         //merge
-        pageInfo.getList().parallelStream()
-            .forEach(c -> {
-                // set monitor
-                c.setMonitor(sisUserList.parallelStream()
-                    .filter(sisUser -> sisUser.getSuId().equals(c.getSuId()))
-                    .findAny()
-                    .map(sisUser -> {
-                        sisUser.setSuPassword(null);
-                        return sisUser;
-                    })
-                    .orElse(null));
+        pageInfo.getList().forEach(c -> {
+            // set monitor
+            c.setMonitor(sisUserList.stream()
+                .filter(sisUser -> sisUser.getSuId().equals(c.getSuId()))
+                .findAny()
+                .map(sisUser -> {
+                    sisUser.setSuPassword(null);
+                    return sisUser;
+                })
+                .orElse(null));
 
-                c.setSisJoinCourseList(sisJoinCourseList.parallelStream()
-                    .filter(j -> j.getScId().equals(c.getScId()))
-                    .collect(Collectors.toList()));
+            c.setSisJoinCourseList(sisJoinCourseList.stream()
+                .filter(j -> j.getScId().equals(c.getScId()))
+                .collect(Collectors.toList()));
 
-                // set schedule
-                List<SisSchedule> tSchList = sisScheduleList.parallelStream()
-                    .filter(sisSchedule -> sisSchedule.getScId().equals(c.getScId()))
-                    .collect(Collectors.toList());
+            // set schedule
+            List<SisSchedule> tSchList = sisScheduleList.stream()
+                .filter(sisSchedule -> sisSchedule.getScId().equals(c.getScId()))
+                .collect(Collectors.toList());
 
-                tSchList.forEach(s -> s.setSisSupervisionList(
-                    sisSupervisionList.stream()
-                        .filter(sisSupervision -> sisSupervision.getSsId().equals(s.getSsId()))
-                        .collect(Collectors.toList())));
+            tSchList.forEach(s -> s.setSisSupervisionList(
+                sisSupervisionList.stream()
+                    .filter(sisSupervision -> sisSupervision.getSsId().equals(s.getSsId()))
+                    .collect(Collectors.toList())));
 
-                c.setSisScheduleList(tSchList);
-            });
+            c.setSisScheduleList(tSchList);
+        });
 
         if (log.isDebugEnabled()) {
             log.debug("select course: CourseService.getCourses(..)");
@@ -250,7 +249,7 @@ public class CourseService {
 
         PageInfo<SisCourse> sisCoursePageInfo = new PageInfo<>(sisCourseList);
 
-        List<String> suIdList = Optional.of(totalJoinCourseList.parallelStream()
+        List<String> suIdList = Optional.of(totalJoinCourseList.stream()
             .map(SisJoinCourse::getSuId)
             .distinct()
             .collect(Collectors.toList()))
@@ -264,16 +263,16 @@ public class CourseService {
         //merge sisJoinCourse
         sisCoursePageInfo.getList().forEach(c -> {
             // merge course -> schedule
-            c.setSisScheduleList(sisScheduleList.parallelStream()
+            c.setSisScheduleList(sisScheduleList.stream()
                 .filter(sisSchedule -> sisSchedule.getScId().equals(c.getScId()))
                 .collect(Collectors.toList()));
 
             // merge course -> joinCourse
             List<SisJoinCourse> tJoinCourseList =
-                totalJoinCourseList.parallelStream()
+                totalJoinCourseList.stream()
                     .filter(sisJoinCourse -> sisJoinCourse.getScId().equals(c.getScId()))
                     .collect(Collectors.toList());
-            tJoinCourseList.forEach(tj -> tj.setSisUser(sisUserList.parallelStream()
+            tJoinCourseList.forEach(tj -> tj.setSisUser(sisUserList.stream()
                 .filter(u -> tj.getSuId().equals(u.getSuId()))
                 .peek(u -> u.setSuPassword(null))
                 .findAny()
@@ -336,11 +335,10 @@ public class CourseService {
 
         List<SisCourse> stdSisCourseList =
             sisCourseMapper.selectByExample(sisCourseExample);
-        stdSisCourseList.parallelStream()
-            .forEach(sisCourse -> {
-                sisCourse.setScNeedMonitor(monitorStatus);
-                if (!monitorStatus) sisCourse.setSuId(null);
-            });
+        stdSisCourseList.forEach(sisCourse -> {
+            sisCourse.setScNeedMonitor(monitorStatus);
+            if (!monitorStatus) sisCourse.setSuId(null);
+        });
 
         sisCourseMapper.updateNeedMonitorList(stdSisCourseList);
         log.info("Success batchSetNeedMonitor: monitorStatus " + monitorStatus);
@@ -354,13 +352,12 @@ public class CourseService {
         sisCourseExample.createCriteria().andScIdIn(scIdList);
         List<SisCourse> stdSisCourseList =
             sisCourseMapper.selectByExample(sisCourseExample);
-        stdSisCourseList.parallelStream()
-            .forEach(sisCourse -> {
-                sisCourse.setScNeedMonitor(monitorStatus);
-                if (!monitorStatus) {
-                    sisCourse.setSuId(null);
-                }
-            });
+        stdSisCourseList.forEach(sisCourse -> {
+            sisCourse.setScNeedMonitor(monitorStatus);
+            if (!monitorStatus) {
+                sisCourse.setSuId(null);
+            }
+        });
 
         sisCourseMapper.updateNeedMonitorList(stdSisCourseList);
         log.info("Success batchSetNeedMonitor: monitorStatus " + monitorStatus + " scIdList -> " + new JSONArray(scIdList));
@@ -394,11 +391,11 @@ public class CourseService {
 
         SisUserExample sisUserExample = new SisUserExample();
         sisUserExample.createCriteria()
-            .andSuIdIn(sisJoinCourseList.parallelStream().map(SisJoinCourse::getSuId).distinct().collect(Collectors.toList()));
+            .andSuIdIn(sisJoinCourseList.stream().map(SisJoinCourse::getSuId).distinct().collect(Collectors.toList()));
 
         List<SisUser> sisUserList =
             sisUserMapper.selectByExample(sisUserExample);
-        sisJoinCourseList.forEach(j -> j.setSisUser(sisUserList.parallelStream()
+        sisJoinCourseList.forEach(j -> j.setSisUser(sisUserList.stream()
             .filter(u -> u.getSuId().equals(j.getSuId()))
             .peek(u -> u.setSuPassword(null))
             .findAny()

@@ -22,7 +22,6 @@ import team.a9043.sign_in_system.service_pojo.VoidSuccessOperationResponse;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Resource;
-import javax.servlet.ServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -199,11 +198,11 @@ public class ImportService {
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
             })
-            .flatMap(Collection::parallelStream)
+            .flatMap(Collection::stream)
             .collect(Collectors.toSet());
 
         List<String> suIdList =
-            sisUserSet.parallelStream().map(SisUser::getSuId).collect(Collectors.toList());
+            sisUserSet.stream().map(SisUser::getSuId).collect(Collectors.toList());
         SisUserExample sisUserExample = new SisUserExample();
         sisUserExample.createCriteria().andSuIdIn(suIdList);
         if (suIdList.isEmpty())
@@ -214,7 +213,7 @@ public class ImportService {
                 .stream()
                 .map(SisUser::getSuId)
                 .collect(Collectors.toList());
-        List<SisUser> insertSisUserList = sisUserSet.parallelStream()
+        List<SisUser> insertSisUserList = sisUserSet.stream()
             .filter(sisUser -> {
                 String suId = sisUser.getSuId();
                 return !oldSuIdList.contains(suId);
@@ -253,7 +252,7 @@ public class ImportService {
                 .map(SisLocation::getSlName)
                 .collect(Collectors.toList());
 
-        List<SisLocation> sisLocationList = firstLocStrSet.parallelStream()
+        List<SisLocation> sisLocationList = firstLocStrSet.stream()
             .filter(s -> !oldSlNameList.contains(s))
             .map(s -> {
                 SisLocation sisLocation = new SisLocation();
@@ -294,7 +293,7 @@ public class ImportService {
                 .map(SisDepartment::getSdName)
                 .collect(Collectors.toList());
         List<SisDepartment> insertSisDepartmentList =
-            firstDepStrSet.parallelStream()
+            firstDepStrSet.stream()
                 .filter(s -> !oldSdNameList.contains(s))
                 .map(s -> {
                     SisDepartment sisDepartment = new SisDepartment();
@@ -345,12 +344,12 @@ public class ImportService {
             return new ArrayList<>();
 
         List<String> suIdList =
-            sisCourseList.parallelStream().map(SisCourse::getScId).collect(Collectors.toList());
+            sisCourseList.stream().map(SisCourse::getScId).collect(Collectors.toList());
         SisCourseExample sisCourseExample = new SisCourseExample();
         sisCourseExample.createCriteria().andScIdIn(suIdList);
         List<String> scIdList =
             sisCourseMapper.selectByExample(sisCourseExample).stream().map(SisCourse::getScId).collect(Collectors.toList());
-        List<SisCourse> insertSisCourseList = sisCourseList.parallelStream()
+        List<SisCourse> insertSisCourseList = sisCourseList.stream()
             .filter(sisCourse -> !scIdList.contains(sisCourse.getScId()))
             .collect(Collectors.toList());
 
@@ -363,7 +362,7 @@ public class ImportService {
         } else {
             logger.info("success insert courses: " + res);
             List<String> insertScIdList =
-                insertSisCourseList.parallelStream().map(SisCourse::getScId).collect(Collectors.toList());
+                insertSisCourseList.stream().map(SisCourse::getScId).collect(Collectors.toList());
             return sheetList.stream().skip(1).parallel()
                 .filter(row -> {
                     String scId = row.get(cozMap.get("课程序号")).toString().trim();
@@ -378,7 +377,7 @@ public class ImportService {
     @Transactional
     void addJoinCourseTeaching(List<List<?>> sheetList,
                                Map<String, Integer> cozMap) {
-        List<SisJoinCourse> sisJoinCourseList = sheetList.parallelStream()
+        List<SisJoinCourse> sisJoinCourseList = sheetList.stream()
             .map(row -> {
                 String scId = row.get(cozMap.get("课程序号")).toString().trim();
                 if ("".equals(scId))
@@ -396,7 +395,7 @@ public class ImportService {
                     .collect(Collectors.toList());
             })
             .filter(Objects::nonNull)
-            .flatMap(Collection::parallelStream)
+            .flatMap(Collection::stream)
             .collect(Collectors.toList());
 
         if (sisJoinCourseList.isEmpty())
@@ -412,7 +411,7 @@ public class ImportService {
     @Transactional
     void addCourseDepart(List<List<?>> sheetList,
                          Map<String, Integer> cozMap) {
-        List<String> sdNameList = sheetList.parallelStream()
+        List<String> sdNameList = sheetList.stream()
             .map(row -> Arrays.stream(row.get(cozMap.get(
                 "上课院系")).toString().split(
                 " "))
@@ -429,7 +428,7 @@ public class ImportService {
         List<SisDepartment> sisDepartmentList =
             sisDepartmentMapper.selectByExample(sisDepartmentExample);
 
-        List<SisJoinDepart> sisJoinDepartList = sheetList.parallelStream()
+        List<SisJoinDepart> sisJoinDepartList = sheetList.stream()
             .map(row -> {
                 String scId = row.get(cozMap.get("课程序号")).toString().trim();
                 if ("".equals(scId))
@@ -442,7 +441,7 @@ public class ImportService {
                     .filter(gradeStr -> !gradeStr.equals("") && gradeStr.length() > 1)
                     .map(s -> {
                         Integer sdId =
-                            sisDepartmentList.parallelStream()
+                            sisDepartmentList.stream()
                                 .filter(sisDepartment -> sisDepartment.getSdName().equals(s))
                                 .findAny()
                                 .map(SisDepartment::getSdId)
@@ -458,7 +457,7 @@ public class ImportService {
                     .collect(Collectors.toList());
             })
             .filter(Objects::nonNull)
-            .flatMap(Collection::parallelStream)
+            .flatMap(Collection::stream)
             .collect(Collectors.toList());
 
         if (sisJoinDepartList.isEmpty())
@@ -499,7 +498,7 @@ public class ImportService {
             .compile("\\s*(?<!\\[)(1[0-2]|[1-9])-(1[0-2]|[1-9])(?!])\\s*"); //节数
 
         //get location
-        Set<String> slNameList = sheetList.parallelStream()
+        Set<String> slNameList = sheetList.stream()
             .map(row -> row.get(cozMap.get("上课地点")).toString().split(","))
             .flatMap(Arrays::stream)
             .map(locStr -> locStr.trim().replaceAll("[a-zA-Z0-9\\-、\\s]",
@@ -516,7 +515,7 @@ public class ImportService {
             sisLocationMapper.selectByExample(sisLocationExample);
 
         //set schedule
-        List<SisSchedule> sisScheduleList = sheetList.parallelStream()
+        List<SisSchedule> sisScheduleList = sheetList.stream()
             .map(row -> {
                 String scId = row.get(cozMap.get("课程序号")).toString().trim();
                 if ("".equals(scId)) {
@@ -547,7 +546,7 @@ public class ImportService {
                         if ("".equals(slName)) {
                             return null;
                         }
-                        Integer slId = locationList.parallelStream()
+                        Integer slId = locationList.stream()
                             .filter(sisLocation -> sisLocation.getSlName().equals(slName))
                             .findAny()
                             .map(SisLocation::getSlId)
@@ -627,7 +626,7 @@ public class ImportService {
                     .collect(Collectors.toList());
             })
             .filter(Objects::nonNull)
-            .flatMap(Collection::parallelStream)
+            .flatMap(Collection::stream)
             .collect(Collectors.toList());
 
         if (sisScheduleList.isEmpty())
@@ -662,7 +661,7 @@ public class ImportService {
             .filter(Objects::nonNull)
             .collect(Collectors.toSet());
         List<String> suIdList =
-            firstSisUserList.parallelStream().map(SisUser::getSuId).collect(Collectors.toList());
+            firstSisUserList.stream().map(SisUser::getSuId).collect(Collectors.toList());
         if (suIdList.isEmpty())
             return;
 
@@ -671,7 +670,7 @@ public class ImportService {
         List<String> oldSuIdList =
             sisUserMapper.selectByExample(sisUserExample).stream().map(SisUser::getSuId).collect(Collectors.toList());
 
-        List<SisUser> sisUserList = firstSisUserList.parallelStream()
+        List<SisUser> sisUserList = firstSisUserList.stream()
             .filter(sisUser -> !oldSuIdList.contains(sisUser.getSuId()))
             .collect(Collectors.toList());
 
@@ -714,7 +713,7 @@ public class ImportService {
             return;
 
         //get course
-        List<String> scIdList = sisJoinCourseList.parallelStream()
+        List<String> scIdList = sisJoinCourseList.stream()
             .map(SisJoinCourse::getScId)
             .distinct()
             .collect(Collectors.toList());
@@ -722,7 +721,7 @@ public class ImportService {
         SisCourseExample sisCourseExample = new SisCourseExample();
         sisCourseExample.createCriteria().andScIdIn(scIdList);
         List<String> extScIdList =
-            sisCourseMapper.selectByExample(sisCourseExample).parallelStream()
+            sisCourseMapper.selectByExample(sisCourseExample).stream()
                 .map(SisCourse::getScId)
                 .collect(Collectors.toList());
 
@@ -732,7 +731,7 @@ public class ImportService {
             sisJoinCourseMapper.selectByExample(sisJoinCourseExample);
 
         List<SisJoinCourse> insertSisJoinCourse =
-            sisJoinCourseList.parallelStream()
+            sisJoinCourseList.stream()
                 .filter(sisJoinCourse ->
                     !oldSisJoinCourseList.contains(sisJoinCourse) &&
                         extScIdList.contains(sisJoinCourse.getScId()))

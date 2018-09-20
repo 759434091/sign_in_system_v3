@@ -103,7 +103,7 @@ public class SignInService {
         //check permission
         if (!sisUser.getSuAuthorities()
             .contains(new SimpleGrantedAuthority("ADMINISTRATOR")))
-            sisJoinCourseList.parallelStream()
+            sisJoinCourseList.stream()
                 .filter(sisJoinCourse -> sisJoinCourse.getJoinCourseType()
                     .equals(SisJoinCourse.JoinCourseType.TEACHING.ordinal()) &&
                     sisJoinCourse.getSuId().equals(sisUser.getSuId()))
@@ -113,7 +113,7 @@ public class SignInService {
 
         //get suIdList
         Map<String, Object> hashMap = sisJoinCourseList
-            .parallelStream()
+            .stream()
             .filter(sisJoinCourse -> sisJoinCourse.getJoinCourseType()
                 .equals(SisJoinCourse.JoinCourseType.ATTENDANCE.ordinal()))
             .map(SisJoinCourse::getSuId)
@@ -206,7 +206,7 @@ public class SignInService {
                     sisSignInDetailMapper.selectByExample(sisSignInDetailExample);
 
                 List<String> suIdList =
-                    sisSignInDetailList.parallelStream()
+                    sisSignInDetailList.stream()
                         .map(SisSignInDetail::getSuId)
                         .distinct()
                         .collect(Collectors.toList());
@@ -220,7 +220,7 @@ public class SignInService {
                 //merge
                 sisSchedule.setSisCourse(sisCourse);
 
-                sisSignInDetailList.forEach(d -> d.setSisUser(sisUserList.parallelStream()
+                sisSignInDetailList.forEach(d -> d.setSisUser(sisUserList.stream()
                     .filter(u -> u.getSuId().equals(d.getSuId()))
                     .peek(u -> u.setSuPassword(null))
                     .findAny()
@@ -291,7 +291,7 @@ public class SignInService {
             .orElse(new ArrayList<>());
 
         //join student
-        List<String> suIdList = sisSignInDetailList.parallelStream()
+        List<String> suIdList = sisSignInDetailList.stream()
             .map(SisSignInDetail::getSuId)
             .collect(Collectors.toList());
         List<SisUser> sisUserList = Optional.of(suIdList)
@@ -305,7 +305,7 @@ public class SignInService {
             .orElse(new ArrayList<>());
 
         //merge student
-        sisSignInDetailList.forEach(d -> d.setSisUser(sisUserList.parallelStream()
+        sisSignInDetailList.forEach(d -> d.setSisUser(sisUserList.stream()
             .filter(u -> u.getSuId().equals(d.getSuId()))
             .peek(u -> u.setSuPassword(null))
             .findAny()
@@ -313,7 +313,7 @@ public class SignInService {
 
         //merge signInDetail
         sisSignInList.forEach(i -> i.setSisSignInDetailList(
-            sisSignInDetailList.parallelStream()
+            sisSignInDetailList.stream()
                 .filter(d -> d.getSsiId().equals(i.getSsiId()))
                 .collect(Collectors.toList())));
 
@@ -340,7 +340,7 @@ public class SignInService {
                     .collect(Collectors.toList()))
                 .orElse(new ArrayList<>());
 
-            List<SisSignIn> tSignInList = sisSignInList.parallelStream()
+            List<SisSignIn> tSignInList = sisSignInList.stream()
                 .filter(i -> i.getSsId().equals(s.getSsId()))
                 .collect(Collectors.toList());
 
@@ -421,7 +421,7 @@ public class SignInService {
         if (sisSignInDetailList.isEmpty()) return sisSignInDetailList;
 
         //join sisSignIn
-        List<Integer> ssiIdList = sisSignInDetailList.parallelStream()
+        List<Integer> ssiIdList = sisSignInDetailList.stream()
             .map(SisSignInDetail::getSsiId)
             .distinct()
             .collect(Collectors.toList());
@@ -467,7 +467,7 @@ public class SignInService {
             })
             .orElse(new ArrayList<>());
 
-        sisSignInDetailList.parallelStream()
+        sisSignInDetailList
             .forEach(d -> {
                 SisSignIn sisSignIn =
                     sisSignInList.stream().filter(s -> s.getSsiId().equals(d.getSsiId())).findAny().orElse(null);
@@ -519,7 +519,7 @@ public class SignInService {
             //create signInDetail list
             List<SisSignInDetail> sisSignInDetailList = map
                 .entrySet()
-                .parallelStream()
+                .stream()
                 .map(entry -> {
                     SisSignInDetail sisSignInDetail = new SisSignInDetail();
                     sisSignInDetail.setSuId((String) entry.getKey());
@@ -554,7 +554,7 @@ public class SignInService {
             }
 
             //insert signInDetail
-            sisSignInDetailList.parallelStream()
+            sisSignInDetailList
                 .forEach(sisSignInDetail -> sisSignInDetail.setSsiId(sisSignIn.getSsiId()));
             boolean res =
                 sisSignInDetailMapper.insertList(sisSignInDetailList) > 0;

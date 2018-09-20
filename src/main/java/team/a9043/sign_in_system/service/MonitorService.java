@@ -79,7 +79,7 @@ public class MonitorService {
         List<SisSchedule> sisScheduleList =
             sisScheduleMapper.selectByExample(sisScheduleExample);
 
-        List<String> suIdList = sisJoinCourseList.parallelStream()
+        List<String> suIdList = sisJoinCourseList.stream()
             .map(SisJoinCourse::getSuId)
             .collect(Collectors.toList());
 
@@ -88,7 +88,7 @@ public class MonitorService {
             CourseService.getSisUserBySuIdList(suIdList, sisUserMapper);
 
         //merge joinCourse
-        sisJoinCourseList.forEach(j -> j.setSisUser(sisUserList.parallelStream()
+        sisJoinCourseList.forEach(j -> j.setSisUser(sisUserList.stream()
             .filter(u -> u.getSuId().equals(j.getSuId()))
             .peek(u -> u.setSuPassword(null))
             .findAny()
@@ -100,7 +100,7 @@ public class MonitorService {
                 .filter(sisSchedule -> sisSchedule.getScId().equals(c.getScId()))
                 .collect(Collectors.toList()));
 
-            c.setSisJoinCourseList(sisJoinCourseList.parallelStream()
+            c.setSisJoinCourseList(sisJoinCourseList.stream()
                 .filter(j -> j.getScId().equals(c.getScId()))
                 .collect(Collectors.toList()));
         });
@@ -371,7 +371,7 @@ public class MonitorService {
             sisUserMapper.selectByExample(sisUserExample);
         PageInfo<SisUser> pageInfo = new PageInfo<>(sisUserList);
 
-        List<String> suIdList = sisUserList.parallelStream()
+        List<String> suIdList = sisUserList.stream()
             .map(SisUser::getSuId)
             .distinct()
             .collect(Collectors.toList());
@@ -385,7 +385,7 @@ public class MonitorService {
 
         pageInfo.getList().forEach(u -> {
             u.setSuPassword(null);
-            u.setSuiLackNum(sisUserInfoList.parallelStream()
+            u.setSuiLackNum(sisUserInfoList.stream()
                 .filter(sisUserInfo -> sisUserInfo.getSuId().equals(u.getSuId()))
                 .findAny()
                 .map(SisUserInfo::getSuiLackNum)
@@ -485,7 +485,7 @@ public class MonitorService {
                 List<SisUser> sisUserList =
                     sisUserMapper.selectByExample(sisUserExample);
 
-                sisJoinCourseList.forEach(j -> j.setSisUser(sisUserList.parallelStream()
+                sisJoinCourseList.forEach(j -> j.setSisUser(sisUserList.stream()
                     .filter(u -> u.getSuId().equals(j.getSuId()))
                     .peek(u -> u.setSuPassword(null))
                     .findAny()

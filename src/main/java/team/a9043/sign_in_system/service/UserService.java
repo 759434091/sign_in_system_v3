@@ -201,7 +201,7 @@ public class UserService {
             sisUserMapper.selectByExample(sisUserExample);
         PageInfo<SisUser> pageInfo = new PageInfo<>(sisUserList);
 
-        List<String> suIdList = sisUserList.parallelStream()
+        List<String> suIdList = sisUserList.stream()
             .map(SisUser::getSuId)
             .distinct()
             .collect(Collectors.toList());

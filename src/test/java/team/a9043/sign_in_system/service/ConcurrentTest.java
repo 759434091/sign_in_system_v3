@@ -90,7 +90,7 @@ public class ConcurrentTest {
                 headers.add("Authorization",
                     "Bearer " + JwtUtil.createJWT(map));
 
-                try {
+/*                try {
                     ResponseEntity<String> jsonObject1 =
                         restTemplate.exchange(
                             "http://118.126.111.189:8088" +
@@ -103,7 +103,7 @@ public class ConcurrentTest {
                 } catch (HttpClientErrorException e) {
                     log.error(new String(e.getResponseBodyAsByteArray
                         ()));
-                }
+                }*/
             });
 
     }
