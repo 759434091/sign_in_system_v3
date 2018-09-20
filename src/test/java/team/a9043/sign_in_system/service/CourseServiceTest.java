@@ -32,6 +32,15 @@ public class CourseServiceTest {
     private CourseService courseService;
 
     @Test
+    public void getStudentCourses() throws JsonProcessingException {
+        SisUser sisUser = new SisUser();
+        sisUser.setSuId("2016220401001");
+        PageInfo<SisCourse> sisCoursePageInfo =
+            courseService.getStudentCourses(sisUser);
+        log.info(objectMapper.writeValueAsString(sisCoursePageInfo));
+    }
+
+    @Test
     public void getCourses() throws
         ExecutionException, InterruptedException, IncorrectParameterException,
         JsonProcessingException {
@@ -51,12 +60,10 @@ public class CourseServiceTest {
     }
 
     @Test
-    public void getCourses1() throws ExecutionException, InterruptedException
-        , JsonProcessingException {
+    public void getCourses1() throws JsonProcessingException {
         SisUser sisUser = new SisUser();
         sisUser.setSuId("3203604");
-        PageInfo<SisJoinCourse> pageInfo = courseService.getCourses(sisUser,
-            SisJoinCourse.JoinCourseType.TEACHING);
+        PageInfo<SisCourse> pageInfo = courseService.getTeacherCourses(sisUser);
         log.info(objectMapper.writeValueAsString(pageInfo));
     }
 

@@ -136,16 +136,14 @@ public class CourseController {
                     throw new InvalidPermissionException(
                         "Invalid permission:" + getType);
                 }
-                return courseService.getCourses(sisUser,
-                    SisJoinCourse.JoinCourseType.TEACHING);
+                return courseService.getTeacherCourses(sisUser);
             }
             case "student": {
                 if (!sisUser.getSuAuthoritiesStr().contains("STUDENT")) {
                     throw new InvalidPermissionException(
                         "Invalid permission:" + getType);
                 }
-                return courseService.getCourses(sisUser,
-                    SisJoinCourse.JoinCourseType.ATTENDANCE);
+                return courseService.getStudentCourses(sisUser);
             }
             default:
                 throw new IncorrectParameterException("Incorrect " +

@@ -48,6 +48,8 @@ public class CourseService {
     private AsyncJoinService asyncJoinService;
     @Resource
     private SisJoinDepartMapper sisJoinDepartMapper;
+    @Resource
+    private OtherMapper otherMapper;
 
     public Week getWeek(LocalDateTime currentDateTime) throws InvalidTimeParameterException {
         int week = JudgeTimeUtil.getWeek(currentDateTime.toLocalDate());
@@ -190,78 +192,16 @@ public class CourseService {
         return pageInfo;
     }
 
-    public PageInfo<SisJoinCourse> getCourses(@TokenUser SisUser sisUser,
-                                              SisJoinCourse.JoinCourseType joinCourseType) throws ExecutionException, InterruptedException {
-        SisJoinCourseExample sisJoinCourseExample = new SisJoinCourseExample();
-        sisJoinCourseExample.createCriteria().andSuIdEqualTo(sisUser.getSuId())
-            .andJoinCourseTypeEqualTo(joinCourseType.ordinal());
-        List<SisJoinCourse> sisJoinCourseList =
-            sisJoinCourseMapper.selectByExample(sisJoinCourseExample);
-        PageInfo<SisJoinCourse> sisJoinCoursePageInfo =
-            new PageInfo<>(sisJoinCourseList);
+    public PageInfo<SisCourse> getStudentCourses(@TokenUser SisUser sisUser) {
+        List<SisCourse> sisCourseList =
+            otherMapper.selectStuCozTable(sisUser.getSuId(), true);
+        return new PageInfo<>(sisCourseList);
+    }
 
-        if (sisJoinCourseList.isEmpty()) return sisJoinCoursePageInfo;
-
-        List<String> scIdList = sisJoinCourseList.stream()
-            .map(SisJoinCourse::getScId)
-            .distinct()
-            .collect(Collectors.toList());
-
-        //join course schedule joinCourse
-        Future<List<SisCourse>> sisCourseListFuture =
-            asyncJoinService.joinSisCourseById(scIdList);
-        Future<List<SisSchedule>> sisScheduleListFuture =
-            asyncJoinService.joinSisScheduleByForeignKey(scIdList);
-        Future<List<SisJoinCourse>> sisJoinCourseListFuture =
-            asyncJoinService.joinSisJoinCourseByForeignKey(scIdList);
-
-        List<SisCourse> sisCourseList = sisCourseListFuture.get();
-        List<SisSchedule> sisScheduleList = sisScheduleListFuture.get();
-        List<SisJoinCourse> totalJoinCourseList = sisJoinCourseListFuture.get();
-
-        List<String> suIdList = Optional.of(totalJoinCourseList.parallelStream()
-            .map(SisJoinCourse::getSuId)
-            .distinct()
-            .collect(Collectors.toList()))
-            .filter(l -> !l.isEmpty())
-            .orElse(new ArrayList<>());
-        SisUserExample sisUserExample = new SisUserExample();
-        sisUserExample.createCriteria().andSuIdIn(suIdList);
-        List<SisUser> sisUserList =
-            sisUserMapper.selectByExample(sisUserExample);
-
-        //merge sisJoinCourse
-        sisJoinCoursePageInfo.getList().forEach(j -> {
-            // get course
-            SisCourse sisCourse =
-                sisCourseList.stream()
-                    .filter(c -> c.getScId().equals(j.getScId()))
-                    .findAny()
-                    .orElse(null);
-            if (null == sisCourse) return;
-
-            // merge course -> schedule
-            sisCourse.setSisScheduleList(sisScheduleList.parallelStream()
-                .filter(sisSchedule -> sisSchedule.getScId().equals(j.getScId()))
-                .collect(Collectors.toList()));
-
-            // merge course -> joinCourse
-            List<SisJoinCourse> tJoinCourseList =
-                totalJoinCourseList.parallelStream()
-                    .filter(sisJoinCourse -> sisJoinCourse.getScId().equals(j.getScId()))
-                    .collect(Collectors.toList());
-            tJoinCourseList.forEach(tj -> tj.setSisUser(sisUserList.parallelStream()
-                .filter(u -> tj.getSuId().equals(u.getSuId()))
-                .peek(u -> u.setSuPassword(null))
-                .findAny()
-                .orElse(null)));
-            sisCourse.setSisJoinCourseList(tJoinCourseList);
-
-            // merge all
-            j.setSisCourse(sisCourse);
-        });
-
-        return sisJoinCoursePageInfo;
+    public PageInfo<SisCourse> getTeacherCourses(@TokenUser SisUser sisUser) {
+        List<SisCourse> sisCourseList =
+            otherMapper.selectStuCozTable(sisUser.getSuId(), false);
+        return new PageInfo<>(sisCourseList);
     }
 
     @Transactional
