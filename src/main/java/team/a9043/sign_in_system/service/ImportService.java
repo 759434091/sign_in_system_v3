@@ -691,6 +691,7 @@ public class ImportService {
 
         List<SisJoinCourse> sisJoinCourseList =
             sheetList.stream().skip(1)
+                .parallel()
                 .map(row -> {
                     String scId = row.get(stuMap.get("课程序号")).toString().trim();
                     if ("".equals(scId))
