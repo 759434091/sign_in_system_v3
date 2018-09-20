@@ -110,7 +110,7 @@ public class ConcurrentTest {
                 try {
                     ResponseEntity<String> jsonObject1 =
                         restTemplate.exchange(
-                            "http://127.0.0.1:8080" +
+                            "http://118.126.111.189:8088" +
                                 "/courses?getType=student",
                             HttpMethod.GET,
                             new HttpEntity<String>(headers),

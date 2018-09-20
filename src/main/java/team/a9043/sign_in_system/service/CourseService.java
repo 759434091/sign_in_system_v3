@@ -195,12 +195,14 @@ public class CourseService {
     public PageInfo<SisCourse> getStudentCourses(@TokenUser SisUser sisUser) {
         List<SisCourse> sisCourseList =
             otherMapper.selectStuCozTable(sisUser.getSuId(), true);
+        log.info("user " + sisUser.getSuId() + " get course table");
         return new PageInfo<>(sisCourseList);
     }
 
     public PageInfo<SisCourse> getTeacherCourses(@TokenUser SisUser sisUser) {
         List<SisCourse> sisCourseList =
             otherMapper.selectStuCozTable(sisUser.getSuId(), false);
+        log.info("user " + sisUser.getSuId() + " get course table");
         return new PageInfo<>(sisCourseList);
     }
 
