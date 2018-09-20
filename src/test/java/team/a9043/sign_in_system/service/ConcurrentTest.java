@@ -8,6 +8,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -32,6 +34,7 @@ import java.util.*;
 /**
  * @author a9043
  */
+@SuppressWarnings("Duplicates")
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @Slf4j
@@ -48,6 +51,78 @@ public class ConcurrentTest {
         RestTemplateBuilder restTemplateBuilder = new RestTemplateBuilder();
         this.restTemplate = restTemplateBuilder
             .build();
+    }
+
+    @Test
+    public void getCourse() {
+        List<String> scIdList = Arrays.asList(
+            "E0901330.01",
+            "E0901330.02",
+            "E0901330.03",
+            "E0901330.04"
+        );
+
+        Map<String, Object> claimsMap = new HashMap<>();
+        claimsMap.put("suId", "2016220401000");
+        claimsMap.put("suName", "");
+        claimsMap.put("suAuthoritiesStr", "ADMINISTRATOR, TEACHER");
+        claimsMap.put("type", "code");
+        HttpHeaders httpHeaders = new HttpHeaders();
+        try {
+            httpHeaders.add("Access-Token", getAccessToken());
+        } catch (NoSuchPaddingException | NoSuchAlgorithmException | BadPaddingException | InvalidKeyException | IllegalBlockSizeException e) {
+            e.printStackTrace();
+        }
+        httpHeaders.add("Authorization",
+            "Bearer " + JwtUtil.createJWT(claimsMap));
+
+        SisJoinCourseExample sisJoinCourseExample = new
+            SisJoinCourseExample();
+        sisJoinCourseExample.createCriteria()
+            .andScIdIn(scIdList)
+            .andJoinCourseTypeEqualTo(SisJoinCourse.JoinCourseType.ATTENDANCE
+                .ordinal());
+        List<SisJoinCourse> sisJoinCourseList =
+            sisJoinCourseMapper.selectByExample(sisJoinCourseExample);
+
+        log.info("total: " + sisJoinCourseList
+            .parallelStream().count());
+        sisJoinCourseList
+            .parallelStream()
+            .forEach(sjc -> {
+                Map<String, Object> map = new HashMap<>();
+                map.put("suId", sjc.getSuId());
+                map.put("suName", "");
+                map.put("suAuthoritiesStr", "STUDENT");
+                map.put("type", "code");
+
+                HttpHeaders headers = new HttpHeaders();
+                try {
+                    headers.add("Access-Token", getAccessToken());
+                } catch (NoSuchPaddingException | NoSuchAlgorithmException |
+                    BadPaddingException | InvalidKeyException |
+                    IllegalBlockSizeException e) {
+                    e.printStackTrace();
+                }
+                headers.add("Authorization",
+                    "Bearer " + JwtUtil.createJWT(map));
+
+                try {
+                    ResponseEntity<String> jsonObject1 =
+                        restTemplate.exchange(
+                            "http://127.0.0.1:8080" +
+                                "/courses?getType=student",
+                            HttpMethod.GET,
+                            new HttpEntity<String>(headers),
+                            String.class,
+                            new HashMap<>());
+                    log.info(jsonObject1.getBody());
+                } catch (HttpClientErrorException e) {
+                    log.error(new String(e.getResponseBodyAsByteArray
+                        ()));
+                }
+            });
+
     }
 
     @Test

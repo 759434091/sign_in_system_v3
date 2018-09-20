@@ -92,7 +92,7 @@
         left join sys_sin_sys_v3.sis_join_course j2
         on sis_course.sc_id =
         j2.sc_id
-        <if test="isStu != true">
+        <if test="isStu == true">
             and
             j2.join_course_type = 1
         </if>

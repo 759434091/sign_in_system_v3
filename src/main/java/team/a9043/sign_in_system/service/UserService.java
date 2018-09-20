@@ -71,7 +71,7 @@ public class UserService {
                 new OperationResponse<>();
             operationResponse.setSuccess(false);
             operationResponse.setCode(1);
-            operationResponse.setMessage("该用户已绑定微信账号");
+            operationResponse.setMessage("该用户已绑定微信账号, 请重新登录");
             return operationResponse;
         }
 
