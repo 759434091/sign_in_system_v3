@@ -12,6 +12,7 @@ import org.springframework.web.context.request.async.DeferredResult;
 import springfox.documentation.annotations.ApiIgnore;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
+import team.a9043.sign_in_system.exception.UnknownServerError;
 import team.a9043.sign_in_system.pojo.SisCourse;
 import team.a9043.sign_in_system.pojo.SisDepartment;
 import team.a9043.sign_in_system.pojo.SisJoinCourse;
@@ -99,62 +100,24 @@ public class CourseController {
             .supplyAsync(() -> {
                 switch (getType) {
                     case "administrator": {
-                        if (!sisUser.getSuAuthoritiesStr().contains(
-                            "ADMINISTRATOR")) {
-                            throw new InvalidPermissionException(
-                                "Invalid permission:" + getType);
-                        }
                         try {
-                            return courseService.getCourses(page,
-                                pageSize, needMonitor,
-                                hasMonitor,
-                                sdId, scGrade, scId, scName);
+                            return getCoursesAdm(sisUser, page, pageSize,
+                                needMonitor,
+                                hasMonitor, sdId, scGrade, scId, scName);
                         } catch (ExecutionException | InterruptedException e) {
                             e.printStackTrace();
+                            throw new UnknownServerError(e.getMessage());
                         }
                     }
                     case "monitor": {
-                        if (null != suId) {
-                            if (!sisUser.getSuAuthoritiesStr()
-                                .contains("ADMINISTRATOR")) {
-                                throw new InvalidPermissionException(
-                                    "Invalid permission:" + suId);
-                            }
-                            SisUser sisUser1 = new SisUser();
-                            sisUser1.setSuId(suId);
-                            try {
-                                return monitorService.getCourses(sisUser1);
-                            } catch (ExecutionException | InterruptedException e) {
-                                e.printStackTrace();
-                            }
+                        try {
+                            return getCoursesMonitor(sisUser, page, pageSize,
+                                needMonitor,
+                                hasMonitor, suId);
+                        } catch (ExecutionException | InterruptedException e) {
+                            e.printStackTrace();
+                            throw new UnknownServerError(e.getMessage());
                         }
-                        if (!sisUser.getSuAuthoritiesStr().contains("MONITOR")) {
-                            throw new InvalidPermissionException(
-                                "Invalid permission:" + needMonitor + "," + hasMonitor);
-                        }
-                        if (null != needMonitor && null != hasMonitor) {
-                            if (needMonitor && !hasMonitor) {
-                                try {
-                                    return courseService.getCourses(page,
-                                        pageSize,
-                                        true,
-                                        false,
-                                        null, null, null, null);
-                                } catch (ExecutionException | InterruptedException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                            throw new InvalidPermissionException(
-                                "Invalid permission:" + getType);
-                        } else if (null == needMonitor && null == hasMonitor) {
-                            try {
-                                return monitorService.getCourses(sisUser);
-                            } catch (ExecutionException | InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                        } else
-                            throw new InvalidPermissionException(
-                                "Invalid permission:" + needMonitor + "," + hasMonitor);
                     }
                     case "teacher": {
                         if (!sisUser.getSuAuthoritiesStr().contains("TEACHER")) {
@@ -197,11 +160,10 @@ public class CourseController {
         notes = "根据scId修改督导,SisCourse -> {\n  scNeedMonitor: boolean,\n  " +
             "monitor: SisUser - {suId: String}\n}",
         produces = "application/json")
-    public VoidOperationResponse modifyScNeedMonitor
-    (@RequestBody @Validated SisCourse sisCourse,
-     @ApiIgnore BindingResult bindingResult,
-     @PathVariable
-     @ApiParam(value = "课程序号") String scId) throws
+    public VoidOperationResponse modifyScNeedMonitor(@RequestBody @Validated SisCourse sisCourse,
+                                                     @ApiIgnore BindingResult bindingResult,
+                                                     @PathVariable
+                                                     @ApiParam(value = "课程序号") String scId) throws
         IncorrectParameterException {
         if (bindingResult.hasErrors()) {
             throw new IncorrectParameterException(new JSONArray(bindingResult.getAllErrors()).toString());
@@ -251,5 +213,63 @@ public class CourseController {
     public List<SisJoinCourse> getJoinCourseStudents(@PathVariable String
                                                          scId) {
         return courseService.getJoinCourseStudents(scId);
+    }
+
+    // prvate
+    private PageInfo<SisCourse> getCoursesAdm(SisUser sisUser,
+                                              Integer page,
+                                              Integer pageSize,
+                                              Boolean needMonitor,
+                                              Boolean hasMonitor,
+                                              Integer sdId,
+                                              Integer scGrade,
+                                              String scId,
+                                              String scName) throws ExecutionException, InterruptedException {
+        if (!sisUser.getSuAuthoritiesStr().contains(
+            "ADMINISTRATOR")) {
+            throw new InvalidPermissionException(
+                "Invalid permission: administrator");
+        }
+        return courseService.getCourses(page,
+            pageSize, needMonitor,
+            hasMonitor,
+            sdId, scGrade, scId, scName);
+    }
+
+    private PageInfo<SisCourse> getCoursesMonitor(SisUser sisUser,
+                                                  Integer page,
+                                                  Integer pageSize,
+                                                  Boolean needMonitor,
+                                                  Boolean hasMonitor,
+                                                  String suId) throws ExecutionException, InterruptedException {
+        if (null != suId) {
+            if (!sisUser.getSuAuthoritiesStr()
+                .contains("ADMINISTRATOR")) {
+                throw new InvalidPermissionException(
+                    "Invalid permission:" + suId);
+            }
+            SisUser sisUser1 = new SisUser();
+            sisUser1.setSuId(suId);
+            return monitorService.getCourses(sisUser1);
+        }
+        if (!sisUser.getSuAuthoritiesStr().contains("MONITOR")) {
+            throw new InvalidPermissionException(
+                "Invalid permission:" + needMonitor + "," + hasMonitor);
+        }
+        if (null != needMonitor && null != hasMonitor) {
+            if (needMonitor && !hasMonitor) {
+                return courseService.getCourses(page,
+                    pageSize,
+                    true,
+                    false,
+                    null, null, null, null);
+            }
+            throw new InvalidPermissionException(
+                "Invalid permission: monitor");
+        } else if (null == needMonitor && null == hasMonitor) {
+            return monitorService.getCourses(sisUser);
+        } else
+            throw new InvalidPermissionException(
+                "Invalid permission:" + needMonitor + "," + hasMonitor);
     }
 }

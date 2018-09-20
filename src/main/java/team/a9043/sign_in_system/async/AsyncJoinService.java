@@ -24,8 +24,6 @@ public class AsyncJoinService {
     private SisJoinCourseMapper sisJoinCourseMapper;
     @Resource
     private SisSupervisionMapper sisSupervisionMapper;
-    @Resource
-    private SisCourseMapper sisCourseMapper;
 
     @Async
     public Future<List<SisUser>> joinSisUserById(List<String> suIdList) {
@@ -35,17 +33,6 @@ public class AsyncJoinService {
             SisUserExample sisUserExample = new SisUserExample();
             sisUserExample.createCriteria().andSuIdIn(suIdList);
             return new AsyncResult<>(sisUserMapper.selectByExample(sisUserExample));
-        }
-    }
-
-    @Async
-    public Future<List<SisCourse>> joinSisCourseById(List<String> scIdList) {
-        if (scIdList.isEmpty()) {
-            return new AsyncResult<>(new ArrayList<>());
-        } else {
-            SisCourseExample sisCourseExample = new SisCourseExample();
-            sisCourseExample.createCriteria().andScIdIn(scIdList);
-            return new AsyncResult<>(sisCourseMapper.selectByExample(sisCourseExample));
         }
     }
 
