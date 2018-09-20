@@ -203,12 +203,10 @@ public class CourseService {
     }
 
     public PageInfo<SisCourse> getStudentCourses(@TokenUser SisUser sisUser) {
-        log.info("user " + sisUser.getSuId() + " get course table");
         return getCourses(sisUser, SisJoinCourse.JoinCourseType.ATTENDANCE);
     }
 
     public PageInfo<SisCourse> getTeacherCourses(@TokenUser SisUser sisUser) {
-        log.info("user " + sisUser.getSuId() + " get course table");
         return getCourses(sisUser, SisJoinCourse.JoinCourseType.TEACHING);
     }
 
@@ -283,6 +281,7 @@ public class CourseService {
             c.setSisJoinCourseList(tJoinCourseList);
         });
 
+        log.info("user " + sisUser.getSuId() + " get course table");
         return sisCoursePageInfo;
     }
 
