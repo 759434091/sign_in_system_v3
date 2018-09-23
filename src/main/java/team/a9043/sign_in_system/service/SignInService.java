@@ -509,6 +509,8 @@ public class SignInService {
         @Override
         @Transactional
         public void run() {
+            if (null == sisRedisTemplate.hasKey(key) || !sisRedisTemplate.hasKey(key))
+                return;
             Map<Object, Object> map =
                 sisRedisTemplate.opsForHash().entries(key);
 
@@ -546,22 +548,12 @@ public class SignInService {
             sisSignIn.setSsiAttRate(attRate);
 
             //insert signIn
-            boolean resSisSignIn = sisSignInMapper.insert(sisSignIn) > 0;
-            if (!resSisSignIn) {
-                logger.error(String.format(
-                    "error insert sisSignIn: [%s, %s]", ssId, week));
-                return;
-            }
+            sisSignInMapper.insert(sisSignIn);
 
             //insert signInDetail
             sisSignInDetailList
                 .forEach(sisSignInDetail -> sisSignInDetail.setSsiId(sisSignIn.getSsiId()));
-            boolean res =
-                sisSignInDetailMapper.insertList(sisSignInDetailList) > 0;
-            if (!res) {
-                logger.error("error insert sisSignInDetailList: " + new JSONArray(sisSignInDetailList).toString(2));
-                return;
-            }
+            sisSignInDetailMapper.insertList(sisSignInDetailList);
 
             //finish
             sisRedisTemplate.delete(key);
