@@ -44,7 +44,7 @@ public class SupervisionSchedule {
                 sisCourseMapper.selectByExample(sisCourseExample);
 
             //获得课程排课
-            List<String> scIdList = sisCourseList.parallelStream()
+            List<String> scIdList = sisCourseList.stream()
                 .map(SisCourse::getScId)
                 .distinct()
                 .collect(Collectors.toList());
@@ -57,7 +57,7 @@ public class SupervisionSchedule {
 
             //获得督导历史
             List<Integer> ssIdList =
-                sisScheduleList.parallelStream().map(SisSchedule::getSsId).distinct().collect(Collectors.toList());
+                sisScheduleList.stream().map(SisSchedule::getSsId).distinct().collect(Collectors.toList());
             if (ssIdList.isEmpty())
                 return;
 
@@ -67,23 +67,23 @@ public class SupervisionSchedule {
             List<SisSupervision> sisSupervisionList =
                 sisSupervisionMapper.selectByExample(sisSupervisionExample);
 
-            List<SisUserInfo> sisUserInfoList = sisCourseList.parallelStream()
+            List<SisUserInfo> sisUserInfoList = sisCourseList.stream()
                 .map(sisCourse -> {
                     String scId = sisCourse.getScId();
                     String suId = sisCourse.getSuId();
 
                     List<SisSchedule> scheduleList =
-                        sisScheduleList.parallelStream()
+                        sisScheduleList.stream()
                             .filter(sisSchedule -> sisSchedule.getScId().equals(scId))
                             .collect(Collectors.toList());
 
                     if (scheduleList.isEmpty())
                         return null;
-                    int totalLackNum = scheduleList.parallelStream()
+                    int totalLackNum = scheduleList.stream()
                         .mapToInt(sisSchedule -> {
                             Integer ssId = sisSchedule.getSsId();
                             int countNum =
-                                (int) sisSupervisionList.parallelStream()
+                                (int) sisSupervisionList.stream()
                                     .filter(sisSupervision -> sisSupervision.getSsId().equals(ssId))
                                     .count();
 
@@ -119,12 +119,8 @@ public class SupervisionSchedule {
                         stdSisUserInfo.setSuiLackNum(stdSisUserInfo.getSuiLackNum() + sisUserInfo.getSuiLackNum());
                     }));
 
-            boolean res = sisUserInfoMapper.insertList(sisUserInfoList) > 0;
-
-            if (!res)
-                log.error("insert sisUserInfo error: " + new JSONArray(sisUserInfoList));
-            else
-                log.info("insert sisUserInfo success: " + new JSONArray(sisUserInfoList));
+            sisUserInfoMapper.insertList(sisUserInfoList);
+            log.info("insert sisUserInfo success: " + new JSONArray(sisUserInfoList));
         } catch (InvalidTimeParameterException e) {
             e.printStackTrace();
         }
