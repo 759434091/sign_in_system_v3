@@ -5,7 +5,7 @@
 
     <groupId>team.a9043</groupId>
     <artifactId>sign_in_system</artifactId>
-    <version>0.0.3-SNAPSHOT</version>
+    <version>3.0.1</version>
     <packaging>jar</packaging>
 
     <name>sign_in_system</name>
