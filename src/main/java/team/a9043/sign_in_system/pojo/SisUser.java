@@ -32,6 +32,9 @@ public class SisUser {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private Integer suiCozLackNum;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private SisUserInfo sisUserInfo;
+
     public List<GrantedAuthority> getSuAuthorities() {
         if (null == suAuthoritiesStr) {
             return null;
