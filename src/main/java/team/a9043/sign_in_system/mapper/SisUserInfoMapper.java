@@ -93,4 +93,7 @@ public interface SisUserInfoMapper {
      * @mbg.generated Sun Oct 07 22:29:39 CST 2018
      */
     int updateByPrimaryKey(SisUserInfo record);
+
+
+    int insertList(@Param("sisUserInfoList") List<SisUserInfo> sisUserInfoList);
 }
