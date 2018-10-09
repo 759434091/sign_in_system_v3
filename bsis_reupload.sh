@@ -1,4 +1,10 @@
 #!/bin/bash
+#JARNAME=
+#USERNAME=
+#HOST=
+#KEYPATH=
+#APPDIR=
+#TARGETDIR=
 
 source ./private.sh
 
