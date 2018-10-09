@@ -80,8 +80,8 @@ public class UserController {
             orderByCozLackNum);
     }
 
-    @GetMapping("/students")
-    @ApiOperation("模糊搜索学生")
+    @GetMapping("/teachers")
+    @ApiOperation("模糊搜索老师")
     public PageInfo<SisUser> getTeacher(@RequestParam @ApiParam("页数") Integer page,
                                          @RequestParam @ApiParam("页大小") Integer pageSize,
                                          @RequestParam(required = false)

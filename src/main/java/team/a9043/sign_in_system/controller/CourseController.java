@@ -87,12 +87,8 @@ public class CourseController {
                                                           @RequestParam(required = false) @ApiParam(value = "课程序号模糊") String scId,
                                                           @RequestParam(required = false) @ApiParam(value = "课程名字模糊") String scName,
                                                           @RequestParam(required = false) @ApiParam(value = "特别指定督导人学号") String suId,
-                                                          @RequestParam
-                                                          @ApiParam(value =
-                                                              "获得方式",
-                                                              allowableValues = "student,monitor," +
-                                                                  "administrator,teacher")
-                                                              String getType) throws IncorrectParameterException, InvalidPermissionException {
+                                                          @RequestParam(required = false) @ApiParam(value = "role=ADMINISTRATOR&&getType=teacher时候必选") String tchSuId,
+                                                          @RequestParam @ApiParam(value = "获得方式", allowableValues = "student,monitor," + "administrator,teacher") String getType) throws IncorrectParameterException, InvalidPermissionException {
         DeferredResult<PageInfo<SisCourse>> deferredResult =
             new DeferredResult<>();
 
@@ -121,6 +117,12 @@ public class CourseController {
                     }
                     case "teacher": {
                         if (!sisUser.getSuAuthoritiesStr().contains("TEACHER")) {
+                            if (sisUser.getSuAuthoritiesStr().contains("ADMINISTRATOR") &&
+                                null != tchSuId) {
+                                SisUser tUser = new SisUser();
+                                tUser.setSuId(tchSuId);
+                                return courseService.getTeacherCourses(tUser);
+                            }
                             throw new InvalidPermissionException(
                                 "Invalid permission:" + getType);
                         }
