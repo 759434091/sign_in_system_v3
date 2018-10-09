@@ -58,31 +58,31 @@ public class SignInController {
     public SisCourse getSignIns(@TokenUser @ApiIgnore SisUser sisUser,
                                 @PathVariable @ApiParam("课程") String scId,
                                 @RequestParam
-                                 @ApiParam(value = "查询类型", allowableValues =
-                                     "student, teacher, administrator")
-                                     String queryType) throws IncorrectParameterException, InvalidPermissionException {
+                                @ApiParam(value = "查询类型", allowableValues =
+                                    "student, teacher, administrator")
+                                    String queryType) throws IncorrectParameterException, InvalidPermissionException {
         switch (queryType) {
             case "teacher":
-                if (!sisUser.getSuAuthoritiesStr().contains("TEACHER")) {
+                if (!sisUser.getSuAuthoritiesStr().contains("TEACHER") && !sisUser.getSuAuthoritiesStr().contains("ADMINISTRATOR")) {
                     throw new InvalidPermissionException(
-                        "Invalid permission:" + queryType);
+                        "Invalid permission: queryType " + queryType);
                 }
                 return signInService.getSignIns(scId);
             case "administrator":
                 if (!sisUser.getSuAuthoritiesStr().contains("ADMINISTRATOR")) {
                     throw new InvalidPermissionException(
-                        "Invalid permission:" + queryType);
+                        "Invalid permission: queryType " + queryType);
                 }
                 return signInService.getSignIns(scId);
             case "student":
                 if (!sisUser.getSuAuthoritiesStr().contains("STUDENT")) {
                     throw new InvalidPermissionException(
-                        "Invalid permission:" + queryType);
+                        "Invalid permission: queryType " + queryType);
                 }
                 return signInService.getSignIns(sisUser, scId);
             default:
                 throw new IncorrectParameterException(
-                    "Incorrect queryType: " + queryType);
+                    "Invalid permission: queryType " + queryType);
         }
     }
 
@@ -110,11 +110,11 @@ public class SignInController {
         ".equals('code')")
     @ApiOperation("学生签到")
     public VoidOperationResponse signIn(@TokenUser @ApiIgnore SisUser sisUser,
-                                    @PathVariable @ApiParam("排课") Integer ssId,
-                                    @RequestHeader("Access-Token")
-                             @ApiParam(value = "json的加密内容进行Base64编码",
-                                 allowableValues = "{loc_lat: Double, " +
-                                     "loc_long: Double}") String base64EncodeAESBytesStr) throws IncorrectParameterException, InvalidTimeParameterException, InvalidPermissionException {
+                                        @PathVariable @ApiParam("排课") Integer ssId,
+                                        @RequestHeader("Access-Token")
+                                        @ApiParam(value = "json的加密内容进行Base64编码",
+                                            allowableValues = "{loc_lat: Double, " +
+                                                "loc_long: Double}") String base64EncodeAESBytesStr) throws IncorrectParameterException, InvalidTimeParameterException, InvalidPermissionException {
         JSONObject locationJson;
         try {
             Cipher cipher = Cipher.getInstance("AES");
