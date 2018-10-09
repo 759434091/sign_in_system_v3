@@ -201,22 +201,43 @@ public class UserService {
             sisUserMapper.selectByExample(sisUserExample);
         PageInfo<SisUser> pageInfo = new PageInfo<>(sisUserList);
 
-        List<String> suIdList = sisUserList.stream()
-            .map(SisUser::getSuId)
-            .distinct()
-            .collect(Collectors.toList());
-
-        if (suIdList.isEmpty()) return pageInfo;
-
-        pageInfo.getList().forEach(u -> u.setSuPassword(null));
+        sisUserList.forEach(u -> u.setSuPassword(null));
         log.info("UserService.getStudents(..) success");
+        return pageInfo;
+    }
+
+    public PageInfo<SisUser> getTeachers(@NonNull Integer page,
+                                         @NonNull Integer pageSize,
+                                         @Nullable String suId,
+                                         @Nullable String suName) {
+        if (page < 1)
+            throw new IncorrectParameterException("Incorrect page: " + page +
+                " (must equal or bigger than 1)");
+        if (pageSize <= 0 || pageSize > 500)
+            throw new IncorrectParameterException(
+                "pageSize must between [1, 500]");
+
+        SisUserExample sisUserExample = new SisUserExample();
+        SisUserExample.Criteria criteria = sisUserExample.createCriteria();
+        criteria.andSuAuthoritiesStrLike("%TEACHER%");
+        if (null != suId)
+            criteria.andSuIdLike("%" + suId + "%");
+        if (null != suName)
+            criteria.andSuNameLike(CourseService.getFuzzySearch(suName));
+        PageHelper.startPage(page, pageSize);
+        List<SisUser> sisUserList =
+            sisUserMapper.selectByExample(sisUserExample);
+        PageInfo<SisUser> pageInfo = new PageInfo<>(sisUserList);
+
+        sisUserList.forEach(u -> u.setSuPassword(null));
+        log.info("UserService.getTeachers(..) success");
         return pageInfo;
     }
 
     @Transactional
     public VoidOperationResponse modifyPassword(String suId,
-                                            String oldPassword,
-                                            String newPassword) throws IncorrectParameterException {
+                                                String oldPassword,
+                                                String newPassword) throws IncorrectParameterException {
         SisUser sisUser = sisUserMapper.selectByPrimaryKey(suId);
         if (null == sisUser)
             throw new IncorrectParameterException("No user found: " + suId);

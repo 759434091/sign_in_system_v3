@@ -80,6 +80,17 @@ public class UserController {
             orderByCozLackNum);
     }
 
+    @GetMapping("/students")
+    @ApiOperation("模糊搜索学生")
+    public PageInfo<SisUser> getTeacher(@RequestParam @ApiParam("页数") Integer page,
+                                         @RequestParam @ApiParam("页大小") Integer pageSize,
+                                         @RequestParam(required = false)
+                                         @ApiParam("用户Id模糊") String suId,
+                                         @RequestParam(required = false)
+                                         @ApiParam("用户名字模糊") String suName) throws IncorrectParameterException {
+        return userService.getTeachers(page, pageSize, suId, suName);
+    }
+
     @PostMapping("/users/{suId}")
     @ApiOperation("修改密码")
     public VoidOperationResponse modifyPassword(@PathVariable @ApiParam(
