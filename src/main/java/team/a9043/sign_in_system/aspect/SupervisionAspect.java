@@ -86,17 +86,7 @@ public class SupervisionAspect {
 
         DoubleStream doubleStream = sisSupervisionList.parallelStream()
             .mapToDouble(tSisSupervision -> {
-                double halfMan = 0;
-                if (null != tSisSupervision.getSsvMobileNum()) {
-                    halfMan += tSisSupervision.getSsvMobileNum();
-                }
-                if (null != tSisSupervision.getSsvSleepNum()) {
-                    halfMan += tSisSupervision.getSsvSleepNum();
-                }
-
-                halfMan /= 2;
-                double suvActNum =
-                    (tSisSupervision.getSsvActualNum() - halfMan);
+                double suvActNum = tSisSupervision.getSsvActualNum();
                 suvActNum = suvActNum < 0 ? 0 : suvActNum;
                 return suvActNum / actNum;
             });
