@@ -14,6 +14,8 @@ import team.a9043.sign_in_system.pojo.SisSchedule;
 import team.a9043.sign_in_system.service_pojo.OperationResponse;
 import team.a9043.sign_in_system.service_pojo.VoidOperationResponse;
 import team.a9043.sign_in_system.service_pojo.VoidSuccessOperationResponse;
+import team.a9043.sign_in_system.util.Gps;
+import team.a9043.sign_in_system.util.LocationUtil;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -31,7 +33,7 @@ public class LocationService {
 
     @Transactional
     public OperationResponse<SisSchedule> modifyScheduleLocation(Integer ssId,
-                                                    Integer slId) throws IncorrectParameterException {
+                                                                 Integer slId) throws IncorrectParameterException {
         SisSchedule sisSchedule = sisScheduleMapper.selectByPrimaryKey(ssId);
         if (null == sisSchedule)
             throw new IncorrectParameterException("Schedule not found: " + ssId);
@@ -111,13 +113,14 @@ public class LocationService {
 
     @Transactional
     public OperationResponse<SisLocation> modifyLocation(Integer slId,
-                                            SisLocation sisLocation) throws IncorrectParameterException {
+                                                         SisLocation sisLocation) throws IncorrectParameterException {
         SisLocation stdSisLocation = sisLocationMapper.selectByPrimaryKey(slId);
         if (null == stdSisLocation)
             throw new IncorrectParameterException("Incorrect location: slid " + slId);
 
-        stdSisLocation.setSlLat(sisLocation.getSlLat());
-        stdSisLocation.setSlLong(sisLocation.getSlLong());
+        Gps gps = LocationUtil.gcj2Wgs84(sisLocation.getSlLat(), sisLocation.getSlLong());
+        stdSisLocation.setSlLat(gps.getWgLat());
+        stdSisLocation.setSlLong(gps.getWgLon());
 
         sisLocationMapper.updateByPrimaryKeySelective(stdSisLocation);
         log.info("Success in modifying location: " + slId);
