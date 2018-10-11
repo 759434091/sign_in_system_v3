@@ -1,5 +1,9 @@
 package team.a9043.sign_in_system.controller;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.SignatureException;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -19,6 +23,7 @@ import team.a9043.sign_in_system.security.tokenuser.TokenUser;
 import team.a9043.sign_in_system.service.SignInService;
 import team.a9043.sign_in_system.service_pojo.OperationResponse;
 import team.a9043.sign_in_system.service_pojo.VoidOperationResponse;
+import team.a9043.sign_in_system.util.JwtUtil;
 import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
 
 import javax.annotation.Resource;
@@ -91,11 +96,20 @@ public class SignInController {
     }
 
     @GetMapping("/courses/{scId}/signIns/export")
-    @PreAuthorize("hasAnyAuthority('ADMINISTRATOR','TEACHER')")
     @ApiOperation("导出签到以及历史")
-    public void exportSignIns(@PathVariable @ApiParam("课程") String scId, HttpServletResponse httpServletResponse) throws IOException {
+    public void exportSignIns(@PathVariable @ApiParam("课程") String scId,
+                              @RequestParam String accessToken,
+                              HttpServletResponse httpServletResponse) throws IOException {
+        try {
+            Claims claims = JwtUtil.parseJwt(accessToken);
+            String auth = claims.get("suAuthoritiesStr", String.class);
+            if (!auth.contains("ADMINISTRATOR") && !auth.contains("TEACHER"))
+                throw new InvalidPermissionException("Invalid Permission: " + auth);
+        } catch (MalformedJwtException | SignatureException | ExpiredJwtException e) {
+            throw new InvalidPermissionException("Invalid Permission: " + null);
+        }
         httpServletResponse.setHeader("content-Type", "application/vnd.ms-excel");
-        httpServletResponse.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode("signIns", "utf-8"));
+        httpServletResponse.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode("signIns.xlsx", "utf-8"));
         Workbook workbook = signInService.exportSignIns(scId);
         workbook.write(httpServletResponse.getOutputStream());
         workbook.close();

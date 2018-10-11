@@ -96,6 +96,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .antMatchers("/webjars/**").permitAll()
             .antMatchers("/tokens/{code}").permitAll()
             .antMatchers("/tokens").permitAll()
+            .antMatchers("/courses/{scId}/signIns/export").permitAll()
             .antMatchers(HttpMethod.OPTIONS).permitAll()
             .anyRequest().authenticated()
             .and()

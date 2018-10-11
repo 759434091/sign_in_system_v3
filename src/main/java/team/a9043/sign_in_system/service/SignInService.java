@@ -409,7 +409,7 @@ public class SignInService {
             tRow.createCell(4, CellType.STRING).setCellValue(ssi.getSsiWeek());
             tRow.createCell(5, CellType.STRING).setCellValue(ssid.getSuId());
             tRow.createCell(6, CellType.STRING).setCellValue(ssid.getSisUser().getSuName());
-            tRow.createCell(7, CellType.STRING).setCellValue(ssid.getSsidStatus());
+            tRow.createCell(7, CellType.STRING).setCellValue(ssid.getSsidStatus() ? "已签到" : "缺勤");
         })));
         return workbook;
     }
