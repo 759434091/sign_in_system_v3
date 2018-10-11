@@ -2,6 +2,7 @@ package team.a9043.sign_in_system.controller;
 
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,6 +27,9 @@ import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.net.URLEncoder;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
@@ -84,6 +88,17 @@ public class SignInController {
                 throw new IncorrectParameterException(
                     "Invalid permission: queryType " + queryType);
         }
+    }
+
+    @GetMapping("/courses/{scId}/signIns/export")
+    @PreAuthorize("hasAnyAuthority('ADMINISTRATOR','TEACHER')")
+    @ApiOperation("导出签到以及历史")
+    public void exportSignIns(@PathVariable @ApiParam("课程") String scId, HttpServletResponse httpServletResponse) throws IOException {
+        httpServletResponse.setHeader("content-Type", "application/vnd.ms-excel");
+        httpServletResponse.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode("signIns", "utf-8"));
+        Workbook workbook = signInService.exportSignIns(scId);
+        workbook.write(httpServletResponse.getOutputStream());
+        workbook.close();
     }
 
     @PostMapping("/schedules/{ssId}/signIns")

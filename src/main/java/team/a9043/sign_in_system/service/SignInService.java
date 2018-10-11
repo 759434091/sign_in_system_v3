@@ -3,7 +3,8 @@ package team.a9043.sign_in_system.service;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.json.JSONArray;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +32,7 @@ import java.security.InvalidParameterException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -356,6 +358,60 @@ public class SignInService {
 
     public SisCourse getSignIns(String scId) throws IncorrectParameterException {
         return getSignIns(null, scId);
+    }
+
+    public Workbook exportSignIns(String scId) {
+        HashMap<Integer, String> dayMap = new HashMap<Integer, String>() {{
+            this.put(1, "一");
+            this.put(2, "二");
+            this.put(3, "三");
+            this.put(4, "四");
+            this.put(5, "五");
+            this.put(6, "六");
+            this.put(7, "日");
+        }};
+        HashMap<Integer, String> fortMap = new HashMap<Integer, String>() {{
+            this.put(0, "全");
+            this.put(1, "单");
+            this.put(2, "双");
+        }};
+        String timeFormat = "%s [%s-%s] 星期%s 第 %s~%s 节 %s";
+
+        SisCourse sisCourse = getSignIns(scId);
+        Workbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet();
+        Row row = sheet.createRow(0);
+        row.createCell(0, CellType.STRING).setCellValue("学年度学期");
+        row.createCell(1, CellType.STRING).setCellValue("课程序号");
+        row.createCell(2, CellType.STRING).setCellValue("课程名字");
+        row.createCell(3, CellType.STRING).setCellValue("上课时间");
+        row.createCell(4, CellType.STRING).setCellValue("签到周");
+        row.createCell(5, CellType.STRING).setCellValue("学号");
+        row.createCell(6, CellType.STRING).setCellValue("姓名");
+        row.createCell(7, CellType.STRING).setCellValue("签到状态");
+
+        AtomicInteger rowIdx = new AtomicInteger(1);
+        sisCourse.getSisScheduleList().forEach(s -> s.getSisSignInList().forEach(ssi -> ssi.getSisSignInDetailList().forEach(ssid -> {
+            String schTime = String.format(timeFormat,
+                fortMap.get(s.getSsFortnight()),
+                s.getSsStartWeek(),
+                s.getSsEndWeek(),
+                dayMap.get(s.getSsDayOfWeek()),
+                s.getSsStartTime(),
+                s.getSsEndTime(),
+                s.getSsRoom());
+
+            Row tRow = sheet.createRow(rowIdx.getAndIncrement());
+            tRow.createCell(0, CellType.STRING).setCellValue(s.getSsYearEtTerm());
+            tRow.createCell(1, CellType.STRING).setCellValue(sisCourse.getScId());
+            tRow.createCell(2, CellType.STRING).setCellValue(sisCourse.getScName());
+            tRow.createCell(3, CellType.STRING).setCellValue(schTime);
+            tRow.createCell(4, CellType.STRING).setCellValue(ssi.getSsiWeek());
+            tRow.createCell(5, CellType.STRING).setCellValue(ssid.getSuId());
+            tRow.createCell(6, CellType.STRING).setCellValue(ssid.getSisUser().getSuName());
+            tRow.createCell(7, CellType.STRING).setCellValue(ssid.getSsidStatus());
+        })));
+        return workbook;
     }
 
     @SuppressWarnings("ConstantConditions")
