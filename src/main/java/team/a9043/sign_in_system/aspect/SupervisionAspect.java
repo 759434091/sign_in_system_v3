@@ -80,18 +80,18 @@ public class SupervisionAspect {
             sisSupervisionMapper.selectByExample(sisSupervisionExample);
 
         SisSignInExample sisSignInExample = new SisSignInExample();
-        sisScheduleExample.createCriteria().andSsIdIn(ssIdList);
+        sisSignInExample.createCriteria().andSsIdIn(ssIdList);
         List<SisSignIn> sisSignInList =
             sisSignInMapper.selectByExample(sisSignInExample);
 
-        DoubleStream doubleStream = sisSupervisionList.parallelStream()
+        DoubleStream doubleStream = sisSupervisionList.stream()
             .mapToDouble(tSisSupervision -> {
                 double suvActNum = tSisSupervision.getSsvActualNum();
                 suvActNum = suvActNum < 0 ? 0 : suvActNum;
                 return suvActNum / actNum;
             });
 
-        DoubleStream doubleStream1 = sisSignInList.parallelStream()
+        DoubleStream doubleStream1 = sisSignInList.stream()
             .mapToDouble(SisSignIn::getSsiAttRate)
             .filter(Objects::nonNull);
 
@@ -110,8 +110,7 @@ public class SupervisionAspect {
 
         sisCourse.setScAttRate(null == totalRate ?
             null : BigDecimal.valueOf(totalRate));
-        boolean resB = sisCourseMapper.updateByPrimaryKey(sisCourse) > 0;
-        if (!resB)
-            log.error("con not update att rate at: " + scId + ", " + totalRate);
+        sisCourseMapper.updateByPrimaryKey(sisCourse);
+        log.info("update att rate at: " + scId + ", " + totalRate);
     }
 }
