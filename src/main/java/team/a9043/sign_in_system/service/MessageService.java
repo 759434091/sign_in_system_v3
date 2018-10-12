@@ -47,8 +47,11 @@ public class MessageService {
         if (null == sisUser || null == sisUser.getSuOpenid()) return;
 
         String key = String.format(formIdKeyFormat, sisUser.getSuOpenid());
-        FormId formId = (FormId) sisRedisTemplate.opsForList().rightPop(key);
-        if (null == formId || formId.getLocalDateTime().isBefore(LocalDateTime.now())) return;
+
+        FormId formId;
+        while ((formId = (FormId) sisRedisTemplate.opsForList().rightPop(key)) == null || formId.getLocalDateTime().isBefore(LocalDateTime.now()))
+            if (sisRedisTemplate.opsForList().size(key) == null || sisRedisTemplate.opsForList().size(key) <= 0)
+                return;
 
         JSONObject data = new JSONObject();
         data.put("keyword1", "课程");
