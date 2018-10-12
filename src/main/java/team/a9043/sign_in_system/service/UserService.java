@@ -5,14 +5,11 @@ import com.github.pagehelper.PageInfo;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
-import team.a9043.sign_in_system.convertor.JsonObjectHttpMessageConverter;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.WxServerException;
 import team.a9043.sign_in_system.mapper.SisUserMapper;
@@ -30,7 +27,6 @@ import java.security.InvalidParameterException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * @author a9043
@@ -38,26 +34,17 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 public class UserService {
-    private RestTemplate restTemplate;
-    @Value("${wxapp.apiurl}")
-    private String apiurl;
     @Value("${wxapp.appid}")
     private String appid;
     @Value("${wxapp.secret}")
     private String secret;
     @Resource
+    private RestTemplate restTemplate;
+    @Resource
     private BCryptPasswordEncoder bCryptPasswordEncoder;
     @Resource
     private SisUserMapper sisUserMapper;
-
-    public UserService(@Value("${wxapp.rooturl}") String rooturl,
-                       @Autowired JsonObjectHttpMessageConverter jsonObjectHttpMessageConverter) {
-        RestTemplateBuilder restTemplateBuilder = new RestTemplateBuilder();
-        restTemplate = restTemplateBuilder
-            .additionalMessageConverters(jsonObjectHttpMessageConverter)
-            .rootUri(rooturl)
-            .build();
-    }
+    private String apiurl = "/sns/jscode2session?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code";
 
     public OperationResponse<String> modifyBindUser(SisUser sisUser,
                                                     String code) throws InvalidParameterException, WxServerException {
