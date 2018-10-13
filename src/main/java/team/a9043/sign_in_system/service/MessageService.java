@@ -128,6 +128,7 @@ public class MessageService {
     }
 
     @SuppressWarnings("ConstantConditions")
+    @Deprecated
     public void sendSignInMessage(SisUser sisUser) {
         String urlFormat = "/cgi-bin/message/wxopen/template/send?access_token=%s";
         String signInTemplateId = "J-dpmRqRsK2H6TI_lLE_90Z3U8xKBAiArSM5Prn7D14";
@@ -152,7 +153,7 @@ public class MessageService {
             data.put("keyword3", kw3);
             JSONObject request = new JSONObject();
             request.put("template_id", signInTemplateId);
-            request.put("page", "/");
+            request.put("page", "/pages/student/sign/sign?scId=R0900520.01");
             request.put("touser", sisUser.getSuOpenid());
             request.put("data", data);
             request.put("emphasis_keyword", "keyword1.DATA");
