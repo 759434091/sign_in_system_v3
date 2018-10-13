@@ -24,6 +24,7 @@ import team.a9043.sign_in_system.service_pojo.SignInProcessing;
 import team.a9043.sign_in_system.service_pojo.VoidOperationResponse;
 import team.a9043.sign_in_system.service_pojo.VoidSuccessOperationResponse;
 import team.a9043.sign_in_system.util.LocationUtil;
+import team.a9043.sign_in_system.util.SisScheduleUtil;
 import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
 import team.a9043.sign_in_system.util.judgetime.JudgeTimeUtil;
 
@@ -67,6 +68,8 @@ public class SignInService {
     private SisLocationMapper sisLocationMapper;
     @Resource
     private SupervisionAspect supervisionAspect;
+    @Resource
+    private MessageService messageService;
 
     @Transactional
     public VoidOperationResponse createSignIn(SisUser sisUser,
@@ -156,6 +159,8 @@ public class SignInService {
         hashMap.put("create_time", currentDateTime);
         sisRedisTemplate.opsForHash().putAll(key, hashMap);
 
+        LocalDateTime localDateTime = LocalDateTime.now().plus(10, ChronoUnit.MINUTES);
+        messageService.sendSignInMessage(sisSchedule, localDateTime);
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.MINUTE, 10);
         threadPoolTaskScheduler.schedule(new EndSignInTask(key, ssId,
@@ -361,22 +366,6 @@ public class SignInService {
     }
 
     public Workbook exportSignIns(String scId) {
-        HashMap<Integer, String> dayMap = new HashMap<Integer, String>() {{
-            this.put(1, "一");
-            this.put(2, "二");
-            this.put(3, "三");
-            this.put(4, "四");
-            this.put(5, "五");
-            this.put(6, "六");
-            this.put(7, "日");
-        }};
-        HashMap<Integer, String> fortMap = new HashMap<Integer, String>() {{
-            this.put(0, "全");
-            this.put(1, "单");
-            this.put(2, "双");
-        }};
-        String timeFormat = "%s [%s-%s] 星期%s 第 %s~%s 节 %s";
-
         SisCourse sisCourse = getSignIns(scId);
         Workbook workbook = new XSSFWorkbook();
         Sheet sheet = workbook.createSheet();
@@ -392,11 +381,11 @@ public class SignInService {
 
         AtomicInteger rowIdx = new AtomicInteger(1);
         sisCourse.getSisScheduleList().forEach(s -> s.getSisSignInList().forEach(ssi -> ssi.getSisSignInDetailList().forEach(ssid -> {
-            String schTime = String.format(timeFormat,
-                fortMap.get(s.getSsFortnight()),
+            String schTime = String.format(SisScheduleUtil.timeFormat,
+                SisScheduleUtil.fortMap.get(s.getSsFortnight()),
                 s.getSsStartWeek(),
                 s.getSsEndWeek(),
-                dayMap.get(s.getSsDayOfWeek()),
+                SisScheduleUtil.dayMap.get(s.getSsDayOfWeek()),
                 s.getSsStartTime(),
                 s.getSsEndTime(),
                 s.getSsRoom());
