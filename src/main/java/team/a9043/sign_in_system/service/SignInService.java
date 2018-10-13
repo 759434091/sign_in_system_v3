@@ -106,15 +106,22 @@ public class SignInService {
             sisJoinCourseMapper.selectByExample(sisJoinCourseExample);
 
         //check permission
-        if (!sisUser.getSuAuthorities()
-            .contains(new SimpleGrantedAuthority("ADMINISTRATOR")))
-            sisJoinCourseList.stream()
-                .filter(sisJoinCourse -> sisJoinCourse.getJoinCourseType()
+        if (!sisUser.getSuAuthoritiesStr().contains("ADMINISTRATOR")) {
+            if (sisUser.getSuAuthoritiesStr().contains("TEACHER")) {
+                sisJoinCourseList.stream().filter(sisJoinCourse -> sisJoinCourse.getJoinCourseType()
                     .equals(SisJoinCourse.JoinCourseType.TEACHING.ordinal()) &&
                     sisJoinCourse.getSuId().equals(sisUser.getSuId()))
-                .findAny()
-                .orElseThrow(() -> new InvalidPermissionException(
-                    "Invalid Permission in: " + ssId));
+                    .findAny()
+                    .orElseThrow(() -> new InvalidPermissionException(
+                        "Invalid Permission in: " + ssId));
+            } else if (sisUser.getSuAuthoritiesStr().contains("MONITOR")) {
+                SisCourse sisCourse = sisCourseMapper.selectByPrimaryKey(sisSchedule.getScId());
+                if (null == sisCourse || !sisCourse.getSuId().equals(sisUser.getSuId()))
+                    throw new InvalidPermissionException("Invalid Permission in: " + ssId);
+            } else {
+                throw new InvalidPermissionException("Invalid Permission in: " + ssId);
+            }
+        }
 
         //get suIdList
         Map<String, Object> hashMap = sisJoinCourseList

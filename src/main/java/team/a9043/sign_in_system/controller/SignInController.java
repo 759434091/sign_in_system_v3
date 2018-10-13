@@ -116,7 +116,7 @@ public class SignInController {
     }
 
     @PostMapping("/schedules/{ssId}/signIns")
-    @PreAuthorize("hasAnyAuthority('ADMINISTRATOR','TEACHER')")
+    @PreAuthorize("hasAnyAuthority('ADMINISTRATOR','TEACHER','MONITOR')")
     @ApiOperation("发起签到")
     public VoidOperationResponse createSignIn(@TokenUser @ApiIgnore SisUser sisUser,
                                               @PathVariable @ApiParam("排课") Integer ssId) throws InvalidTimeParameterException, InvalidPermissionException {
