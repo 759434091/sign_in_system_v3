@@ -44,7 +44,7 @@ public class MessageService {
 
     public void receiveFormId(SisUser sisUser, String formIdStr) {
         SisUser stdUser = sisUserMapper.selectByPrimaryKey(sisUser.getSuId());
-        if (null == stdUser || null == stdUser.getSuOpenid()) return;
+        if (null == stdUser || null == stdUser.getSuOpenid() || stdUser.getSuOpenid().isEmpty()) return;
 
         String key = String.format(formIdKeyFormat, stdUser.getSuOpenid());
         FormId formId = new FormId(formIdStr, LocalDateTime.now().plus(6, ChronoUnit.DAYS));
@@ -76,6 +76,7 @@ public class MessageService {
 
         String urlFormat = "/cgi-bin/message/wxopen/template/send?access_token=%s";
         String signInTemplateId = "J-dpmRqRsK2H6TI_lLE_90Z3U8xKBAiArSM5Prn7D14";
+        String wxAppUrlFormat = "/pages/student/sign/sign?scId=%s";
         String schTime = String.format(SisScheduleUtil.timeFormat,
             SisScheduleUtil.fortMap.get(sisSchedule.getSsFortnight()),
             sisSchedule.getSsStartWeek(),
@@ -106,7 +107,7 @@ public class MessageService {
                 data.put("keyword3", kw3);
                 JSONObject request = new JSONObject();
                 request.put("template_id", signInTemplateId);
-                request.put("page", "/");
+                request.put("page", String.format(wxAppUrlFormat, sisCourse.getScId()));
                 request.put("touser", openid);
                 request.put("data", data);
                 request.put("emphasis_keyword", "keyword1.DATA");
