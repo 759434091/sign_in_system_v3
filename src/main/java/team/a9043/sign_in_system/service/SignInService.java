@@ -167,7 +167,7 @@ public class SignInService {
         sisRedisTemplate.opsForHash().putAll(key, hashMap);
 
         LocalDateTime localDateTime = LocalDateTime.now().plus(10, ChronoUnit.MINUTES);
-        messageService.sendSignInMessage(sisSchedule, localDateTime);
+        messageService.sendSignInMessage(ssId, localDateTime);
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.MINUTE, 10);
         threadPoolTaskScheduler.schedule(new EndSignInTask(key, ssId,

@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
 import team.a9043.sign_in_system.exception.InvalidPermissionException;
-import team.a9043.sign_in_system.exception.String2ValueException;
+import team.a9043.sign_in_system.pojo.String2ValueException;
 import team.a9043.sign_in_system.pojo.SisMonitorTrans;
 import team.a9043.sign_in_system.pojo.SisSchedule;
 import team.a9043.sign_in_system.pojo.SisSupervision;

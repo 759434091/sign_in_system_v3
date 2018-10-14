@@ -1,4 +1,4 @@
-package team.a9043.sign_in_system.exception;
+package team.a9043.sign_in_system.pojo;
 
 /**
  * @author a9043

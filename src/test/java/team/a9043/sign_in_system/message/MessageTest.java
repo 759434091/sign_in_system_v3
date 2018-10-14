@@ -20,20 +20,11 @@ import java.time.temporal.ChronoUnit;
 public class MessageTest {
     @Resource
     private MessageService messageService;
-    @Resource
-    private SisUserMapper sisUserMapper;
 
     @Test
     public void sendTest2() throws InterruptedException {
         LocalDateTime localDateTime = LocalDateTime.now().plus(10, ChronoUnit.MINUTES);
-        messageService.sendSignInMessage(new SisSchedule(), localDateTime);
-        Thread.sleep(100000);
-    }
-
-    @Test
-    public void sendTest() throws InterruptedException {
-        SisUser sisUser = sisUserMapper.selectByPrimaryKey("2016220401001");
-        messageService.sendSignInMessage(sisUser);
+        messageService.sendSignInMessage(511, localDateTime);
         Thread.sleep(10000);
     }
 }

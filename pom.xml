@@ -5,7 +5,7 @@
 
     <groupId>team.a9043</groupId>
     <artifactId>sign_in_system</artifactId>
-    <version>3.0.4</version>
+    <version>3.0.5</version>
     <packaging>jar</packaging>
 
     <name>sign_in_system</name>
@@ -28,6 +28,10 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -158,7 +162,28 @@
         </dependency>
     </dependencies>
 
+    <profiles>
+        <profile>
+            <id>dev</id>
+            <properties>
+                <activatedProperties>dev</activatedProperties>
+            </properties>
+        </profile>
+        <profile>
+            <id>release</id>
+            <properties>
+                <activatedProperties>release</activatedProperties>
+            </properties>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+        </profile>
+    </profiles>
+
     <build>
+        <filters>
+            <filter>src/main/resources/application-${activatedProperties}.yaml</filter>
+        </filters>
         <resources>
             <resource>
                 <directory>src/main/java</directory>
@@ -170,9 +195,16 @@
             <resource>
                 <directory>src/main/resources</directory>
                 <includes>
-                    <include>**/*.*</include>
+                    <include>**/application.yaml</include>
                 </includes>
-                <filtering>false</filtering>
+                <filtering>true</filtering>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <includes>
+                    <include>**/application-${activatedProperties}.yaml</include>
+                </includes>
+                <filtering>true</filtering>
             </resource>
         </resources>
         <plugins>

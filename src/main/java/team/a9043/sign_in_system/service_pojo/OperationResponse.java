@@ -4,12 +4,14 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serializable;
+
 /**
  * @author a9043
  */
 @Setter
 @Getter
-public class OperationResponse<T> {
+public class OperationResponse<T> implements Serializable {
     protected boolean success;
     protected String message;
 

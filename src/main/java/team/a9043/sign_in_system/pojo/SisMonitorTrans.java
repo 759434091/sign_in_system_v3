@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Getter;
 import lombok.Setter;
-import team.a9043.sign_in_system.exception.String2ValueException;
 
 import javax.validation.constraints.NotNull;
 
