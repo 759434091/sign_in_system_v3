@@ -10,6 +10,7 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.web.client.RestTemplate;
 import team.a9043.sign_in_system.convertor.JsonObjectHttpMessageConverter;
@@ -28,6 +29,8 @@ public class WxAppConfig {
     private String secret;
     @Resource
     private ThreadPoolTaskScheduler threadPoolTaskScheduler;
+    @Resource(name = "sisRedisTemplate")
+    private RedisTemplate<String, Object> sisRedisTemplate;
     @Resource
     private ObjectMapper objectMapper;
     private RestTemplate restTemplate;
@@ -63,6 +66,7 @@ public class WxAppConfig {
 
         threadPoolTaskScheduler.schedule(this::updateAppToken, calendar.toInstant());
         log.info("success init AppToken: " + objectMapper.writeValueAsString(appToken));
+        sisRedisTemplate.opsForValue().set("wx_access_token", appToken.getAccessToken());
         return appToken;
     }
 
@@ -80,6 +84,7 @@ public class WxAppConfig {
 
         appToken.modifyAppToken(jsonObject.getString("access_token"), calendar.getTime());
 
+        sisRedisTemplate.opsForValue().set("wx_access_token", appToken.getAccessToken());
         threadPoolTaskScheduler.schedule(this::updateAppToken, calendar.toInstant());
         try {
             log.info("success update AppToken: " + objectMapper.writeValueAsString(appToken));
