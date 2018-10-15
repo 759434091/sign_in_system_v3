@@ -320,7 +320,7 @@
         where ssid_id in
         <foreach collection="sisSignInDetailList" item="sisSignInDetail"
                  separator="," close=")" open="(">
-            #{sisCourse.ssidId}
+            #{sisSignInDetail.ssidId}
         </foreach>
     </update>
 </mapper>
