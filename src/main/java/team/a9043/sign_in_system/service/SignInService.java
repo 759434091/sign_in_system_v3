@@ -410,6 +410,25 @@ public class SignInService {
         return workbook;
     }
 
+    public VoidOperationResponse modifySignIns(Integer ssiId, List<SisSignInDetail> sisSignInDetailList) {
+        SisSignIn sisSignIn = sisSignInMapper.selectByPrimaryKey(ssiId);
+        if (null == sisSignIn)
+            throw new IncorrectParameterException("Invalid ssiId: " + ssiId);
+        SisSignInDetailExample sisSignInDetailExample = new SisSignInDetailExample();
+        sisSignInDetailExample.createCriteria().andSsiIdEqualTo(ssiId);
+        List<SisSignInDetail> stdSignInDetailList = sisSignInDetailMapper.selectByExample(sisSignInDetailExample);
+        if (stdSignInDetailList.isEmpty())
+            return VoidSuccessOperationResponse.SUCCESS;
+
+        sisSignInDetailList.forEach(s -> stdSignInDetailList
+            .stream()
+            .filter(ss -> ss.getSsiId().equals(s.getSsiId()))
+            .findAny()
+            .ifPresent(ss-> ss.setSsidStatus(s.getSsidStatus())));
+
+        // TODO update
+    }
+
     @SuppressWarnings("ConstantConditions")
     public VoidOperationResponse signIn(SisUser sisUser,
                                         Integer ssId,
