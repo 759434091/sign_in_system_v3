@@ -308,4 +308,19 @@
             #{sisSignInDetail.suId,jdbcType=VARCHAR})
         </foreach>
     </insert>
+
+    <update id="updateList"
+            parameterType="team.a9043.sign_in_system.pojo.SisSignInDetail">
+        update sis_sign_in_detail
+        set ssid_status =
+        <foreach collection="sisSignInDetailList" item="sisSignInDetail"
+                 separator="" close="end" open="case ssid_id">
+            when #{sisSignInDetail.ssidId} then #{sisSignInDetail.ssidStatus}
+        </foreach>
+        where ssid_id in
+        <foreach collection="sisSignInDetailList" item="sisSignInDetail"
+                 separator="," close=")" open="(">
+            #{sisCourse.ssidId}
+        </foreach>
+    </update>
 </mapper>

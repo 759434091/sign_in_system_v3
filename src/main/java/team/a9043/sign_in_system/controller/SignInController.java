@@ -159,4 +159,12 @@ public class SignInController {
         LocalDateTime localDateTime = LocalDateTime.now();
         return signInService.signIn(sisUser, ssId, localDateTime, locationJson);
     }
+
+    @PutMapping("/signIns/{ssiId}")
+    @PreAuthorize("hasAnyAuthority('ADMINISTRATOR','TEACHER','MONITOR')")
+    public VoidOperationResponse modifySignIns(@TokenUser SisUser sisUser,
+                                               @PathVariable Integer ssiId,
+                                               @RequestBody List<SisSignInDetail> sisSignInDetailList) {
+        return signInService.modifySignIns(sisUser, ssiId, sisSignInDetailList);
+    }
 }

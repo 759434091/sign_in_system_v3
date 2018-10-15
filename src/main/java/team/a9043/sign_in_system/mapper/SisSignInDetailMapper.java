@@ -98,4 +98,6 @@ public interface SisSignInDetailMapper {
     int updateByPrimaryKey(SisSignInDetail record);
 
     int insertList(@Param("sisSignInDetailList") List<SisSignInDetail> sisSignInDetailList);
+
+    int updateList(@Param("sisSignInDetailList") List<SisSignInDetail> sisSignInDetailList);
 }

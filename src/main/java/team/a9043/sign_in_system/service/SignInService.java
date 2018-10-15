@@ -410,10 +410,29 @@ public class SignInService {
         return workbook;
     }
 
-    public VoidOperationResponse modifySignIns(Integer ssiId, List<SisSignInDetail> sisSignInDetailList) {
+    public VoidOperationResponse modifySignIns(SisUser sisUser, Integer ssiId, List<SisSignInDetail> sisSignInDetailList) {
         SisSignIn sisSignIn = sisSignInMapper.selectByPrimaryKey(ssiId);
         if (null == sisSignIn)
             throw new IncorrectParameterException("Invalid ssiId: " + ssiId);
+
+        if (!sisUser.getSuAuthoritiesStr().contains("ADMINISTRATOR")) {
+            SisSchedule sisSchedule = sisScheduleMapper.selectByPrimaryKey(sisSignIn.getSsId());
+            if (sisUser.getSuAuthoritiesStr().contains("MONITOR")) {
+                SisCourse sisCourse = sisCourseMapper.selectByPrimaryKey(sisSchedule.getScId());
+                if (!sisUser.getSuId().equals(sisCourse.getSuId()))
+                    throw new InvalidPermissionException("Invalid permission on course: " + sisCourse.getScId());
+            } else {
+                SisJoinCourseExample sisJoinCourseExample = new SisJoinCourseExample();
+                sisJoinCourseExample
+                    .createCriteria()
+                    .andScIdEqualTo(sisSchedule.getScId())
+                    .andSuIdEqualTo(sisUser.getSuId())
+                    .andJoinCourseTypeEqualTo(SisJoinCourse.JoinCourseType.TEACHING.ordinal());
+                if (sisJoinCourseMapper.selectByExample(sisJoinCourseExample).isEmpty())
+                    throw new InvalidPermissionException("Invalid permission on course: " + sisSchedule.getScId());
+            }
+        }
+
         SisSignInDetailExample sisSignInDetailExample = new SisSignInDetailExample();
         sisSignInDetailExample.createCriteria().andSsiIdEqualTo(ssiId);
         List<SisSignInDetail> stdSignInDetailList = sisSignInDetailMapper.selectByExample(sisSignInDetailExample);
@@ -424,9 +443,21 @@ public class SignInService {
             .stream()
             .filter(ss -> ss.getSsiId().equals(s.getSsiId()))
             .findAny()
-            .ifPresent(ss-> ss.setSsidStatus(s.getSsidStatus())));
+            .ifPresent(ss -> ss.setSsidStatus(s.getSsidStatus())));
 
-        // TODO update
+
+        long attNum = sisSignInDetailList.stream()
+            .filter(sisSignInDetail -> Boolean.TRUE.equals(sisSignInDetail.getSsidStatus()))
+            .count();
+        long totalNum = sisSignInDetailList.size();
+        double attRate = (double) attNum / totalNum;
+        sisSignIn.setSsiAttRate(attRate);
+        sisSignInDetailMapper.updateList(sisSignInDetailList);
+        sisSignIn.setSsiCreateTime(null);
+        sisSignIn.setSsiWeek(null);
+        sisSignInMapper.updateByPrimaryKeySelective(sisSignIn);
+        supervisionAspect.updateAttRate(sisSignIn.getSsId());
+        return VoidSuccessOperationResponse.SUCCESS;
     }
 
     @SuppressWarnings("ConstantConditions")
