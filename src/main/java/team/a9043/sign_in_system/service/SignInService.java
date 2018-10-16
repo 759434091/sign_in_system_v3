@@ -173,7 +173,7 @@ public class SignInService {
         threadPoolTaskScheduler.schedule(new EndSignInTask(key, ssId,
             week), calendar.toInstant());
 
-        log.info("start signIn schedule and end at: " + calendar.toInstant().toString());
+        log.info("user " + sisUser.getSuId() + " start signIn schedule and end at: " + calendar.toInstant().toString());
         return VoidSuccessOperationResponse.SUCCESS;
     }
 
@@ -466,7 +466,7 @@ public class SignInService {
                                         LocalDateTime currentDateTime,
                                         JSONObject locationJson) throws InvalidTimeParameterException, IncorrectParameterException, InvalidPermissionException {
         if (log.isDebugEnabled())
-            log.debug("User " + sisUser.getSuId() + " try to signIn");
+            log.debug("User " + sisUser.getSuId() + " try to signIn ssId " + ssId);
 
         String key =
             String.format(signInKeyFormat, ssId,

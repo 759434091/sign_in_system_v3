@@ -1,6 +1,10 @@
 package team.a9043.sign_in_system.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.*;
+import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
+import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,8 +12,19 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 
+import javax.annotation.Resource;
+
 @Configuration
+@Slf4j
 public class RabbitMQConfig {
+    public RabbitMQConfig(@Autowired RabbitTemplate rabbitTemplate) {
+        rabbitTemplate.setConfirmCallback((correlationData, ack, cause) -> {
+            if (null != correlationData)
+                log.info(correlationData.toString());
+            log.info("ack " + ack + " , cause: " + cause);
+        });
+    }
+
     /*-----------SignIn Message-----------------*/
     @Bean("signInExchange")
     public DirectExchange signInExchange(@Value("${rbmq.signIn.exchange}") String exchange) {
