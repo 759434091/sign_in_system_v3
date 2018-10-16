@@ -7,9 +7,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import team.a9043.sign_in_system.exception.IncorrectParameterException;
-import team.a9043.sign_in_system.pojo.SisContact;
 import team.a9043.sign_in_system.service.ContactService;
 import team.a9043.sign_in_system.service_pojo.VoidOperationResponse;
+import team.a9043.sis_message_system.service_pojo.SisContact;
 
 import javax.annotation.Resource;
 

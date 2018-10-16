@@ -18,12 +18,10 @@ import java.time.temporal.ChronoUnit;
 @Service
 @Slf4j
 public class MessageService {
-    @Value("${rbmq.queue}")
-    private String queue;
-    @Value("${rbmq.exchange}")
-    private String exchange;
-    @Value("${rbmq.bindKey}")
-    private String bindKey;
+    @Value("${rbmq.signIn.exchange}")
+    private String signInExchange;
+    @Value("${rbmq.signIn.bindKey}")
+    private String signInBindKey;
     @Resource
     private SisUserMapper sisUserMapper;
     @Resource(name = "sisRedisTemplate")
@@ -48,7 +46,7 @@ public class MessageService {
     @Async
     public void sendSignInMessage(Integer ssId, LocalDateTime signInEndTime) {
         SignInMessage signInMessage = new SignInMessage(ssId, signInEndTime);
-        Boolean res = (Boolean) amqpTemplate.convertSendAndReceive(exchange, bindKey, signInMessage);
+        Boolean res = (Boolean) amqpTemplate.convertSendAndReceive(signInExchange, signInBindKey, signInMessage);
         if (null == res)
             log.error(String.format("send Message Error: unknown error in ssId %s", ssId));
         else if (!res)
