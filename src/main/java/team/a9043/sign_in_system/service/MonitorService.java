@@ -232,6 +232,8 @@ public class MonitorService {
             return new VoidOperationResponse(false, "Incorrect time");
         }
 
+        if (sisSupervision.getSsvActualNum() > sisCourse.getScActSize())
+            sisSupervision.setSsvActualNum(sisCourse.getScActSize());
         sisSupervision.setSsId(ssId);
         sisSupervisionMapper.insert(sisSupervision);
         log.info("User " + sisUser.getSuId() + " insert supervision: ssId " + ssId + " week " + ssvWeek);

@@ -472,6 +472,11 @@ public class SignInService {
             String.format(signInKeyFormat, ssId,
                 JudgeTimeUtil.getWeek(currentDateTime.toLocalDate()));
 
+
+        double locLat = locationJson.getDouble("loc_lat");
+        double locLong = locationJson.getDouble("loc_long");
+        log.info(String.format("try signIn loc: lat&lon[%s, %s]", locLat, locLong));
+
         if (!sisRedisTemplate.hasKey(key))
             throw new IncorrectParameterException(
                 String.format("Sign in not found: %d_%s", ssId,
@@ -498,8 +503,6 @@ public class SignInService {
                 "loc_lat");
             Double stdLocLong = (Double) sisRedisTemplate.opsForHash().get(key,
                 "loc_long");
-            double locLat = locationJson.getDouble("loc_lat");
-            double locLong = locationJson.getDouble("loc_long");
 
             double distance = LocationUtil.getDistance(stdLocLat, stdLocLong,
                 locLat, locLong);
