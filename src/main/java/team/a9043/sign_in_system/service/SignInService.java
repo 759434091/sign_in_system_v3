@@ -503,8 +503,11 @@ public class SignInService {
 
             double distance = LocationUtil.getDistance(stdLocLat, stdLocLong,
                 locLat, locLong);
-            if (distance > MAX_DISTANCE) return new VoidOperationResponse(false,
-                "Error location distance: " + distance);
+            if (distance > MAX_DISTANCE) {
+                log.info(String.format("failed loc: lat&lon[%s, %s], distance %s", locLat, locLong, distance));
+                return new VoidOperationResponse(false,
+                    "Error location distance: " + distance);
+            }
         }
 
         sisRedisTemplate.opsForHash().put(key, sisUser.getSuId(), true);
