@@ -5,6 +5,8 @@
 #KEYPATH=
 #APPDIR=
 #TARGETDIR=
+#PASSWD=
+#PASSPHRASE=
 
 source ./private.sh -p "edu"
 
