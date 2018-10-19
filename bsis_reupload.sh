@@ -6,16 +6,33 @@
 #APPDIR=
 #TARGETDIR=
 
-source ./private.sh
+source ./private.sh -p "edu"
+
+if [ -n "${KEYPATH}" ]; then
+    ID=" -i ${KEYPATH} "
+fi
 
 /usr/bin/expect << EOF
     set timeout -1
-    spawn ssh ${USERNAME}@${HOST} -i ${KEYPATH}
-    expect "*#"
+    spawn ssh ${USERNAME}@${HOST} ${ID}
+    if { "" == "${KEYPATH}" } {
+        if { "" != "${PASSWD}" } {
+            expect "*password"
+                send "${PASSWD}\r"
+        }
+    } else {
+        if { "" != "${PASSPHRASE}" } {
+            expect "*:*"
+                send "${PASSPHRASE}\r"
+        }
+    }
+    expect -re {[#\$]+} {
         send "cd ${APPDIR}\r"
-    expect "*#"
+    }
+    expect -re {[#\$]+} {
         send "./killAndDelete.sh\r"
         send "logout\r"
+    }
     expect eof
 EOF
 
@@ -27,7 +44,18 @@ echo "find jar ${FILENAME}"
 
 /usr/bin/expect << EOF
     set timeout -1
-    spawn scp -i ${KEYPATH} ${FILENAME} ${USERNAME}@${HOST}:${APPDIR}
+    spawn scp ${ID} ${FILENAME} ${USERNAME}@${HOST}:${APPDIR}
+    if { "" == "${KEYPATH}" } {
+        if { "" != "${PASSWD}" } {
+            expect "*password"
+                send "${PASSWD}\r"
+        }
+    } else {
+        if { "" != "${PASSPHRASE}" } {
+            expect "*:*"
+                send "${PASSPHRASE}\r"
+        }
+    }
     expect "ETA" {
         exp_continue;
     }
@@ -37,12 +65,23 @@ echo "success upload"
 
 /usr/bin/expect << EOF
     set timeout -1
-    spawn ssh ${USERNAME}@${HOST} -i ${KEYPATH}
-    expect "*#"
+    spawn ssh ${USERNAME}@${HOST} ${ID}
+    if { "" == "${KEYPATH}" } {
+        if { "" != "${PASSWD}" } {
+            expect "*password"
+                send "${PASSWD}\r"
+        }
+    } else {
+        if { "" != "${PASSPHRASE}" } {
+            expect "*:*"
+                send "${PASSPHRASE}\r"
+        }
+    }
+    expect -re {[#\$]+}
         send "cd ${APPDIR}/\r"
-    expect "*#"
+    expect -re {[#\$]+}
         send "./start.sh\r"
-    expect "*#" {
+    expect -re {[#\$]+} {
         sleep 10
         send "cat nohup.out\r"
         sleep 10
