@@ -52,7 +52,16 @@ public class WxAppConfig {
     public AppToken initAppToken(@Value("${wxapp.appid}") String appid,
                                  @Value("${wxapp.secret}") String secret) throws JsonProcessingException {
         String urlFormat = "/cgi-bin/token?grant_type=client_credential&appid=%s&secret=%s";
-        JSONObject jsonObject = restTemplate.getForObject(String.format(urlFormat, appid, secret), JSONObject.class);
+        JSONObject jsonObject;
+        try {
+            jsonObject = restTemplate.getForObject(String.format(urlFormat, appid, secret), JSONObject.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Calendar calendar = Calendar.getInstance();
+            calendar.add(Calendar.SECOND, 30);
+            threadPoolTaskScheduler.schedule(this::updateAppToken, calendar.getTime());
+            return null;
+        }
         if (null == jsonObject)
             throw new WxServerException("can not get response");
         if (!jsonObject.has("access_token"))
@@ -72,7 +81,16 @@ public class WxAppConfig {
 
     private void updateAppToken() {
         String urlFormat = "/cgi-bin/token?grant_type=client_credential&appid=%s&secret=%s";
-        JSONObject jsonObject = restTemplate.getForObject(String.format(urlFormat, appid, secret), JSONObject.class);
+        JSONObject jsonObject;
+        try {
+            jsonObject = restTemplate.getForObject(String.format(urlFormat, appid, secret), JSONObject.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Calendar calendar = Calendar.getInstance();
+            calendar.add(Calendar.SECOND, 30);
+            threadPoolTaskScheduler.schedule(this::updateAppToken, calendar.getTime());
+            return;
+        }
         if (null == jsonObject)
             throw new WxServerException("can not get response");
         if (!jsonObject.has("access_token"))
