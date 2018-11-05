@@ -235,7 +235,7 @@ public class MonitorService {
         if (sisSupervision.getSsvActualNum() > sisCourse.getScActSize())
             sisSupervision.setSsvActualNum(sisCourse.getScActSize());
         sisSupervision.setSsId(ssId);
-        sisSupervisionMapper.insert(sisSupervision);
+        sisSupervisionMapper.insertSelective(sisSupervision);
         log.info("User " + sisUser.getSuId() + " insert supervision: ssId " + ssId + " week " + ssvWeek);
         return VoidSuccessOperationResponse.SUCCESS;
     }

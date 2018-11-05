@@ -495,7 +495,7 @@ public class SignInService {
         long until = createTime.until(currentDateTime, ChronoUnit.MINUTES);
         if (until > 10 || until < 0)
             return new VoidOperationResponse(false,
-                "Error time until: " + until);
+                "Error time until: " + until, 3);
 
         if (sisRedisTemplate.opsForHash().hasKey(key, "loc_lat") &&
             sisRedisTemplate.opsForHash().hasKey(key, "loc_long")) {
@@ -509,10 +509,13 @@ public class SignInService {
             if (distance > MAX_DISTANCE) {
                 log.info(String.format("failed loc: lat&lon[%s, %s], distance %s", locLat, locLong, distance));
                 return new VoidOperationResponse(false,
-                    "Error location distance: " + distance);
+                    "Error location distance: " + distance, 2);
             }
         }
 
+        if (sisRedisTemplate.opsForHash().hasKey(key, sisUser.getSuId()) || sisRedisTemplate.opsForHash().get(key, sisUser.getSuId()).equals(true)) {
+            return new VoidOperationResponse(false, "Already Sign In", 1);
+        }
         sisRedisTemplate.opsForHash().put(key, sisUser.getSuId(), true);
         if (log.isDebugEnabled())
             log.debug("User " + sisUser.getSuId() + " successfully signIn");
@@ -656,7 +659,7 @@ public class SignInService {
             sisSignIn.setSsiAttRate(attRate);
 
             //insert signIn
-            sisSignInMapper.insert(sisSignIn);
+            sisSignInMapper.insertSelective(sisSignIn);
 
             //insert signInDetail
             sisSignInDetailList

@@ -27,4 +27,10 @@ public class OperationResponse<T> implements Serializable {
         this.success = success;
         this.message = message;
     }
+
+    public OperationResponse(boolean success, String message, Integer code) {
+        this.success = success;
+        this.message = message;
+        this.code = code;
+    }
 }

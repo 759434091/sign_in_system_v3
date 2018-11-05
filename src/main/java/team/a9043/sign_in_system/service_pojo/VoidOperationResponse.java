@@ -11,6 +11,10 @@ public class VoidOperationResponse extends OperationResponse<Void> {
         super(success, message);
     }
 
+    public VoidOperationResponse(boolean success, String message, Integer code) {
+        super(success, message, code);
+    }
+
     public void setData(Void data) {
     }
 

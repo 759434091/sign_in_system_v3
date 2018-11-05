@@ -9,6 +9,7 @@ public class VoidSuccessOperationResponse extends VoidOperationResponse {
 
     private VoidSuccessOperationResponse() {
         this.success = true;
+        this.code = 0;
     }
 
     public void setSuccess(boolean success) {
