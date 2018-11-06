@@ -486,6 +486,9 @@ public class SignInService {
             throw new InvalidPermissionException(errStr);
         }
 
+        if (sisRedisTemplate.opsForHash().hasKey(key, sisUser.getSuId()) || sisRedisTemplate.opsForHash().get(key, sisUser.getSuId()).equals(true))
+            return new VoidOperationResponse(false, "Already Sign In", 1);
+
         long until = createTime.until(currentDateTime, ChronoUnit.MINUTES);
         if (until > 10 || until < 0)
             return new VoidOperationResponse(false,
@@ -527,6 +530,9 @@ public class SignInService {
             throw new InvalidPermissionException(errStr);
         }
 
+        if (sisRedisTemplate.opsForHash().hasKey(key, sisUser.getSuId()) || sisRedisTemplate.opsForHash().get(key, sisUser.getSuId()).equals(true))
+            return new VoidOperationResponse(false, "Already Sign In", 1);
+
         long until = createTime.until(currentDateTime, ChronoUnit.MINUTES);
         if (until > 10 || until < 0)
             return new VoidOperationResponse(false,
@@ -548,9 +554,6 @@ public class SignInService {
             }
         }
 
-        if (sisRedisTemplate.opsForHash().hasKey(key, sisUser.getSuId()) || sisRedisTemplate.opsForHash().get(key, sisUser.getSuId()).equals(true)) {
-            return new VoidOperationResponse(false, "Already Sign In", 1);
-        }
         sisRedisTemplate.opsForHash().put(key, sisUser.getSuId(), true);
         if (log.isDebugEnabled())
             log.debug("User " + sisUser.getSuId() + " successfully signIn");
