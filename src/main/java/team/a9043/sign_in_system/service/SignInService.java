@@ -460,6 +460,41 @@ public class SignInService {
         return VoidSuccessOperationResponse.SUCCESS;
     }
 
+    public VoidOperationResponse backSignIn(SisUser sisUser,
+                                            Integer ssId,
+                                            byte[] bytes,
+                                            LocalDateTime currentDateTime) throws InvalidTimeParameterException {
+        if (log.isDebugEnabled())
+            log.debug("User " + sisUser.getSuId() + " try to backSignIn ssId " + ssId);
+
+        String key =
+            String.format(signInKeyFormat, ssId,
+                JudgeTimeUtil.getWeek(currentDateTime.toLocalDate()));
+
+        if (!sisRedisTemplate.hasKey(key))
+            throw new IncorrectParameterException(
+                String.format("Sign in not found: %d_%s", ssId,
+                    currentDateTime));
+
+        LocalDateTime createTime = (LocalDateTime) sisRedisTemplate
+            .opsForHash()
+            .get(key, "create_time");
+        if (null == createTime) {
+            String errStr = String.format(
+                "SignIn error: No create_time %d_%s", ssId, currentDateTime);
+            log.error(errStr);
+            throw new InvalidPermissionException(errStr);
+        }
+
+        long until = createTime.until(currentDateTime, ChronoUnit.MINUTES);
+        if (until > 10 || until < 0)
+            return new VoidOperationResponse(false,
+                "Error time until: " + until, 3);
+
+        sisRedisTemplate.opsForHash().put(key, sisUser.getSuId(), bytes);
+        return VoidSuccessOperationResponse.SUCCESS;
+    }
+
     @SuppressWarnings("ConstantConditions")
     public VoidOperationResponse signIn(SisUser sisUser,
                                         Integer ssId,
@@ -636,7 +671,15 @@ public class SignInService {
                 .map(entry -> {
                     SisSignInDetail sisSignInDetail = new SisSignInDetail();
                     sisSignInDetail.setSuId((String) entry.getKey());
-                    sisSignInDetail.setSsidStatus((boolean) entry.getValue());
+                    Object val = entry.getValue();
+                    if (val instanceof Boolean) {
+                        sisSignInDetail.setSsidStatus((boolean) entry.getValue());
+                    } else if (val instanceof byte[]) {
+                        sisSignInDetail.setSsidStatus(false);
+                        sisSignInDetail.setSsidPicture((byte[]) entry.getValue());
+                    } else {
+                        sisSignInDetail.setSsidStatus(false);
+                    }
                     return sisSignInDetail;
                 })
                 .collect(Collectors.toList());

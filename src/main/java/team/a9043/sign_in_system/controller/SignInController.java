@@ -133,6 +133,18 @@ public class SignInController {
         return signInService.getSignIn(ssId, week);
     }
 
+    @PostMapping("/schedules/{ssId}/signIns/doBackSignIn")
+    @PreAuthorize("hasAnyAuthority('STUDENT') && authentication.sisUser.type" +
+        ".equals('code')")
+    @ApiOperation("学生备用签到")
+    public VoidOperationResponse backSignIn(@TokenUser @ApiIgnore SisUser sisUser,
+                                            @PathVariable @ApiParam("排课") Integer ssId,
+                                            @RequestPart("picture") byte[] bytes) throws InvalidTimeParameterException {
+        LocalDateTime localDateTime = LocalDateTime.now();
+        return signInService.backSignIn(sisUser, ssId, bytes, localDateTime);
+    }
+
+
     @SuppressWarnings({"ELValidationInJSP", "SpringElInspection"})
     @PostMapping("/schedules/{ssId}/signIns/doSignIn")
     @PreAuthorize("hasAnyAuthority('STUDENT') && authentication.sisUser.type" +
