@@ -74,4 +74,11 @@ public class SignInServiceTest {
         String s = objectMapper.writeValueAsString(sisSignInDetail);
         log.info(s);
     }
+
+
+    @Test
+    public void test7() {
+        Object o = sisRedisTemplate.opsForHash().get("sis_ssId_506_week_10", "2016220401007");
+        log.info(o.toString());
+    }
 }

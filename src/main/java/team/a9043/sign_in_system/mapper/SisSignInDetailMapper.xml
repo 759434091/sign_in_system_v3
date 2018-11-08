@@ -361,6 +361,7 @@
         <foreach collection="sisSignInDetailList" item="sisSignInDetail"
                  separator="," close="" open="">
             (#{sisSignInDetail.ssidStatus,jdbcType=BIT},
+            #{sisSignInDetail.ssidPicture,jdbcType=BLOB},
             #{sisSignInDetail.ssiId,jdbcType=INTEGER},
             #{sisSignInDetail.suId,jdbcType=VARCHAR})
         </foreach>

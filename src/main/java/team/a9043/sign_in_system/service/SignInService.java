@@ -300,7 +300,7 @@ public class SignInService {
                     sisSignInDetailExample.createCriteria();
                 criteria.andSsiIdIn(l);
                 if (null != sisUser) criteria.andSuIdEqualTo(sisUser.getSuId());
-                return sisSignInDetailMapper.selectByExample(sisSignInDetailExample);
+                return sisSignInDetailMapper.selectByExampleWithBLOBs(sisSignInDetailExample);
             })
             .orElse(new ArrayList<>());
 
@@ -486,7 +486,7 @@ public class SignInService {
             throw new InvalidPermissionException(errStr);
         }
 
-        if (sisRedisTemplate.opsForHash().hasKey(key, sisUser.getSuId()) || sisRedisTemplate.opsForHash().get(key, sisUser.getSuId()).equals(true))
+        if (sisRedisTemplate.opsForHash().hasKey(key, sisUser.getSuId()) && sisRedisTemplate.opsForHash().get(key, sisUser.getSuId()).equals(true))
             return new VoidOperationResponse(false, "Already Sign In", 1);
 
         long until = createTime.until(currentDateTime, ChronoUnit.MINUTES);
@@ -530,7 +530,7 @@ public class SignInService {
             throw new InvalidPermissionException(errStr);
         }
 
-        if (sisRedisTemplate.opsForHash().hasKey(key, sisUser.getSuId()) || sisRedisTemplate.opsForHash().get(key, sisUser.getSuId()).equals(true))
+        if (sisRedisTemplate.opsForHash().hasKey(key, sisUser.getSuId()) && sisRedisTemplate.opsForHash().get(key, sisUser.getSuId()).equals(true))
             return new VoidOperationResponse(false, "Already Sign In", 1);
 
         long until = createTime.until(currentDateTime, ChronoUnit.MINUTES);
@@ -566,7 +566,7 @@ public class SignInService {
             new SisSignInDetailExample();
         sisSignInDetailExample.createCriteria().andSuIdEqualTo(suId);
         List<SisSignInDetail> sisSignInDetailList =
-            sisSignInDetailMapper.selectByExample(sisSignInDetailExample);
+            sisSignInDetailMapper.selectByExampleWithBLOBs(sisSignInDetailExample);
         if (sisSignInDetailList.isEmpty()) return sisSignInDetailList;
 
         //join sisSignIn
