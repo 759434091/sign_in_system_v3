@@ -119,10 +119,11 @@ public class SignInController {
     @PreAuthorize("hasAnyAuthority('ADMINISTRATOR','TEACHER','MONITOR')")
     @ApiOperation("发起签到")
     public VoidOperationResponse createSignIn(@TokenUser @ApiIgnore SisUser sisUser,
-                                              @PathVariable @ApiParam("排课") Integer ssId) throws InvalidTimeParameterException, InvalidPermissionException {
+                                              @PathVariable @ApiParam("排课") Integer ssId,
+                                              @RequestPart(value = "picture", required = false) byte[] picBytes) throws InvalidTimeParameterException, InvalidPermissionException {
         LocalDateTime localDateTime = LocalDateTime.now();
 
-        return signInService.createSignIn(sisUser, ssId, localDateTime);
+        return signInService.createSignIn(sisUser, ssId, picBytes, localDateTime);
     }
 
     @GetMapping("/schedules/{ssId}/signIns/week/{week}")

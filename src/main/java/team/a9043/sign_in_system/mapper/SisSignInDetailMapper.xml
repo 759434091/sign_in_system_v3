@@ -356,12 +356,12 @@
 
     <insert id="insertList">
         insert into
-        sis_sign_in_detail (ssid_status, ssi_id, su_id)
+        sis_sign_in_detail (ssid_status, ssid_picture, ssi_id, su_id)
         values
         <foreach collection="sisSignInDetailList" item="sisSignInDetail"
                  separator="," close="" open="">
             (#{sisSignInDetail.ssidStatus,jdbcType=BIT},
-            #{sisSignInDetail.ssidPicture,jdbcType=BLOB},
+            #{sisSignInDetail.ssidPicture},
             #{sisSignInDetail.ssiId,jdbcType=INTEGER},
             #{sisSignInDetail.suId,jdbcType=VARCHAR})
         </foreach>

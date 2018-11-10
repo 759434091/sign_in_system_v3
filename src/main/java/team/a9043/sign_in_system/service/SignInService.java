@@ -74,6 +74,7 @@ public class SignInService {
     @Transactional
     public VoidOperationResponse createSignIn(SisUser sisUser,
                                               Integer ssId,
+                                              byte[] picBytes,
                                               LocalDateTime currentDateTime) throws InvalidTimeParameterException, InvalidPermissionException {
         SisSchedule sisSchedule = Optional
             .ofNullable(sisScheduleMapper.selectByPrimaryKey(ssId))
@@ -164,6 +165,7 @@ public class SignInService {
         }
 
         hashMap.put("create_time", currentDateTime);
+        hashMap.put("picture", picBytes);
         sisRedisTemplate.opsForHash().putAll(key, hashMap);
 
         LocalDateTime localDateTime = LocalDateTime.now().plus(10, ChronoUnit.MINUTES);
@@ -182,7 +184,13 @@ public class SignInService {
         if (Boolean.TRUE.equals(sisRedisTemplate.hasKey(key))) {
             OperationResponse<SisSignIn> operationResponse =
                 new OperationResponse<>();
-            operationResponse.setSuccess(false);
+            SisSignIn sisSignIn = new SisSignIn();
+            sisSignIn.setSsiCreateTime((LocalDateTime) sisRedisTemplate.opsForHash().get(key, "create_time"));
+            sisSignIn.setSsiPicture((byte[]) sisRedisTemplate.opsForHash().get(key, "picture"));
+            sisSignIn.setSsId(ssId);
+            sisSignIn.setSsiWeek(week);
+            operationResponse.setData(sisSignIn);
+            operationResponse.setSuccess(true);
             operationResponse.setCode(1);
             operationResponse.setMessage("Processing");
             return operationResponse;
@@ -663,7 +671,13 @@ public class SignInService {
             Map<Object, Object> map =
                 sisRedisTemplate.opsForHash().entries(key);
 
+            SisSignIn sisSignIn = new SisSignIn();
+            sisSignIn.setSsId(ssId);
+            sisSignIn.setSsiWeek(week);
+            sisSignIn.setSsiCreateTime((LocalDateTime) map.get("create_time"));
+            sisSignIn.setSsiPicture((byte[]) map.get("picture"));
             map.remove("create_time");
+            map.remove("picture");
             map.remove("loc_lat");
             map.remove("loc_long");
 
@@ -693,10 +707,6 @@ public class SignInService {
             }
 
             //create signIn
-            SisSignIn sisSignIn = new SisSignIn();
-            sisSignIn.setSsId(ssId);
-            sisSignIn.setSsiWeek(week);
-            sisSignIn.setSsiCreateTime((LocalDateTime) map.get("create_time"));
             long attNum = sisSignInDetailList.stream()
                 .filter(sisSignInDetail -> Boolean.TRUE.equals(sisSignInDetail.getSsidStatus()))
                 .count();
