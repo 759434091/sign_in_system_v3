@@ -692,7 +692,7 @@ public class SignInService {
                     if (val instanceof Boolean) {
                         sisSignInDetail.setSsidStatus((boolean) entry.getValue());
                     } else if (val instanceof byte[]) {
-                        sisSignInDetail.setSsidStatus(false);
+                        sisSignInDetail.setSsidStatus(true);
                         sisSignInDetail.setSsidPicture((byte[]) entry.getValue());
                     } else {
                         sisSignInDetail.setSsidStatus(false);

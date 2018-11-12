@@ -127,7 +127,6 @@ public class SignInController {
     }
 
     @GetMapping("/schedules/{ssId}/signIns/week/{week}")
-    @PreAuthorize("hasAnyAuthority('ADMINISTRATOR','TEACHER')")
     @ApiOperation("获得签到")
     public OperationResponse<SisSignIn> getSignIn(@PathVariable @ApiParam("排课") Integer ssId,
                                                   @PathVariable @ApiParam("签到周") Integer week) {
