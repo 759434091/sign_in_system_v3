@@ -202,7 +202,7 @@ public class SignInService {
             .andSsIdEqualTo(ssId)
             .andSsiWeekEqualTo(week);
 
-        return sisSignInMapper.selectByExample(sisSignInExample)
+        return sisSignInMapper.selectByExampleWithBLOBs(sisSignInExample)
             .stream()
             .findAny()
             .map(sisSignIn -> {
@@ -291,7 +291,7 @@ public class SignInService {
             .map(l -> {
                 SisSignInExample sisSignInExample = new SisSignInExample();
                 sisSignInExample.createCriteria().andSsIdIn(l);
-                return sisSignInMapper.selectByExample(sisSignInExample);
+                return sisSignInMapper.selectByExampleWithBLOBs(sisSignInExample);
             })
             .orElse(new ArrayList<>());
 
@@ -588,7 +588,7 @@ public class SignInService {
             .map(l -> {
                 SisSignInExample sisSignInExample = new SisSignInExample();
                 sisSignInExample.createCriteria().andSsiIdIn(l);
-                return sisSignInMapper.selectByExample(sisSignInExample);
+                return sisSignInMapper.selectByExampleWithBLOBs(sisSignInExample);
             })
             .orElse(new ArrayList<>());
 
