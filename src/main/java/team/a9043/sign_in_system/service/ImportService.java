@@ -959,6 +959,7 @@ public class ImportService {
         else
             sisCourse.setSuId(stdSisCourse.getSuId());
 
+        sisCourse.setScGrade(stdSisCourse.getScGrade());
         sisCourse.setScId(stdSisCourse.getScId());
         sisCourse.setScAttRate(stdSisCourse.getScAttRate());
         sisCourseMapper.updateByPrimaryKey(sisCourse);
