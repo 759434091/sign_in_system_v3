@@ -3,7 +3,7 @@ package team.a9043.sign_in_system.pojo;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Data;
-import team.a9043.sign_in_system.convertor.Byte2Base64Serializer;
+import team.a9043.sign_in_system.convertor.Byte2ImgSerializer;
 
 @Data
 public class SisSignInDetail {
@@ -39,7 +39,7 @@ public class SisSignInDetail {
      */
     private String suId;
 
-    @JsonSerialize(using = Byte2Base64Serializer.class)
+    @JsonSerialize(using = Byte2ImgSerializer.class)
     private byte[] ssidPicture;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)

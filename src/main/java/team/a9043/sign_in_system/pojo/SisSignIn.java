@@ -2,7 +2,7 @@ package team.a9043.sign_in_system.pojo;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import team.a9043.sign_in_system.convertor.Byte2Base64Serializer;
+import team.a9043.sign_in_system.convertor.Byte2ImgSerializer;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -18,7 +18,7 @@ public class SisSignIn {
 
     private Double ssiAttRate;
 
-    @JsonSerialize(using = Byte2Base64Serializer.class)
+    @JsonSerialize(using = Byte2ImgSerializer.class)
     private byte[] ssiPicture;
 
     public Integer getSsiId() {
