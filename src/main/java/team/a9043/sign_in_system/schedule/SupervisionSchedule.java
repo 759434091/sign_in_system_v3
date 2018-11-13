@@ -1,9 +1,8 @@
 package team.a9043.sign_in_system.schedule;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.tomcat.util.http.fileupload.FileUtils;
 import org.json.JSONArray;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import team.a9043.sign_in_system.mapper.SisCourseMapper;
@@ -15,6 +14,8 @@ import team.a9043.sign_in_system.util.judgetime.InvalidTimeParameterException;
 import team.a9043.sign_in_system.util.judgetime.JudgeTimeUtil;
 
 import javax.annotation.Resource;
+import java.io.File;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -124,5 +125,14 @@ public class SupervisionSchedule {
         } catch (InvalidTimeParameterException e) {
             e.printStackTrace();
         }
+    }
+
+    @Scheduled(cron = "0 0 0 * * ?")
+    public void removeTmp() throws IOException {
+        String pathStr = "/home/sis-user/javaApps/sign_in_system/temp/imgs";
+        File file = new File(pathStr);
+        if (!file.exists()) return;
+
+        FileUtils.deleteDirectory(file);
     }
 }
