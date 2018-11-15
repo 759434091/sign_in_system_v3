@@ -46,12 +46,7 @@ public class MessageService {
     @Async
     public void sendSignInMessage(Integer ssId, LocalDateTime signInEndTime) {
         SignInMessage signInMessage = new SignInMessage(ssId, signInEndTime);
-        Boolean res = (Boolean) amqpTemplate.convertSendAndReceive(signInExchange, signInBindKey, signInMessage);
-        if (null == res)
-            log.error(String.format("send Message Error: unknown error in ssId %s", ssId));
-        else if (!res)
-            log.error(String.format("send Message Error: false in ssId %s", ssId));
-        else
-            log.info(String.format("send Message success: true in ssId %s", ssId));
+        amqpTemplate.convertAndSend(signInExchange, signInBindKey, signInMessage);
+        log.info(String.format("send Message success: true in ssId %s", ssId));
     }
 }
