@@ -34,6 +34,7 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -101,7 +102,7 @@ public class SignInController {
                               @RequestParam String accessToken,
                               HttpServletResponse httpServletResponse) throws IOException {
         try {
-            Claims claims = JwtUtil.parseJwt(accessToken);
+            Claims claims = JwtUtil.parseJwt(URLDecoder.decode(accessToken));
             String auth = claims.get("suAuthoritiesStr", String.class);
             if (!auth.contains("ADMINISTRATOR") && !auth.contains("TEACHER"))
                 throw new InvalidPermissionException("Invalid Permission: " + auth);
