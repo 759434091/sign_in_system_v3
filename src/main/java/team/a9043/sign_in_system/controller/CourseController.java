@@ -87,6 +87,8 @@ public class CourseController {
                                                           @RequestParam(required = false) @ApiParam(value = "课程序号模糊") String scId,
                                                           @RequestParam(required = false) @ApiParam(value = "课程名字模糊") String scName,
                                                           @RequestParam(required = false) @ApiParam(value = "特别指定督导人学号") String suId,
+                                                          @RequestParam(required = false) @ApiParam(value = "排序列") String orderCol,
+                                                          @RequestParam(required = false) @ApiParam(value = "排序") String order,
                                                           @RequestParam(required = false) @ApiParam(value = "role=ADMINISTRATOR&&getType=teacher时候必选") String tchSuId,
                                                           @RequestParam @ApiParam(value = "获得方式", allowableValues = "student,monitor," + "administrator,teacher") String getType) throws IncorrectParameterException, InvalidPermissionException {
         DeferredResult<PageInfo<SisCourse>> deferredResult =
@@ -99,7 +101,7 @@ public class CourseController {
                         try {
                             return getCoursesAdm(sisUser, page, pageSize,
                                 needMonitor,
-                                hasMonitor, sdId, scGrade, scId, scName);
+                                hasMonitor, sdId, scGrade, scId, scName, orderCol, order);
                         } catch (ExecutionException | InterruptedException e) {
                             e.printStackTrace();
                             throw new UnknownServerError(e.getMessage());
@@ -226,7 +228,9 @@ public class CourseController {
                                               Integer sdId,
                                               Integer scGrade,
                                               String scId,
-                                              String scName) throws ExecutionException, InterruptedException {
+                                              String scName,
+                                              String orderCol,
+                                              String order) throws ExecutionException, InterruptedException {
         if (!sisUser.getSuAuthoritiesStr().contains(
             "ADMINISTRATOR")) {
             throw new InvalidPermissionException(
@@ -235,7 +239,7 @@ public class CourseController {
         return courseService.getCourses(page,
             pageSize, needMonitor,
             hasMonitor,
-            sdId, scGrade, scId, scName);
+            sdId, scGrade, scId, scName, orderCol, order);
     }
 
     private PageInfo<SisCourse> getCoursesMonitor(SisUser sisUser,
@@ -264,7 +268,7 @@ public class CourseController {
                     pageSize,
                     true,
                     false,
-                    null, null, null, null);
+                    null, null, null, null, null, null);
             }
             throw new InvalidPermissionException(
                 "Invalid permission: monitor");

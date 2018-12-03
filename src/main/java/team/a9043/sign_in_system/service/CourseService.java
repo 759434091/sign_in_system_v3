@@ -31,6 +31,21 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 public class CourseService {
+    private final Map<String, String> courseOrdMap = new HashMap<String, String>() {
+        private static final long serialVersionUID = 619658001661515241L;
+
+        {
+            this.put("scAttRate", "sc_att_rate");
+        }
+    };
+    private final Set<String> courseOrdSet = new HashSet<String>() {
+        private static final long serialVersionUID = 619658001661515241L;
+
+        {
+            this.add("desc");
+            this.add("asc");
+        }
+    };
     @Value("${pageSize.coursePageSize}")
     private Integer coursePageSize;
     @Resource
@@ -69,7 +84,9 @@ public class CourseService {
                                           @Nullable Integer sdId,
                                           @Nullable Integer scGrade,
                                           @Nullable String scId,
-                                          @Nullable String scName) throws IncorrectParameterException {
+                                          @Nullable String scName,
+                                          @Nullable String orderCol,
+                                          @Nullable String order) throws IncorrectParameterException {
         if (null == page)
             throw new IncorrectParameterException("Incorrect page: " + null);
         if (page < 1)
@@ -95,6 +112,10 @@ public class CourseService {
         if (null != scName) criteria.andScNameLike(getFuzzySearch(scName));
         if (null != scId) criteria.andScIdLike("%" + scId + "%");
         if (null != sdId) sisCourseExample.setSdId(sdId);
+        if (null != orderCol && courseOrdMap.containsKey(orderCol))
+            sisCourseExample.setOrderByClause(String.format("%s %s",
+                courseOrdMap.get(orderCol),
+                null != order && courseOrdSet.contains(order) ? order : "asc"));
 
         PageHelper.startPage(page, pageSize);
         List<SisCourse> sisCourseList =
