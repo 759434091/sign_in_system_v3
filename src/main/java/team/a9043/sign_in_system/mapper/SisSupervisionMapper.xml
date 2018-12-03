@@ -300,4 +300,10 @@
     where ss_id = #{ssId,jdbcType=INTEGER}
       and ssv_week = #{ssvWeek,jdbcType=INTEGER}
   </update>
+
+    <select id="getSsIds" resultType="INTEGER">
+        select ss_id
+        from sis_supervision
+        group by  ss_id
+    </select>
 </mapper>

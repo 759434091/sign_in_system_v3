@@ -1,6 +1,7 @@
 package team.a9043.sign_in_system.mapper;
 
 import java.util.List;
+
 import org.apache.ibatis.annotations.Param;
 import team.a9043.sign_in_system.pojo.SisSupervision;
 import team.a9043.sign_in_system.pojo.SisSupervisionExample;
@@ -94,4 +95,6 @@ public interface SisSupervisionMapper {
      * @mbg.generated Mon Aug 27 13:08:41 CST 2018
      */
     int updateByPrimaryKey(SisSupervision record);
+
+    List<Integer> getSsIds();
 }

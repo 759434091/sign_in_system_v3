@@ -3,7 +3,7 @@ package team.a9043.sign_in_system.aspect;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
-import org.json.JSONObject;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import team.a9043.sign_in_system.mapper.SisCourseMapper;
@@ -112,5 +112,12 @@ public class SupervisionAspect {
             null : BigDecimal.valueOf(totalRate));
         sisCourseMapper.updateByPrimaryKey(sisCourse);
         log.info("update att rate at: " + scId + ", " + totalRate);
+    }
+
+    @Scheduled(cron = "0 0 23,12 * * ?")
+    public void updateAttRate() {
+        sisSupervisionMapper
+            .getSsIds()
+            .forEach(this::updateAttRate);
     }
 }

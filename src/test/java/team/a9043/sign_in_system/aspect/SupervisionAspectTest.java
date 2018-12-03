@@ -22,4 +22,9 @@ public class SupervisionAspectTest {
     public void updateAttRate() {
         supervisionAspect.updateAttRate(138);
     }
+
+    @Test
+    public void updateAttRateAll() {
+        supervisionAspect.updateAttRate();
+    }
 }
